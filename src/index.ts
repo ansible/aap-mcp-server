@@ -239,13 +239,56 @@ const generateTools = async (): Promise<ToolWithSize[]> => {
     );
 
     let mspecification = await oas.convert();
-    // Convert to bundled version for consistency
-    const bundledSpec = await (new OASNormalize(mspecification)).bundle();
+
+    // FIX: Skip bundling for Controller - it strips path parameters from Swagger 2 converted specs
+    let specToUse = mspecification;
+    if (spec.service !== 'controller') {
+      // Convert to bundled version for consistency (but not for controller)
+      specToUse = await (new OASNormalize(mspecification)).bundle();
+    }
 
     try {
-      const tools = await getToolsFromOpenApi(bundledSpec as any, {
+      const tools = await getToolsFromOpenApi(specToUse as any, {
         baseUrl: CONFIG.BASE_URL,
       }) as AAPMcpToolDefinition[];
+
+      // FIX: openapi-mcp-generator doesn't extract path-level parameters for Controller specs
+      // Extract parameter names from pathTemplate and add them to inputSchema
+      tools.forEach(tool => {
+        if (tool.pathTemplate && tool.pathTemplate.includes('{')) {
+          // Extract path parameter names from template like /api/v2/credentials/{id}/
+          const pathParamMatches = tool.pathTemplate.match(/\{(\w+)\}/g);
+          if (pathParamMatches) {
+            const pathParamNames = pathParamMatches.map(match => match.slice(1, -1)); // Remove { }
+
+            // Initialize inputSchema structure if needed
+            const schema = tool.inputSchema as any;
+            if (!schema.properties) {
+              schema.properties = {};
+            }
+            if (!schema.required) {
+              schema.required = [];
+            }
+
+            // Add each path parameter to inputSchema
+            pathParamNames.forEach(paramName => {
+              // Skip if already in schema (e.g., from operation-level params)
+              if (!schema.properties[paramName]) {
+                schema.properties[paramName] = {
+                  type: paramName === 'id' ? 'integer' : 'string',
+                  description: `Path parameter: ${paramName}`
+                };
+
+                // Path parameters are always required
+                if (!schema.required.includes(paramName)) {
+                  schema.required.push(paramName);
+                }
+              }
+            });
+          }
+        }
+      });
+
       const filteredTools = tools.filter((tool) => {
         tool.service = spec.service; // Add service information to each tool
         const result = spec.reformatFunc(tool);
@@ -422,9 +465,25 @@ server.setRequestHandler(CallToolRequestSchema, async (request, extra) => {
       'Accept': 'application/json'
     };
 
-    for (const param of tool.parameters || []) {
-      if (param.in === 'path' && args[param.name]) {
-        url = url.replace(`{${param.name}}`, String(args[param.name]));
+    // Substitute path parameters
+    // For tools with tool.parameters (Gateway, EDA, Galaxy), use those
+    // For tools without (Controller after conversion), extract from pathTemplate
+    if (tool.parameters && tool.parameters.length > 0) {
+      for (const param of tool.parameters) {
+        if (param.in === 'path' && args[param.name]) {
+          url = url.replace(`{${param.name}}`, String(args[param.name]));
+        }
+      }
+    } else if (url.includes('{')) {
+      // Fallback: Extract parameter names from URL template and substitute from args
+      const pathParamMatches = url.match(/\{(\w+)\}/g);
+      if (pathParamMatches) {
+        pathParamMatches.forEach(match => {
+          const paramName = match.slice(1, -1); // Remove { }
+          if (args[paramName] !== undefined) {
+            url = url.replace(match, String(args[paramName]));
+          }
+        });
       }
     }
 
