@@ -1216,15 +1216,16 @@ process.on('SIGINT', async () => {
     }
   }
 
-  // Flush analytics before shutdown
+  // Stop periodic reporting and flush analytics before shutdown
   try {
     const { analyticsService } = await import('./analytics.js');
     if (analyticsService.isEnabled()) {
-      console.log('Flushing analytics data...');
+      console.log('Stopping analytics reporting and flushing data...');
+      analyticsService.stopPeriodicReporting();
       await analyticsService.flush();
     }
   } catch (error) {
-    console.error('Error flushing analytics:', error);
+    console.error('Error stopping analytics:', error);
   }
 
   console.log('Server shutdown complete');
