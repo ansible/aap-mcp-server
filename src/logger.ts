@@ -1,5 +1,7 @@
 import { promises as fs } from 'fs';
 import { join } from 'path';
+import { metricsService } from './metrics.js';
+import { analyticsService, type ToolUsageEvent } from './analytics.js';
 
 export interface LogEntry {
   timestamp: string;
@@ -36,7 +38,10 @@ export class ToolLogger {
     endpoint: string,
     payload: any,
     response: any,
-    returnCode: number
+    returnCode: number,
+    startTime?: number,
+    sessionId?: string,
+    userAgent?: string
   ): Promise<void> {
     const logEntry: LogEntry = {
       timestamp: new Date().toISOString(),
@@ -53,5 +58,32 @@ export class ToolLogger {
     } catch (error) {
       console.error(`Failed to write to log file ${logFile}:`, error);
     }
+
+    // Record metrics
+    const duration = startTime ? (Date.now() - startTime) / 1000 : 0;
+    const status = returnCode >= 200 && returnCode < 400 ? 'success' : 'error';
+    const service = tool.service || 'unknown';
+
+    // Prometheus metrics
+    metricsService.recordToolExecution(tool.name, service, status, duration);
+    metricsService.recordApiCall(service, endpoint, 'POST', returnCode);
+
+    if (status === 'error') {
+      const errorType = returnCode >= 400 && returnCode < 500 ? 'client_error' : 'server_error';
+      metricsService.recordToolError(tool.name, service, errorType);
+    }
+
+    // Segment analytics (anonymized)
+    const toolUsage: ToolUsageEvent = {
+      toolName: tool.name,
+      service,
+      success: status === 'success',
+      duration,
+      endpoint,
+      responseCode: returnCode,
+      errorType: status === 'error' ? (returnCode >= 400 && returnCode < 500 ? 'client_error' : 'server_error') : undefined
+    };
+
+    await analyticsService.trackToolUsage(toolUsage, sessionId, userAgent);
   }
 }
