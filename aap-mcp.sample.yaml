@@ -8,6 +8,9 @@
 # Configuration for Web UI (defaults to false if not specified)
 # enable_ui: false
 
+# Configuration for Prometheus metrics endpoint (defaults to false if not specified)
+# enable_metrics: true
+
 # Configuration for base URL (defaults to https://localhost if not specified)
 # Lower priority than BASE_URL environment variable
 # base_url: "https://localhost:8443"

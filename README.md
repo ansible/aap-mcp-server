@@ -254,6 +254,36 @@ The service generates tools from AAP OpenAPI specifications for:
 
 Tool availability depends on your configured categories and user permissions. When the web UI is enabled, you can browse available tools at `http://localhost:3000/tools`.
 
+## Prometheus Metrics
+
+The service includes comprehensive Prometheus metrics for monitoring and observability. Enable metrics in your configuration:
+
+```yaml
+# In aap-mcp.yaml
+enable_metrics: true
+```
+
+Or via environment variable:
+
+```bash
+export ENABLE_METRICS=true
+```
+
+### Metrics Endpoint
+
+When enabled, Prometheus metrics are available at:
+
+```
+http://localhost:3000/metrics
+```
+
+### Available Metrics
+
+- **HTTP Metrics**: Request counts, duration, and status codes
+- **MCP Tool Metrics**: Tool execution counts, duration, success/failure rates
+- **System Metrics**: CPU, memory, garbage collection, event loop lag
+- **API Call Metrics**: AAP API calls by service, endpoint, and method
+
 ## Development
 
 ### Key Features
@@ -265,6 +295,7 @@ Tool availability depends on your configured categories and user permissions. Wh
 - **Role-based Access Control**: Custom categories and permission-based tool filtering
 - **Session Management**: Token validation and user permission detection
 - **API Query Logging**: Optional logging of all tool usage
+- **Prometheus Metrics**: Comprehensive metrics for monitoring and observability
 - **Health Monitoring**: Built-in health check endpoint for container orchestration
 
 ### Configuration Design
