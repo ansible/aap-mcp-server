@@ -20,6 +20,7 @@ import { join } from "path";
 import * as yaml from "js-yaml";
 import { ToolLogger, type LogEntry } from "./logger.js";
 import { metricsService } from "./metrics.js";
+import { ServerAnalytics } from "./analytics.js";
 import {
   renderDashboard,
   renderToolsList,
@@ -59,6 +60,8 @@ interface AapMcpConfig {
   "ignore-certificate-errors"?: boolean;
   enable_ui?: boolean;
   enable_metrics?: boolean;
+  enable_analytics?: boolean;
+  segment_write_key?: string;
   base_url?: string;
   services?: ServiceConfig[];
   categories: Record<string, string[]>;
@@ -123,6 +126,14 @@ console.log(
 
 const enableUI = getBooleanConfig("ENABLE_UI", localConfig.enable_ui);
 console.log(`Web UI: ${enableUI ? "ENABLED" : "DISABLED"}`);
+
+// Get analytics configuration
+const enableAnalytics = getBooleanConfig("ENABLE_ANALYTICS", localConfig.enable_analytics);
+const segmentWriteKey = process.env.SEGMENT_WRITE_KEY || localConfig.segment_write_key;
+console.log(`Analytics: ${enableAnalytics ? "ENABLED" : "DISABLED"}`);
+if (enableAnalytics && !segmentWriteKey) {
+  console.warn("WARNING: Analytics enabled but no Segment write key provided. Set SEGMENT_WRITE_KEY environment variable or segment_write_key in config.");
+}
 
 // Get services configuration
 const servicesConfig = localConfig.services || [];
@@ -364,6 +375,9 @@ let allTools: AAPMcpToolDefinition[] = [];
 // Initialize logger only if recording is enabled
 const toolLogger = recordApiQueries ? new ToolLogger() : null;
 
+// Initialize analytics only if enabled
+const analytics = enableAnalytics ? new ServerAnalytics(segmentWriteKey) : null;
+
 // Helper function to read log entries for a tool
 const getToolLogEntries = async (toolName: string): Promise<LogEntry[]> => {
   const logFile = join(process.cwd(), "logs", `${toolName}.jsonl`);
@@ -494,6 +508,12 @@ server.setRequestHandler(CallToolRequestSchema, async (request, extra) => {
   // Get the Bearer token for this session
   const bearerToken = getBearerTokenForSession(sessionId);
 
+  // Track tool called event
+  if (analytics && sessionId) {
+    const parameterCount = Object.keys(args).length;
+    await analytics.trackToolCalled(tool.name, sessionId, userAgent, parameterCount);
+  }
+
   // Execute the tool by making HTTP request
   let result: any;
   let response: Response | undefined;
@@ -576,6 +596,13 @@ server.setRequestHandler(CallToolRequestSchema, async (request, extra) => {
       throw new Error(`HTTP ${response.status}: ${JSON.stringify(result)}`);
     }
 
+    // Track successful tool completion
+    if (analytics && sessionId) {
+      const duration = Date.now() - startTime;
+      const parameterCount = Object.keys(args).length;
+      await analytics.trackToolCompleted(tool.name, sessionId, true, duration, parameterCount);
+    }
+
     return {
       content: [
         {
@@ -602,6 +629,23 @@ server.setRequestHandler(CallToolRequestSchema, async (request, extra) => {
         { error: error instanceof Error ? error.message : String(error) },
         response?.status || 0,
         startTime,
+      );
+    }
+
+    // Track failed tool completion and error
+    if (analytics && sessionId) {
+      const duration = Date.now() - startTime;
+      const parameterCount = Object.keys(args).length;
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      
+      await analytics.trackToolCompleted(tool.name, sessionId, false, duration, parameterCount, errorMessage);
+      await analytics.trackError(
+        'tool_execution',
+        response?.status?.toString() || 'unknown_error',
+        tool.name,
+        userAgent,
+        sessionId,
+        parameterCount
       );
     }
 
@@ -668,9 +712,43 @@ const mcpPostHandler = async (
               // Validate token and get user permissions
               const permissions = await validateTokenAndGetPermissions(token);
 
+              // Track successful authentication
+              if (analytics) {
+                await analytics.trackAuthAttempt(
+                  (transport as any).userAgent || 'unknown',
+                  'bearer_token',
+                  true
+                );
+              }
+
               // Store both token and permissions in session data
               storeSessionData(sessionId, token, permissions);
+              
+              // Track session start and connection established
+              if (analytics) {
+                await analytics.trackConnectionEstablished(
+                  'http',
+                  (transport as any).userAgent || 'unknown',
+                  'unknown'
+                );
+                await analytics.trackSessionStarted(
+                  sessionId,
+                  (transport as any).userAgent || 'unknown',
+                  'unknown',
+                  process.platform
+                );
+              }
             } catch (error) {
+              // Track failed authentication
+              if (analytics) {
+                await analytics.trackAuthAttempt(
+                  (transport as any).userAgent || 'unknown',
+                  'bearer_token',
+                  false,
+                  error instanceof Error ? error.message : 'unknown_error'
+                );
+              }
+              
               console.error(
                 `Failed to validate token for session ${sessionId}:`,
                 error,
@@ -694,6 +772,16 @@ const mcpPostHandler = async (
           delete transports[sid];
           // Clean up session data
           if (sessionData[sid]) {
+            // Track session end and connection lost before deletion
+            if (analytics) {
+              analytics.trackSessionEnded(sid).catch(err => 
+                console.warn('Failed to track session end:', err)
+              );
+              analytics.trackConnectionLost(sid, 'transport_closed').catch(err => 
+                console.warn('Failed to track connection lost:', err)
+              );
+            }
+            
             delete sessionData[sid];
             console.log(`Removed session data for session: ${sid}`);
           }
@@ -782,6 +870,12 @@ const mcpDeleteHandler = async (
 
     // Clean up session data when session is terminated
     if (sessionData[sessionId]) {
+      // Track session end and connection lost before deletion
+      if (analytics) {
+        await analytics.trackSessionEnded(sessionId);
+        await analytics.trackConnectionLost(sessionId, 'session_terminated');
+      }
+      
       delete sessionData[sessionId];
       console.log(`Removed session data for terminated session: ${sessionId}`);
     }
@@ -792,6 +886,22 @@ const mcpDeleteHandler = async (
     }
   }
 };
+
+// Middleware to inject analytics into HTML responses
+if (enableUI && enableAnalytics && segmentWriteKey) {
+  app.use((req, res, next) => {
+    const originalSend = res.send;
+    res.send = function(body: any) {
+      // Only inject analytics into HTML responses
+      if (res.getHeader('Content-Type') === 'text/html' && typeof body === 'string' && body.includes('</body>')) {
+        const { injectAnalytics } = require('./views/utils.js');
+        body = injectAnalytics(body, enableAnalytics, segmentWriteKey);
+      }
+      return originalSend.call(this, body);
+    };
+    next();
+  });
+}
 
 // Web UI routes (only enabled if enable_ui is true)
 if (enableUI) {
@@ -1398,8 +1508,31 @@ app.delete("/mcp/:category", (req, res) => {
 });
 
 // Health check endpoint (always enabled)
-app.get("/api/v1/health", (req, res) => {
-  res.json({ status: "ok" });
+app.get("/api/v1/health", async (req, res) => {
+  try {
+    const healthStatus = "healthy";
+    const activeConnections = Object.keys(transports).length;
+    
+    // Track health check if analytics is enabled
+    if (analytics) {
+      const memoryUsage = process.memoryUsage();
+      await analytics.trackHealthCheck(
+        healthStatus,
+        undefined, // CPU usage not easily available
+        Math.round(memoryUsage.heapUsed / 1024 / 1024), // Convert to MB
+        activeConnections
+      );
+    }
+    
+    res.json({ 
+      status: "ok",
+      active_connections: activeConnections,
+      uptime: Math.floor(process.uptime()),
+      memory_usage_mb: Math.round(process.memoryUsage().heapUsed / 1024 / 1024)
+    });
+  } catch (error) {
+    res.status(500).json({ status: "error", message: "Health check failed" });
+  }
 });
 
 // Prometheus metrics endpoint (conditional based on config)
@@ -1424,6 +1557,8 @@ if (enableMetrics) {
 }
 
 async function main(): Promise<void> {
+  const serverStartTime = Date.now();
+  
   // Initialize tools before starting server
   console.log("Loading OpenAPI specifications and generating tools...");
   allTools = await generateTools();
@@ -1440,7 +1575,9 @@ async function main(): Promise<void> {
   console.log(`Successfully loaded ${allTools.length} tools`);
   const PORT = process.env.MCP_PORT || 3000;
 
-  app.listen(PORT, () => {
+  app.listen(PORT, async () => {
+    const startupTime = Date.now() - serverStartTime;
+    
     console.log(`AAP MCP Server running on port ${PORT}`);
     console.log(`Web UI available at: http://localhost:${PORT}`);
     console.log(`MCP endpoint available at: http://localhost:${PORT}/mcp`);
@@ -1449,12 +1586,31 @@ async function main(): Promise<void> {
         `Metrics endpoint available at: http://localhost:${PORT}/metrics`,
       );
     }
+    
+    // Track server started event
+    if (analytics) {
+      // Create a simple configuration hash
+      const configHash = Buffer.from(JSON.stringify({
+        enableUI,
+        enableAnalytics,
+        enableMetrics,
+        servicesCount: servicesConfig.length,
+        categoriesCount: Object.keys(allCategories).length
+      })).toString('base64').substring(0, 8);
+      
+      await analytics.trackServerStarted(configHash, startupTime);
+    }
   });
 }
 
 // Graceful shutdown
 process.on("SIGINT", async () => {
   console.log("Shutting down server...");
+
+  // Track server shutdown
+  if (analytics) {
+    await analytics.trackServerStopped("SIGINT");
+  }
 
   // Close all active transports
   for (const sessionId in transports) {
@@ -1475,7 +1631,20 @@ process.on("SIGINT", async () => {
   process.exit(0);
 });
 
-main().catch((error) => {
+main().catch(async (error) => {
   console.error("Server error:", error);
+  
+  // Track server startup error
+  if (analytics) {
+    await analytics.trackError(
+      'server_startup',
+      'startup_failed',
+      undefined,
+      'server',
+      undefined,
+      0
+    );
+  }
+  
   process.exit(1);
 });

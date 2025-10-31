@@ -11,6 +11,11 @@
 # Configuration for Prometheus metrics endpoint (defaults to false if not specified)
 # enable_metrics: true
 
+# Configuration for Segment analytics (defaults to false if not specified)
+# Enable analytics tracking for web UI and API usage
+# enable_analytics: true
+# segment_write_key: "your_segment_write_key_here"
+
 # Configuration for base URL (defaults to https://localhost if not specified)
 # Lower priority than BASE_URL environment variable
 # base_url: "https://localhost:8443"
