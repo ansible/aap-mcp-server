@@ -1,5 +1,6 @@
 import { AAPMcpToolDefinition } from "../openapi-loader.js";
 import { renderHeader, getHeaderStyles } from "../header.js";
+import { getLogIcon } from "./utils.js";
 
 interface DashboardData {
   allTools: AAPMcpToolDefinition[];
@@ -26,14 +27,32 @@ export const renderDashboard = (data: DashboardData): string => {
     };
   }
 
-  // Count tools by service
+  // Count tools by service and calculate log statistics
   const serviceStats = allTools.reduce(
     (acc, tool) => {
       const service = tool.service || "unknown";
-      acc[service] = (acc[service] || 0) + 1;
+      if (!acc[service]) {
+        acc[service] = {
+          toolCount: 0,
+          logs: { err: 0, warn: 0, info: 0 },
+        };
+      }
+      acc[service].toolCount++;
+
+      // Count logs by severity for this tool
+      tool.logs.forEach((log) => {
+        const severity = log.severity.toLowerCase() as "err" | "warn" | "info";
+        if (severity === "err" || severity === "warn" || severity === "info") {
+          acc[service].logs[severity]++;
+        }
+      });
+
       return acc;
     },
-    {} as Record<string, number>,
+    {} as Record<
+      string,
+      { toolCount: number; logs: { err: number; warn: number; info: number } }
+    >,
   );
 
   return `
@@ -205,6 +224,79 @@ export const renderDashboard = (data: DashboardData): string => {
         .service-gateway { background: #4caf50; color: white; }
         .service-galaxy { background: #ff9800; color: white; }
         .service-unknown { background: #f44336; color: white; }
+
+        /* Service log display styles */
+        .services-with-logs {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .service-detail {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #f1f1f1;
+        }
+        .service-detail:last-child {
+            border-bottom: none;
+        }
+        .service-logs {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+        .log-count {
+            display: inline-block;
+            padding: 2px 6px;
+            border-radius: 8px;
+            font-size: 0.8em;
+            font-weight: bold;
+            text-decoration: none;
+        }
+        .log-count.clickable {
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: 1px solid transparent;
+        }
+        .log-count.clickable:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            text-decoration: none;
+        }
+        .log-count.err {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        .log-count.err.clickable:hover {
+            background-color: #f5c6cb;
+            color: #491217;
+            border-color: #f1b0b7;
+        }
+        .log-count.warn {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+        .log-count.warn.clickable:hover {
+            background-color: #ffeaa7;
+            color: #533f03;
+            border-color: #ffe08a;
+        }
+        .log-count.info {
+            background-color: #d1ecf1;
+            color: #0c5460;
+        }
+        .log-count.info.clickable:hover {
+            background-color: #b8daff;
+            color: #004085;
+            border-color: #9fcdff;
+        }
+        .no-logs {
+            font-size: 0.8em;
+            color: #6c757d;
+            font-style: italic;
+        }
+
         ${getHeaderStyles()}
     </style>
 </head>
@@ -232,8 +324,9 @@ export const renderDashboard = (data: DashboardData): string => {
                 <div class="summary-number">${Object.keys(serviceStats).length}</div>
             </div>
             <div class="summary-card">
-                <h3>Categories</h3>
-                <div class="summary-number">${Object.keys(allCategories).length}</div>
+                <h3>Log Messages</h3>
+                <div class="summary-number">${Object.values(serviceStats).reduce((sum, service) => sum + service.logs.err + service.logs.warn + service.logs.info, 0)}</div>
+                <small>across all tools</small>
             </div>
         </div>
 
@@ -263,8 +356,8 @@ export const renderDashboard = (data: DashboardData): string => {
                 <div class="service-stats">
                     ${Object.entries(serviceStats)
                       .map(
-                        ([service, count]) =>
-                          `<span class="service-badge service-${service}">${service}: ${count}</span>`,
+                        ([service, stats]) =>
+                          `<span class="service-badge service-${service}">${service}: ${stats.toolCount}</span>`,
                       )
                       .join("")}
                 </div>
@@ -286,20 +379,45 @@ export const renderDashboard = (data: DashboardData): string => {
                         <div class="stat-label">Services</div>
                     </div>
                     <div class="stat">
-                        <div class="stat-number">${allTools.length}</div>
+                        <div class="stat-number">${Object.values(serviceStats).reduce((sum, s) => sum + s.toolCount, 0)}</div>
                         <div class="stat-label">Total Tools</div>
                     </div>
                     <div class="stat">
-                        <div class="stat-number">${Math.round(totalSize / 1000)}K</div>
-                        <div class="stat-label">Characters</div>
+                        <div class="stat-number">${Object.values(serviceStats).reduce((sum, s) => sum + s.logs.err, 0)}</div>
+                        <div class="stat-label">${getLogIcon("err")} Errors</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-number">${Object.values(serviceStats).reduce((sum, s) => sum + s.logs.warn, 0)}</div>
+                        <div class="stat-label">${getLogIcon("warn")} Warnings</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-number">${Object.values(serviceStats).reduce((sum, s) => sum + s.logs.info, 0)}</div>
+                        <div class="stat-label">${getLogIcon("info")} Info</div>
                     </div>
                 </div>
-                <div class="service-stats">
+                <div class="services-with-logs">
                     ${Object.entries(serviceStats)
-                      .map(
-                        ([service, count]) =>
-                          `<span class="service-badge service-${service}">${service}: ${count}</span>`,
-                      )
+                      .map(([service, stats]) => {
+                        const hasLogs =
+                          stats.logs.err > 0 ||
+                          stats.logs.warn > 0 ||
+                          stats.logs.info > 0;
+                        return `
+                          <div class="service-detail">
+                            <span class="service-badge service-${service}">${service}: ${stats.toolCount} tools</span>
+                            ${
+                              hasLogs
+                                ? `
+                              <div class="service-logs">
+                                ${stats.logs.err > 0 ? `<a href="/services/${service}#logs" class="log-count err clickable">${getLogIcon("err")} ${stats.logs.err}</a>` : ""}
+                                ${stats.logs.warn > 0 ? `<a href="/services/${service}#logs" class="log-count warn clickable">${getLogIcon("warn")} ${stats.logs.warn}</a>` : ""}
+                                ${stats.logs.info > 0 ? `<a href="/services/${service}#logs" class="log-count info clickable">${getLogIcon("info")} ${stats.logs.info}</a>` : ""}
+                              </div>
+                            `
+                                : '<div class="service-logs"><span class="no-logs">No messages</span></div>'
+                            }
+                          </div>`;
+                      })
                       .join("")}
                 </div>
                 <br><br>

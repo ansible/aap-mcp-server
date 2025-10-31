@@ -240,12 +240,20 @@ export const renderServiceTools = (data: ServiceToolsData): string => {
       ? Object.entries(logGroups)
           .map(([key, group]) => {
             const [severity, message] = key.split(":", 2);
+            // Create a hash-friendly ID for this log group
+            const logId = `log-${severity.toLowerCase()}-${message
+              .replace(/[^a-zA-Z0-9]/g, "-")
+              .replace(/-+/g, "-")
+              .replace(/^-|-$/g, "")}`;
             return `
-        <div class="log-group">
+        <div class="log-group" id="${logId}">
           <div class="log-header">
             <span class="log-icon ${severity.toLowerCase()}">${getLogIcon(severity.toLowerCase())}</span>
             <span class="log-message">${message}</span>
             <span class="log-count">${group.tools.length} tool${group.tools.length !== 1 ? "s" : ""}</span>
+            <button class="share-link-btn" onclick="copyShareLink('${logId}')" title="Copy share link">
+              <span class="share-icon">🔗</span>
+            </button>
           </div>
           <div class="log-tools">
             ${group.tools
@@ -378,6 +386,29 @@ export const renderServiceTools = (data: ServiceToolsData): string => {
             align-items: center;
             gap: 12px;
         }
+        .share-link-btn {
+            background: none;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 4px 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            margin-left: auto;
+        }
+        .share-link-btn:hover {
+            background-color: #e9ecef;
+            border-color: #adb5bd;
+        }
+        .share-icon {
+            font-size: 14px;
+        }
+        .log-group.highlighted {
+            border: 2px solid #007acc;
+            background-color: #f8f9ff;
+        }
+        .log-group.highlighted .log-header {
+            background-color: #e6f3ff;
+        }
         .log-icon {
             font-size: 16px;
         }
@@ -502,9 +533,79 @@ export const renderServiceTools = (data: ServiceToolsData): string => {
             document.getElementById(tabName + '-tab').classList.add('active');
         }
 
-        // Show tools tab by default when page loads
+        // Copy share link to clipboard
+        function copyShareLink(logId) {
+            const url = window.location.origin + window.location.pathname + '#' + logId;
+            navigator.clipboard.writeText(url).then(function() {
+                // Show temporary feedback
+                const button = event.target.closest('.share-link-btn');
+                const originalText = button.innerHTML;
+                button.innerHTML = '<span style="color: green;">✓ Copied!</span>';
+                setTimeout(() => {
+                    button.innerHTML = originalText;
+                }, 2000);
+            }).catch(function() {
+                // Fallback for older browsers
+                const textArea = document.createElement('textarea');
+                textArea.value = url;
+                document.body.appendChild(textArea);
+                textArea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textArea);
+
+                const button = event.target.closest('.share-link-btn');
+                const originalText = button.innerHTML;
+                button.innerHTML = '<span style="color: green;">✓ Copied!</span>';
+                setTimeout(() => {
+                    button.innerHTML = originalText;
+                }, 2000);
+            });
+        }
+
+        // Handle URL hash on page load and hash changes
+        function handleHash() {
+            const hash = window.location.hash.substring(1);
+            if (hash && hash.startsWith('log-')) {
+                // Switch to logs tab
+                showTab('logs');
+
+                // Remove highlighting from all log groups
+                document.querySelectorAll('.log-group').forEach(group => {
+                    group.classList.remove('highlighted');
+                });
+
+                // Highlight the targeted log group
+                const targetElement = document.getElementById(hash);
+                if (targetElement) {
+                    targetElement.classList.add('highlighted');
+                    // Scroll to the element after a short delay to ensure tab content is visible
+                    setTimeout(() => {
+                        targetElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }, 100);
+                }
+            }
+        }
+
+        // Show tools tab by default when page loads, unless there's a hash
         document.addEventListener('DOMContentLoaded', function() {
-            showTab('tools');
+            const hash = window.location.hash;
+            if (hash && hash.startsWith('#log-')) {
+                handleHash();
+            } else if (hash === '#logs') {
+                showTab('logs');
+            } else {
+                showTab('tools');
+            }
+        });
+
+        // Handle hash changes (when user clicks browser back/forward or manually changes hash)
+        window.addEventListener('hashchange', function() {
+            const hash = window.location.hash;
+            if (hash && hash.startsWith('#log-')) {
+                handleHash();
+            } else if (hash === '#logs') {
+                showTab('logs');
+            }
         });
     </script>
 </head>
