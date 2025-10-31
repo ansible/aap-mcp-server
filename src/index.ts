@@ -37,6 +37,9 @@ interface AapMcpConfig {
   record_api_queries?: boolean;
   'ignore-certificate-errors'?: boolean;
   enable_ui?: boolean;
+  enable_metrics?: boolean;
+  enable_analytics?: boolean;
+  segment_write_key?: string;
   base_url?: string;
   services?: ServiceConfig[];
   categories: Record<string, string[]>;
@@ -380,6 +383,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request, extra) => {
 
   // Get the session ID from the transport context
   const sessionId = extra?.sessionId;
+  const startTime = Date.now();
 
   // Get user-agent from transport (if available)
   let userAgent = 'unknown';
@@ -456,7 +460,10 @@ server.setRequestHandler(CallToolRequestSchema, async (request, extra) => {
           userAgent: userAgent
         },
         result,
-        response.status
+        response.status,
+        startTime,
+        sessionId,
+        userAgent
       );
     }
 
@@ -483,7 +490,10 @@ server.setRequestHandler(CallToolRequestSchema, async (request, extra) => {
           userAgent: userAgent
         },
         { error: error instanceof Error ? error.message : String(error) },
-        response?.status || 0
+        response?.status || 0,
+        startTime,
+        sessionId,
+        userAgent
       );
     }
 
@@ -1192,7 +1202,27 @@ app.get('/api/v1/health', (req, res) => {
   res.json({ status: 'ok' });
 });
 
+// Metrics endpoint for Prometheus scraping
+app.get('/metrics', async (req, res) => {
+  try {
+    const { metricsService } = await import('./metrics.js');
+    res.set('Content-Type', metricsService.getContentType());
+    const metrics = await metricsService.getMetrics();
+    res.send(metrics);
+  } catch (error) {
+    console.error('Failed to generate metrics:', error);
+    res.status(500).send('Failed to generate metrics');
+  }
+});
+
 async function main(): Promise<void> {
+  // Initialize analytics service if configured
+  const segmentWriteKey = process.env.SEGMENT_WRITE_KEY || CONFIG.segment_write_key;
+  if (segmentWriteKey && (CONFIG.enable_analytics !== false)) {
+    const { initializeAnalytics } = await import('./analytics.js');
+    initializeAnalytics(segmentWriteKey);
+  }
+
   // Initialize tools before starting server
   console.log('Loading OpenAPI specifications and generating tools...');
   allTools = await generateTools();
@@ -1206,12 +1236,30 @@ async function main(): Promise<void> {
   });
 
   console.log(`Successfully loaded ${allTools.length} tools`);
+  
+  // Set up metrics for active tools count per service
+  if (CONFIG.enable_metrics !== false) {
+    const { metricsService } = await import('./metrics.js');
+    const toolsByService = allTools.reduce((acc, tool) => {
+      const service = tool.service || 'unknown';
+      acc[service] = (acc[service] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+    
+    Object.entries(toolsByService).forEach(([service, count]) => {
+      metricsService.setActiveTools(service, count);
+    });
+  }
+
   const PORT = process.env.MCP_PORT || 3000;
 
   app.listen(PORT, () => {
     console.log(`AAP MCP Server running on port ${PORT}`);
     console.log(`Web UI available at: http://localhost:${PORT}`);
     console.log(`MCP endpoint available at: http://localhost:${PORT}/mcp`);
+    if (CONFIG.enable_metrics !== false) {
+      console.log(`Metrics endpoint available at: http://localhost:${PORT}/metrics`);
+    }
   });
 }
 
@@ -1232,6 +1280,17 @@ process.on('SIGINT', async () => {
     } catch (error) {
       console.error(`Error closing transport for session ${sessionId}:`, error);
     }
+  }
+
+  // Flush analytics before shutdown
+  try {
+    const { analyticsService } = await import('./analytics.js');
+    if (analyticsService.isEnabled()) {
+      console.log('Flushing analytics data...');
+      await analyticsService.flush();
+    }
+  } catch (error) {
+    console.error('Error flushing analytics:', error);
   }
 
   console.log('Server shutdown complete');
