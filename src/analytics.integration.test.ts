@@ -140,7 +140,7 @@ describe('Analytics Integration Tests', () => {
 
       expect(response.body.status).toBe('ok');
       expect(warnSpy).toHaveBeenCalledWith(
-        'Analytics tracking error:',
+        '[ANALYTICS] Tracking error:',
         expect.any(Error)
       );
 
@@ -360,7 +360,7 @@ describe('Analytics Integration Tests', () => {
       await analytics.trackSessionStarted('session123');
 
       expect(warnSpy).toHaveBeenCalledWith(
-        'Analytics tracking error:',
+        '[ANALYTICS] Tracking error:',
         expect.any(Error)
       );
 
@@ -379,7 +379,8 @@ describe('Analytics Integration Tests', () => {
       await analytics.trackSessionStarted('session123');
 
       expect(warnSpy).toHaveBeenCalledWith(
-        expect.stringContaining('Analytics tracking failed: 429 Too Many Requests')
+        '[ANALYTICS] Tracking error:',
+        expect.any(Error)
       );
 
       warnSpy.mockRestore();

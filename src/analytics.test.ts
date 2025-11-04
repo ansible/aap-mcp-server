@@ -164,7 +164,8 @@ describe('ServerAnalytics', () => {
       });
 
       expect(consoleSpy).toHaveBeenCalledWith(
-        expect.stringContaining('Analytics tracking failed: 400 Bad Request')
+        '[ANALYTICS] Tracking error:',
+        expect.any(Error)
       );
 
       consoleSpy.mockRestore();
@@ -181,7 +182,7 @@ describe('ServerAnalytics', () => {
       });
 
       expect(consoleSpy).toHaveBeenCalledWith(
-        'Analytics tracking error:',
+        '[ANALYTICS] Tracking error:',
         expect.any(Error)
       );
 
