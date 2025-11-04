@@ -11,6 +11,14 @@
 # Configuration for Prometheus metrics endpoint (defaults to false if not specified)
 # enable_metrics: true
 
+# Configuration for analytics reporting (defaults to false if not specified)
+# Sends anonymized usage metrics to Segment.com every 5 hours
+# enable_analytics: false
+
+# Segment.com write key for analytics (required if enable_analytics is true)
+# Lower priority than SEGMENT_WRITE_KEY environment variable
+# segment_write_key: "your-segment-write-key-here"
+
 # Configuration for base URL (defaults to https://localhost if not specified)
 # Lower priority than BASE_URL environment variable
 # base_url: "https://localhost:8443"
