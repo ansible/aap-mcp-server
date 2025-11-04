@@ -59,6 +59,8 @@ interface AapMcpConfig {
   "ignore-certificate-errors"?: boolean;
   enable_ui?: boolean;
   enable_metrics?: boolean;
+  enable_analytics?: boolean;
+  segment_write_key?: string;
   allow_write_operations?: boolean;
   base_url?: string;
   services?: ServiceConfig[];
@@ -82,19 +84,6 @@ const loadConfig = (): AapMcpConfig => {
 const localConfig = loadConfig();
 const allCategories: Record<string, Category> = localConfig.categories;
 
-// Configuration constants (with priority: env var > config file > default)
-const CONFIG = {
-  BASE_URL: process.env.BASE_URL || localConfig.base_url || "https://localhost",
-  MCP_PORT: process.env.MCP_PORT ? parseInt(process.env.MCP_PORT, 10) : 3000,
-  FALLBACK_BEARER_TOKEN: process.env.BEARER_TOKEN_OAUTH2_AUTHENTICATION,
-} as const;
-
-// Log entries size limit for /logs endpoint
-const logEntriesSizeLimit = 10000;
-
-// Log configuration settings
-console.log(`BASE_URL: ${CONFIG.BASE_URL}`);
-
 // Helper function to get boolean configuration with environment variable override
 const getBooleanConfig = (
   envVar: string,
@@ -104,6 +93,29 @@ const getBooleanConfig = (
     ? process.env[envVar]!.toLowerCase() === "true"
     : (configValue ?? false);
 };
+
+// Configuration constants (with priority: env var > config file > default)
+const CONFIG = {
+  BASE_URL: process.env.BASE_URL || localConfig.base_url || "https://localhost",
+  MCP_PORT: process.env.MCP_PORT ? parseInt(process.env.MCP_PORT, 10) : 3000,
+  FALLBACK_BEARER_TOKEN: process.env.BEARER_TOKEN_OAUTH2_AUTHENTICATION,
+  segment_write_key:
+    process.env.SEGMENT_WRITE_KEY || localConfig.segment_write_key,
+  enable_analytics: getBooleanConfig(
+    "ENABLE_ANALYTICS",
+    localConfig.enable_analytics,
+  ),
+  enable_metrics: getBooleanConfig(
+    "ENABLE_METRICS",
+    localConfig.enable_metrics,
+  ),
+};
+
+// Log entries size limit for /logs endpoint
+const logEntriesSizeLimit = 10000;
+
+// Log configuration settings
+console.log(`BASE_URL: ${CONFIG.BASE_URL}`);
 
 // Get configuration settings (priority: env var > config file > default)
 const recordApiQueries = getBooleanConfig(
@@ -130,7 +142,9 @@ const allowWriteOperations = getBooleanConfig(
   localConfig.allow_write_operations,
 );
 console.log(
-  `Write operations (POST/DELETE/PATCH): ${allowWriteOperations ? "ENABLED" : "DISABLED"}`,
+  `Write operations (POST/DELETE/PATCH): ${
+    allowWriteOperations ? "ENABLED" : "DISABLED"
+  }`,
 );
 
 // Initialize allowed operations list based on configuration
@@ -141,7 +155,11 @@ const allowedOperations = allowWriteOperations
 // Get services configuration
 const servicesConfig = localConfig.services || [];
 console.log(
-  `Services configured: ${servicesConfig.length > 0 ? servicesConfig.map((s) => s.name).join(", ") : "none"}`,
+  `Services configured: ${
+    servicesConfig.length > 0
+      ? servicesConfig.map((s) => s.name).join(", ")
+      : "none"
+  }`,
 );
 
 // Configure HTTPS certificate validation globally
@@ -227,7 +245,9 @@ const validateTokenAndGetPermissions = async (
   } catch (error) {
     console.error("Token validation failed:", error);
     throw new Error(
-      `Token validation failed: ${error instanceof Error ? error.message : String(error)}`,
+      `Token validation failed: ${
+        error instanceof Error ? error.message : String(error)
+      }`,
     );
   }
 };
@@ -365,7 +385,9 @@ const generateTools = async (): Promise<AAPMcpToolDefinition[]> => {
   const csvRows = toolsWithSize
     .map(
       (tool) =>
-        `${tool.name},${tool.size},"${tool.description}",${tool.pathTemplate},${tool.service || "unknown"}`,
+        `${tool.name},${tool.size},"${tool.description}",${tool.pathTemplate},${
+          tool.service || "unknown"
+        }`,
     )
     .join("\n");
   const csvContent = csvHeader + csvRows;
@@ -481,7 +503,11 @@ server.setRequestHandler(ListToolsRequestSchema, async (request, extra) => {
     ? ` (override: ${categoryOverride})`
     : "";
   console.log(
-    `Returning ${filteredTools.length} tools for ${categoryType} category${overrideInfo} (session: ${sessionId || "none"})`,
+    `Returning ${
+      filteredTools.length
+    } tools for ${categoryType} category${overrideInfo} (session: ${
+      sessionId || "none"
+    })`,
   );
 
   return {
@@ -591,6 +617,8 @@ server.setRequestHandler(CallToolRequestSchema, async (request, extra) => {
         result,
         response.status,
         startTime,
+        sessionId,
+        userAgent,
       );
     }
 
@@ -624,11 +652,15 @@ server.setRequestHandler(CallToolRequestSchema, async (request, extra) => {
         { error: error instanceof Error ? error.message : String(error) },
         response?.status || 0,
         startTime,
+        sessionId,
+        userAgent,
       );
     }
 
     throw new Error(
-      `Tool execution failed: ${error instanceof Error ? error.message : String(error)}`,
+      `Tool execution failed: ${
+        error instanceof Error ? error.message : String(error)
+      }`,
     );
   }
 });
@@ -675,7 +707,11 @@ const mcpPostHandler = async (
         sessionIdGenerator: () => randomUUID(),
         onsessioninitialized: async (sessionId: string) => {
           console.log(
-            `Session initialized with ID: ${sessionId}${categoryOverride ? ` with category override: ${categoryOverride}` : ""}`,
+            `Session initialized with ID: ${sessionId}${
+              categoryOverride
+                ? ` with category override: ${categoryOverride}`
+                : ""
+            }`,
           );
           transports[sessionId] = transport;
 
@@ -946,7 +982,9 @@ if (enableUI) {
       const csvRows = allTools
         .map(
           (tool) =>
-            `${tool.name},${tool.size},"${tool.description?.replace(/"/g, '""') || ""}",${tool.pathTemplate},${tool.service || "unknown"}`,
+            `${tool.name},${tool.size},"${
+              tool.description?.replace(/"/g, '""') || ""
+            }",${tool.pathTemplate},${tool.service || "unknown"}`,
         )
         .join("\n");
       const csvContent = csvHeader + csvRows;
@@ -975,7 +1013,9 @@ if (enableUI) {
           name: categoryName,
           displayName:
             categoryName.charAt(0).toUpperCase() + categoryName.slice(1),
-          description: `${categoryName.charAt(0).toUpperCase() + categoryName.slice(1)} category with specific tool access`,
+          description: `${
+            categoryName.charAt(0).toUpperCase() + categoryName.slice(1)
+          } category with specific tool access`,
           tools: filterToolsByCategory(allTools, categoryTools),
           color: getCategoryColor(categoryName),
           toolCount: 0, // Will be calculated below
@@ -1200,7 +1240,11 @@ if (enableUI) {
             (sum, tool) => sum + (tool.logs?.length || 0),
             0,
           ),
-          description: `${serviceName.charAt(0).toUpperCase() + serviceName.slice(1)} service providing ${tools.length} tools for automation and management tasks.`,
+          description: `${
+            serviceName.charAt(0).toUpperCase() + serviceName.slice(1)
+          } service providing ${
+            tools.length
+          } tools for automation and management tasks.`,
         }),
       );
 
@@ -1426,11 +1470,7 @@ app.get("/api/v1/health", (req, res) => {
 });
 
 // Prometheus metrics endpoint (conditional based on config)
-const enableMetrics = getBooleanConfig(
-  "ENABLE_METRICS",
-  localConfig.enable_metrics,
-);
-if (enableMetrics) {
+if (CONFIG.enable_metrics) {
   app.get("/metrics", async (req, res) => {
     try {
       res.set("Content-Type", metricsService.getContentType());
@@ -1447,6 +1487,14 @@ if (enableMetrics) {
 }
 
 async function main(): Promise<void> {
+  // Initialize analytics service if configured
+  const segmentWriteKey =
+    process.env.SEGMENT_WRITE_KEY || CONFIG.segment_write_key;
+  if (segmentWriteKey && CONFIG.enable_analytics !== false) {
+    const { initializeAnalytics } = await import("./analytics.js");
+    initializeAnalytics(segmentWriteKey);
+  }
+
   // Initialize tools before starting server
   console.log("Loading OpenAPI specifications and generating tools...");
   allTools = await generateTools();
@@ -1461,13 +1509,31 @@ async function main(): Promise<void> {
   });
 
   console.log(`Successfully loaded ${allTools.length} tools`);
+
+  // Set up metrics for active tools count per service
+  if (CONFIG.enable_metrics !== false) {
+    const { metricsService } = await import("./metrics.js");
+    const toolsByService = allTools.reduce(
+      (acc, tool) => {
+        const service = tool.service || "unknown";
+        acc[service] = (acc[service] || 0) + 1;
+        return acc;
+      },
+      {} as Record<string, number>,
+    );
+
+    Object.entries(toolsByService).forEach(([service, count]) => {
+      metricsService.setActiveTools(service, count);
+    });
+  }
+
   const PORT = process.env.MCP_PORT || 3000;
 
   app.listen(PORT, () => {
     console.log(`AAP MCP Server running on port ${PORT}`);
     console.log(`Web UI available at: http://localhost:${PORT}`);
     console.log(`MCP endpoint available at: http://localhost:${PORT}/mcp`);
-    if (enableMetrics) {
+    if (CONFIG.enable_metrics) {
       console.log(
         `Metrics endpoint available at: http://localhost:${PORT}/metrics`,
       );
@@ -1492,6 +1558,18 @@ process.on("SIGINT", async () => {
     } catch (error) {
       console.error(`Error closing transport for session ${sessionId}:`, error);
     }
+  }
+
+  // Stop periodic reporting and flush analytics before shutdown
+  try {
+    const { analyticsService } = await import("./analytics.js");
+    if (analyticsService.isEnabled()) {
+      console.log("Stopping analytics reporting and flushing data...");
+      analyticsService.stopPeriodicReporting();
+      await analyticsService.flush();
+    }
+  } catch (error) {
+    console.error("Error stopping analytics:", error);
   }
 
   console.log("Server shutdown complete");
