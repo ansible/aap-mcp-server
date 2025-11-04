@@ -43,6 +43,7 @@ import {
   type EndpointsOverviewData,
   type EndpointData,
 } from "./views/index.js";
+import { injectAnalytics } from "./views/utils.js";
 import {
   loadOpenApiSpecs,
   type AAPMcpToolDefinition,
@@ -887,21 +888,20 @@ const mcpDeleteHandler = async (
   }
 };
 
-// Middleware to inject analytics into HTML responses
-if (enableUI && enableAnalytics && segmentWriteKey) {
-  app.use((req, res, next) => {
-    const originalSend = res.send;
-    res.send = function(body: any) {
-      // Only inject analytics into HTML responses
-      if (res.getHeader('Content-Type') === 'text/html' && typeof body === 'string' && body.includes('</body>')) {
-        const { injectAnalytics } = require('./views/utils.js');
-        body = injectAnalytics(body, enableAnalytics, segmentWriteKey);
-      }
-      return originalSend.call(this, body);
-    };
-    next();
-  });
-}
+// Helper function to send HTML with analytics injection
+const sendHtmlWithAnalytics = async (res: express.Response, htmlContent: string) => {
+  res.setHeader("Content-Type", "text/html");
+  
+  if (enableUI && enableAnalytics && segmentWriteKey) {
+    try {
+      htmlContent = await injectAnalytics(htmlContent, enableAnalytics, segmentWriteKey);
+    } catch (error) {
+      console.warn('Failed to inject analytics:', error);
+    }
+  }
+  
+  res.send(htmlContent);
+};
 
 // Web UI routes (only enabled if enable_ui is true)
 if (enableUI) {
@@ -933,8 +933,7 @@ if (enableUI) {
       // Use the view function to render the HTML
       const htmlContent = renderToolsList({ tools: toolsWithSuccessRates });
 
-      res.setHeader("Content-Type", "text/html");
-      res.send(htmlContent);
+      await sendHtmlWithAnalytics(res, htmlContent);
     } catch (error) {
       console.error("Error generating HTML tool list:", error);
       res.status(500).json({
@@ -1014,8 +1013,7 @@ if (enableUI) {
       // Use the view function to render the HTML
       const htmlContent = renderToolDetails(toolDetailsData);
 
-      res.setHeader("Content-Type", "text/html");
-      res.send(htmlContent);
+      await sendHtmlWithAnalytics(res, htmlContent);
     } catch (error) {
       console.error("Error generating tool details:", error);
       res.status(500).json({
@@ -1055,7 +1053,7 @@ if (enableUI) {
   });
 
   // Category overview endpoint
-  app.get("/category", (req, res) => {
+  app.get("/category", async (req, res) => {
     try {
       // Calculate stats for each category
       const categories = Object.entries(allCategories).map(
@@ -1090,8 +1088,7 @@ if (enableUI) {
       // Use the view function to render the HTML
       const htmlContent = renderCategoriesOverview(categoriesOverviewData);
 
-      res.setHeader("Content-Type", "text/html");
-      res.send(htmlContent);
+      await sendHtmlWithAnalytics(res, htmlContent);
     } catch (error) {
       console.error("Error generating category overview:", error);
       res.status(500).json({
@@ -1102,7 +1099,7 @@ if (enableUI) {
   });
 
   // Category tools endpoint
-  app.get("/category/:name", (req, res) => {
+  app.get("/category/:name", async (req, res) => {
     try {
       const categoryName = req.params.name.toLowerCase();
 
@@ -1140,8 +1137,7 @@ if (enableUI) {
       // Use the view function to render the HTML
       const htmlContent = renderCategoryTools(categoryToolsData);
 
-      res.setHeader("Content-Type", "text/html");
-      res.send(htmlContent);
+      await sendHtmlWithAnalytics(res, htmlContent);
     } catch (error) {
       console.error("Error generating category tool list:", error);
       res.status(500).json({
@@ -1249,8 +1245,7 @@ if (enableUI) {
       // Use the view function to render the HTML
       const htmlContent = renderLogs(logsData);
 
-      res.setHeader("Content-Type", "text/html");
-      res.send(htmlContent);
+      await sendHtmlWithAnalytics(res, htmlContent);
     } catch (error) {
       console.error("Error generating logs overview:", error);
       res.status(500).json({
@@ -1261,7 +1256,7 @@ if (enableUI) {
   });
 
   // Services overview endpoint
-  app.get("/services", (req, res) => {
+  app.get("/services", async (req, res) => {
     try {
       // Group tools by service
       const serviceGroups = allTools.reduce(
@@ -1301,8 +1296,7 @@ if (enableUI) {
       // Use the view function to render the HTML
       const htmlContent = renderServicesOverview(servicesOverviewData);
 
-      res.setHeader("Content-Type", "text/html");
-      res.send(htmlContent);
+      await sendHtmlWithAnalytics(res, htmlContent);
     } catch (error) {
       console.error("Error generating services overview:", error);
       res.status(500).json({
@@ -1312,7 +1306,7 @@ if (enableUI) {
     }
   });
 
-  app.get("/services/:name", (req, res) => {
+  app.get("/services/:name", async (req, res) => {
     try {
       const serviceName = req.params.name.toLowerCase();
 
@@ -1348,8 +1342,7 @@ if (enableUI) {
       // Use the view function to render the HTML
       const htmlContent = renderServiceTools(serviceToolsData);
 
-      res.setHeader("Content-Type", "text/html");
-      res.send(htmlContent);
+      await sendHtmlWithAnalytics(res, htmlContent);
     } catch (error) {
       console.error("Error generating service tools list:", error);
       res.status(500).json({
@@ -1360,7 +1353,7 @@ if (enableUI) {
   });
 
   // API endpoints overview
-  app.get("/endpoints", (req, res) => {
+  app.get("/endpoints", async (req, res) => {
     try {
       // Get category filter from query parameter
       const categoryFilter = req.query.category as string | undefined;
@@ -1430,8 +1423,7 @@ if (enableUI) {
       // Use the view function to render the HTML
       const htmlContent = renderEndpointsOverview(endpointsOverviewData);
 
-      res.setHeader("Content-Type", "text/html");
-      res.send(htmlContent);
+      await sendHtmlWithAnalytics(res, htmlContent);
     } catch (error) {
       console.error("Error generating endpoints overview:", error);
       res.status(500).json({
@@ -1454,8 +1446,7 @@ if (enableUI) {
       // Use the view function to render the HTML
       const htmlContent = renderDashboard(dashboardData);
 
-      res.setHeader("Content-Type", "text/html");
-      res.send(htmlContent);
+      await sendHtmlWithAnalytics(res, htmlContent);
     } catch (error) {
       console.error("Error generating dashboard:", error);
       res.status(500).json({
