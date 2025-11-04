@@ -1,6 +1,6 @@
-import { promises as fs } from 'fs';
-import { join } from 'path';
-import { metricsService } from './metrics.js';
+import { promises as fs } from "fs";
+import { join } from "path";
+import { metricsService } from "./metrics.js";
 
 export interface LogEntry {
   timestamp: string;
@@ -13,13 +13,14 @@ export interface LogEntry {
 export interface Tool {
   name: string;
   service?: string;
+  category?: string;
   [key: string]: any;
 }
 
 export class ToolLogger {
   private logDir: string;
 
-  constructor(logDir: string = 'logs') {
+  constructor(logDir: string = "logs") {
     this.logDir = logDir;
     this.ensureLogDir();
   }
@@ -28,7 +29,7 @@ export class ToolLogger {
     try {
       await fs.mkdir(this.logDir, { recursive: true });
     } catch (error) {
-      console.error('Failed to create log directory:', error);
+      console.error("Failed to create log directory:", error);
     }
   }
 
@@ -40,36 +41,43 @@ export class ToolLogger {
     returnCode: number,
     startTime?: number,
     sessionId?: string,
-    userAgent?: string
+    userAgent?: string,
   ): Promise<void> {
     const logEntry: LogEntry = {
       timestamp: new Date().toISOString(),
       endpoint,
       payload,
       response,
-      return_code: returnCode
+      return_code: returnCode,
     };
 
     const logFile = join(this.logDir, `${tool.name}.jsonl`);
 
     try {
-      await fs.appendFile(logFile, JSON.stringify(logEntry) + '\n');
+      await fs.appendFile(logFile, JSON.stringify(logEntry) + "\n");
     } catch (error) {
       console.error(`Failed to write to log file ${logFile}:`, error);
     }
-
-    // Record Prometheus metrics only - analytics will pull from these periodically
+    // Record metrics
     const duration = startTime ? (Date.now() - startTime) / 1000 : 0;
-    const status = returnCode >= 200 && returnCode < 400 ? 'success' : 'error';
-    const service = tool.service || 'unknown';
+    const status = returnCode >= 200 && returnCode < 400 ? "success" : "error";
+    const service = tool.service || "unknown";
+    const category = tool.category || "uncategorized";
 
-    // All metrics centralized in Prometheus
-    metricsService.recordToolExecution(tool.name, service, status, duration);
-    metricsService.recordApiCall(service, endpoint, 'POST', returnCode);
+    // Prometheus metrics
+    metricsService.recordToolExecution(
+      tool.name,
+      service,
+      category,
+      status,
+      duration,
+    );
+    metricsService.recordApiCall(service, endpoint, "POST", returnCode);
 
-    if (status === 'error') {
-      const errorType = returnCode >= 400 && returnCode < 500 ? 'client_error' : 'server_error';
-      metricsService.recordToolError(tool.name, service, errorType);
+    if (status === "error") {
+      const errorType =
+        returnCode >= 400 && returnCode < 500 ? "client_error" : "server_error";
+      metricsService.recordToolError(tool.name, service, category, errorType);
     }
   }
 }

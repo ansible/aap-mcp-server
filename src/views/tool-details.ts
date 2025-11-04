@@ -1,4 +1,6 @@
-import { ToolWithSize } from '../index.js';
+import { AAPMcpToolDefinition } from "../openapi-loader.js";
+import { getLogIcon } from "./utils.js";
+import { renderHeader, getHeaderStyles } from "../header.js";
 
 interface LogEntry {
   timestamp: string;
@@ -14,7 +16,7 @@ interface CategoryWithAccess {
 }
 
 interface ToolDetailsData {
-  tool: ToolWithSize;
+  tool: AAPMcpToolDefinition;
   logEntries: LogEntry[];
   last10Calls: LogEntry[];
   errorCodeSummary: Record<number, number>;
@@ -23,7 +25,14 @@ interface ToolDetailsData {
 }
 
 export const renderToolDetails = (data: ToolDetailsData): string => {
-  const { tool, logEntries, last10Calls, errorCodeSummary, chartData, categoriesWithAccess } = data;
+  const {
+    tool,
+    logEntries,
+    last10Calls,
+    errorCodeSummary,
+    chartData,
+    categoriesWithAccess,
+  } = data;
 
   // Helper function to format timestamp for display
   const formatTimestamp = (timestamp: string) => {
@@ -32,42 +41,42 @@ export const renderToolDetails = (data: ToolDetailsData): string => {
 
   // Helper function to get status color
   const getStatusColor = (code: number) => {
-    if (code >= 200 && code < 300) return '#28a745'; // green
-    if (code >= 300 && code < 400) return '#ffc107'; // yellow
-    if (code >= 400 && code < 500) return '#fd7e14'; // orange
-    if (code >= 500) return '#dc3545'; // red
-    return '#6c757d'; // gray
+    if (code >= 200 && code < 300) return "#28a745"; // green
+    if (code >= 300 && code < 400) return "#ffc107"; // yellow
+    if (code >= 400 && code < 500) return "#fd7e14"; // orange
+    if (code >= 500) return "#dc3545"; // red
+    return "#6c757d"; // gray
   };
 
   // Helper function to get status text
   const getStatusText = (code: number) => {
-    if (code >= 200 && code < 300) return 'Success';
-    if (code >= 300 && code < 400) return 'Redirect';
-    if (code >= 400 && code < 500) return 'Client Error';
-    if (code >= 500) return 'Server Error';
-    return 'Unknown';
+    if (code >= 200 && code < 300) return "Success";
+    if (code >= 300 && code < 400) return "Redirect";
+    if (code >= 400 && code < 500) return "Client Error";
+    if (code >= 500) return "Server Error";
+    return "Unknown";
   };
 
   // Format the input schema for display
   const formatSchema = (schema: any, level = 0): string => {
-    if (!schema) return 'No schema defined';
+    if (!schema) return "No schema defined";
 
-    const indent = '  '.repeat(level);
-    let result = '';
+    const indent = "  ".repeat(level);
+    let result = "";
 
-    if (schema.type === 'object' && schema.properties) {
-      result += '{\n';
+    if (schema.type === "object" && schema.properties) {
+      result += "{\n";
       for (const [key, value] of Object.entries(schema.properties)) {
         const prop = value as any;
-        const required = schema.required?.includes(key) ? ' (required)' : '';
+        const required = schema.required?.includes(key) ? " (required)" : "";
         result += `${indent}  "${key}"${required}: `;
-        if (prop.type === 'object') {
+        if (prop.type === "object") {
           result += formatSchema(prop, level + 1);
         } else {
-          result += `${prop.type || 'any'}`;
+          result += `${prop.type || "any"}`;
           if (prop.description) result += ` // ${prop.description}`;
         }
-        result += '\n';
+        result += "\n";
       }
       result += `${indent}}`;
     } else {
@@ -93,7 +102,7 @@ export const renderToolDetails = (data: ToolDetailsData): string => {
             line-height: 1.6;
         }
         .container {
-            max-width: 1000px;
+            max-width: 1300px;
             margin: 0 auto;
             background-color: white;
             padding: 30px;
@@ -124,20 +133,7 @@ export const renderToolDetails = (data: ToolDetailsData): string => {
         .service-gateway { background-color: #4caf50; }
         .service-galaxy { background-color: #ff9800; }
         .service-unknown { background-color: #f44336; }
-        .navigation {
-            margin-bottom: 30px;
-        }
-        .nav-link {
-            background-color: #6c757d;
-            color: white;
-            padding: 8px 16px;
-            text-decoration: none;
-            border-radius: 4px;
-            margin-right: 10px;
-        }
-        .nav-link:hover {
-            background-color: #5a6268;
-        }
+        ${getHeaderStyles()}
         .info-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
@@ -350,24 +346,143 @@ export const renderToolDetails = (data: ToolDetailsData): string => {
             border-radius: 4px;
             font-size: 0.9em;
         }
+        .deprecation-warning {
+            background-color: #fff3cd;
+            border: 1px solid #ffeaa7;
+            color: #856404;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .deprecation-icon {
+            font-size: 1.5em;
+        }
+        .tool-logs-section {
+            background-color: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+        }
+        .tool-logs-section h2 {
+            margin-top: 0;
+            color: #495057;
+        }
+        .log-entries {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .log-entry {
+            display: flex;
+            align-items: center;
+            padding: 12px;
+            background-color: white;
+            border-radius: 6px;
+            border: 1px solid #dee2e6;
+            gap: 12px;
+        }
+        .log-severity-icon {
+            font-size: 16px;
+            min-width: 20px;
+        }
+        .log-severity-icon.warn {
+            color: #856404;
+        }
+        .log-severity-icon.info {
+            color: #0277bd;
+        }
+        .log-severity-icon.err {
+            color: #dc3545;
+        }
+        .log-message-text {
+            flex: 1;
+            color: #495057;
+            font-size: 0.95em;
+        }
+        .log-severity-badge {
+            font-size: 0.8em;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-weight: 500;
+            text-transform: uppercase;
+        }
+        .log-severity-badge.warn {
+            background-color: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+        .log-severity-badge.info {
+            background-color: #e1f5fe;
+            color: #0277bd;
+            border: 1px solid #81d4fa;
+        }
+        .log-severity-badge.err {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .no-logs {
+            color: #6c757d;
+            font-style: italic;
+            text-align: center;
+            padding: 20px;
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <div class="navigation">
-            <a href="/tools" class="nav-link">← All Tools</a>
-            <a href="/category" class="nav-link">Categories</a>
-            <a href="/export/tools/csv" class="nav-link">Download CSV</a>
-        </div>
+        ${renderHeader()}
 
         <div class="tool-header">
             <h1>${tool.name}</h1>
-            <span class="service-badge service-${tool.service || 'unknown'}">${tool.service || 'unknown'}</span>
+            <span class="service-badge service-${tool.service || "unknown"}">${tool.service || "unknown"}</span>
         </div>
+
+        ${
+          tool.deprecated
+            ? `
+        <div class="deprecation-warning">
+            <span class="deprecation-icon">⚠️</span>
+            <div>
+                <strong>Deprecation Warning:</strong> This endpoint is deprecated.
+            </div>
+        </div>
+        `
+            : ""
+        }
+
+        ${
+          tool.logs && tool.logs.length > 0
+            ? `
+        <div class="tool-logs-section">
+            <h2>Messages</h2>
+            <div class="log-entries">
+                ${tool.logs
+                  .map((log) => {
+                    const icon = getLogIcon(log.severity);
+                    return `
+                    <div class="log-entry">
+                        <span class="log-severity-icon ${log.severity.toLowerCase()}">${icon}</span>
+                        <span class="log-message-text">${log.msg}</span>
+                        <span class="log-severity-badge ${log.severity.toLowerCase()}">${log.severity}</span>
+                    </div>
+                    `;
+                  })
+                  .join("")}
+            </div>
+        </div>
+        `
+            : ""
+        }
 
         <div class="schema-section">
             <h2>Usage Statistics</h2>
-            ${logEntries.length > 0 ? `
+            ${
+              logEntries.length > 0
+                ? `
             <p><strong>Total Calls:</strong> ${logEntries.length}</p>
             <div class="chart-container">
                 <div class="chart-wrapper">
@@ -379,26 +494,36 @@ export const renderToolDetails = (data: ToolDetailsData): string => {
                         <div class="stat-card">
                             <h4>Response Codes</h4>
                             <div class="code-summary">
-                                ${Object.entries(errorCodeSummary).map(([code, count]) => `
+                                ${Object.entries(errorCodeSummary)
+                                  .map(
+                                    ([code, count]) => `
                                 <div class="code-entry" style="border-left: 4px solid ${getStatusColor(Number(code))};">
                                     <span class="code-number">${code}</span>
                                     <span class="code-text">${getStatusText(Number(code))}</span>
                                     <span class="code-count">${count} calls</span>
                                 </div>
-                                `).join('')}
+                                `,
+                                  )
+                                  .join("")}
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
-            ` : '<p><em>No usage data available</em></p>'}
+            `
+                : "<p><em>No usage data available</em></p>"
+            }
         </div>
 
-        ${last10Calls.length > 0 ? `
+        ${
+          last10Calls.length > 0
+            ? `
         <div class="schema-section">
             <h2>Recent Calls (Last 10)</h2>
             <div class="calls-list">
-                ${last10Calls.map(entry => `
+                ${last10Calls
+                  .map(
+                    (entry) => `
                 <div class="call-entry">
                     <div class="call-header">
                         <span class="call-timestamp">${formatTimestamp(entry.timestamp)}</span>
@@ -407,21 +532,35 @@ export const renderToolDetails = (data: ToolDetailsData): string => {
                         </span>
                     </div>
                     <div class="call-endpoint">${entry.endpoint}</div>
-                    ${entry.response && typeof entry.response === 'object' && entry.response.error ? `
+                    ${
+                      entry.response &&
+                      typeof entry.response === "object" &&
+                      entry.response.error
+                        ? `
                     <div class="call-error">Error: ${entry.response.error}</div>
-                    ` : ''}
+                    `
+                        : ""
+                    }
                 </div>
-                `).join('')}
+                `,
+                  )
+                  .join("")}
             </div>
         </div>
-        ` : ''}
+        `
+            : ""
+        }
 
-        ${tool.description ? `
+        ${
+          tool.description
+            ? `
         <div class="description-section">
             <h2>Description</h2>
             <p>${tool.description}</p>
         </div>
-        ` : ''}
+        `
+            : ""
+        }
 
         <div class="info-grid">
             <div class="info-card">
@@ -443,39 +582,57 @@ export const renderToolDetails = (data: ToolDetailsData): string => {
 
             <div class="info-card">
                 <h3>Service</h3>
-                <div class="info-value">${tool.service || 'unknown'}</div>
+                <div class="info-value">${tool.service || "unknown"}</div>
             </div>
         </div>
 
         <div class="categories-section">
             <h2>Available to Categories</h2>
-            ${categoriesWithAccess.length > 0 ? `
+            ${
+              categoriesWithAccess.length > 0
+                ? `
             <div class="category-badges">
-                ${categoriesWithAccess.map(category => `
+                ${categoriesWithAccess
+                  .map(
+                    (category) => `
                 <a href="/category/${category.name}" class="category-badge" style="background-color: ${category.color};">
                     ${category.displayName}
                 </a>
-                `).join('')}
+                `,
+                  )
+                  .join("")}
             </div>
-            ` : '<p class="no-categories">This tool is not available to any category.</p>'}
+            `
+                : '<p class="no-categories">This tool is not available to any category.</p>'
+            }
         </div>
 
-        ${tool.inputSchema ? `
+        ${
+          tool.inputSchema
+            ? `
         <div class="schema-section">
             <h2>Input Schema</h2>
             <div class="schema-code">${formatSchema(tool.inputSchema)}</div>
         </div>
-        ` : ''}
+        `
+            : ""
+        }
 
-        ${tool.parameters && tool.parameters.length > 0 ? `
+        ${
+          tool.parameters && tool.parameters.length > 0
+            ? `
         <div class="schema-section">
             <h2>Parameters</h2>
             <div class="schema-code">${JSON.stringify(tool.parameters, null, 2)}</div>
         </div>
-        ` : ''}
+        `
+            : ""
+        }
     </div>
 
-    ${logEntries.length > 0 ? `
+    ${
+      logEntries.length > 0
+        ? `
     <script>
         // Create pie chart for success vs error distribution
         const ctx = document.getElementById('statusChart').getContext('2d');
@@ -527,7 +684,9 @@ export const renderToolDetails = (data: ToolDetailsData): string => {
 
         new Chart(ctx, config);
     </script>
-    ` : ''}
+    `
+        : ""
+    }
 </body>
 </html>`;
 };

@@ -11,17 +11,20 @@ A Model Context Protocol (MCP) service that provides access to Ansible Automatio
 ## Installation
 
 1. Clone the repository:
+
 ```bash
 git clone <repository-url>
 cd aap-mcp-server
 ```
 
 2. Install dependencies:
+
 ```bash
 npm install
 ```
 
 3. Build the project:
+
 ```bash
 npm run build
 ```
@@ -62,9 +65,9 @@ Configure which AAP services to load and how to access their OpenAPI specificati
 ```yaml
 services:
   - name: controller
-    url: "https://custom-controller.example.com/api/v2/schema/"     # Optional: custom URL
-    local_path: "data/controller-schema.json"                       # Optional: local file path
-    enabled: true                                                   # Optional: enable/disable service
+    url: "https://custom-controller.example.com/api/v2/schema/" # Optional: custom URL
+    local_path: "data/controller-schema.json" # Optional: local file path
+    enabled: true # Optional: enable/disable service
 
   - name: galaxy
     url: "https://custom-galaxy.example.com/api/v3/openapi.json"
@@ -76,10 +79,11 @@ services:
     enabled: true
 
   - name: eda
-    enabled: false  # Disable this service
+    enabled: false # Disable this service
 ```
 
 **Service Configuration Rules:**
+
 - **name**: Must be one of: `controller`, `galaxy`, `gateway`, `eda`
 - **url**: Custom OpenAPI specification URL (optional, uses service defaults if not specified)
 - **local_path**: Path to local OpenAPI file (optional, if set, loads from file instead of URL)
@@ -133,30 +137,27 @@ Configuration values are resolved in the following order (highest to lowest prio
 
 ### User Categories
 
-The service supports role-based access control through user categories:
-
-- **Anonymous**: Limited or no tool access (default for unauthenticated users)
-- **User**: Standard user access with read-only tools
-- **Admin**: Full administrative access to all tools
-
-Categories are automatically determined based on user permissions from the AAP token, but can be overridden using category-specific endpoints or configured through custom categories in the YAML file.
+The service supports role-based access control through user categories.
 
 ## Usage
 
 ### Starting the Service
 
 1. **Configure the service** by copying and editing the sample configuration:
+
 ```bash
 cp aap-mcp.sample.yaml aap-mcp.yaml
 # Edit aap-mcp.yaml with your AAP instance details
 ```
 
 2. **Set your authentication token**:
+
 ```bash
 export BEARER_TOKEN_OAUTH2_AUTHENTICATION=your_aap_token_here
 ```
 
 3. **Start the service**:
+
 ```bash
 # Development mode
 npm run dev
@@ -210,16 +211,19 @@ claude mcp add aap-mcp -t http http://localhost:3000/mcp -H 'Authorization: Bear
 #### Option 2: Token in Environment Variable
 
 1. Configure the token as an environment variable:
+
 ```bash
 export BEARER_TOKEN_OAUTH2_AUTHENTICATION=your_aap_token_here
 ```
 
 2. Start the service:
+
 ```bash
 npm run dev
 ```
 
 3. Register with Claude:
+
 ```bash
 claude mcp add aap-mcp -t http http://localhost:3000/mcp
 ```
@@ -250,23 +254,37 @@ The service generates tools from AAP OpenAPI specifications for:
 
 Tool availability depends on your configured categories and user permissions. When the web UI is enabled, you can browse available tools at `http://localhost:3000/tools`.
 
+## Prometheus Metrics
+
+The service includes comprehensive Prometheus metrics for monitoring and observability. Enable metrics in your configuration:
+
+```yaml
+# In aap-mcp.yaml
+enable_metrics: true
+```
+
+Or via environment variable:
+
+```bash
+export ENABLE_METRICS=true
+```
+
+### Metrics Endpoint
+
+When enabled, Prometheus metrics are available at:
+
+```
+http://localhost:3000/metrics
+```
+
+### Available Metrics
+
+- **HTTP Metrics**: Request counts, duration, and status codes
+- **MCP Tool Metrics**: Tool execution counts, duration, success/failure rates
+- **System Metrics**: CPU, memory, garbage collection, event loop lag
+- **API Call Metrics**: AAP API calls by service, endpoint, and method
+
 ## Development
-
-### Project Structure
-
-```
-├── src/
-│   ├── index.ts              # Main service implementation
-│   ├── logger.ts             # Tool usage logging
-│   └── views/                # Web UI rendering
-│       └── index.ts          # Dashboard and UI components
-├── kubernetes/
-│   └── deployment.yaml       # Kubernetes deployment configuration
-├── aap-mcp.yaml             # Main configuration file
-├── aap-mcp.sample.yaml      # Sample configuration
-├── package.json             # Dependencies and scripts
-└── tool_list.csv            # Generated tool list (created at runtime)
-```
 
 ### Key Features
 
@@ -277,6 +295,7 @@ Tool availability depends on your configured categories and user permissions. Wh
 - **Role-based Access Control**: Custom categories and permission-based tool filtering
 - **Session Management**: Token validation and user permission detection
 - **API Query Logging**: Optional logging of all tool usage
+- **Prometheus Metrics**: Comprehensive metrics for monitoring and observability
 - **Health Monitoring**: Built-in health check endpoint for container orchestration
 
 ### Configuration Design
@@ -296,42 +315,6 @@ The configuration system follows a hierarchical approach:
 3. **Built-in Defaults** (lowest priority)
    - Default OpenAPI specification URLs for each service
    - Standard port (3000) and base URL (https://localhost)
-
-### Adding New Services
-
-To add support for additional AAP services:
-
-1. **Add service to configuration**:
-```yaml
-services:
-  - name: new_service
-    url: "https://your-aap/api/new_service/openapi.json"
-    enabled: true
-```
-
-2. **Update defaultConfigs** in `src/index.ts`:
-```typescript
-const defaultConfigs: Record<string, { url: string; enabled?: boolean }> = {
-  // ... existing services
-  new_service: {
-    url: `${CONFIG.BASE_URL}/api/new_service/openapi.json`,
-  },
-};
-```
-
-3. **Add reformat function** to standardize tool names:
-```typescript
-const reformatFunctions: Record<string, (tool: AAPMcpToolDefinition) => AAPMcpToolDefinition | false> = {
-  // ... existing functions
-  new_service: (tool: AAPMcpToolDefinition) => {
-    tool.name = "new_service." + tool.name;
-    tool.pathTemplate = "/api/new_service" + tool.pathTemplate;
-    return tool;
-  },
-};
-```
-
-4. **Update categories** to include relevant tools from the new service
 
 ## Container Deployment
 
@@ -375,6 +358,7 @@ kubectl logs -l app=aap-mcp
 ```
 
 The Kubernetes deployment includes:
+
 - **ConfigMap**: Stores the YAML configuration
 - **Deployment**: Runs the service with health checks
 - **PersistentVolumeClaim**: Stores API query logs
@@ -424,6 +408,7 @@ diff aap-mcp.sample.yaml aap-mcp.yaml
 ### Logs and Debugging
 
 The service provides detailed console logging for:
+
 - Configuration loading and validation
 - OpenAPI specification loading (local files vs URLs)
 - Service enabling/disabling
@@ -435,8 +420,8 @@ Enable additional logging:
 
 ```yaml
 # In aap-mcp.yaml
-record_api_queries: true  # Enable API query logging
-enable_ui: true          # Access logs via web UI at /logs
+record_api_queries: true # Enable API query logging
+enable_ui: true # Access logs via web UI at /logs
 ```
 
 ### Health Monitoring

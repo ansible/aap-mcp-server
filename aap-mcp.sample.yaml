@@ -8,12 +8,8 @@
 # Configuration for Web UI (defaults to false if not specified)
 # enable_ui: false
 
-# Configuration for Prometheus metrics endpoint (defaults to true if not specified)
+# Configuration for Prometheus metrics endpoint (defaults to false if not specified)
 # enable_metrics: true
-
-# Configuration for Segment.com analytics (defaults to true if segment_write_key is provided)
-# enable_analytics: true
-# segment_write_key: "your_segment_write_key_here"
 
 # Configuration for base URL (defaults to https://localhost if not specified)
 # Lower priority than BASE_URL environment variable
@@ -24,6 +20,9 @@
 # Optional url, local_path, and enabled can override defaults
 # If local_path is not specified, it defaults to the url value
 # If enabled is not specified, it defaults to true
+
+# Allow write operation (POST, DELETE and PATCH)
+# allow_write_operations: false
 
 services:
   - name: controller
@@ -38,7 +37,7 @@ services:
     local_path: data/galaxy-openapi.json
   - name: gateway
     # url: "https://custom-gateway.example.com/api/v1/docs/schema/"
-    local_path: data/gateway-schema.json     # defaults to url if not specified
+    local_path: data/gateway-schema.json # defaults to url if not specified
     # enabled: true                                       # defaults to true if not specified
   - name: eda
     # url: "https://custom-eda.example.com/api/v1/openapi.json"
@@ -46,6 +45,7 @@ services:
     # enabled: true
 
 categories:
+  # Phase 1
   job_management:
     - controller.job_templates_launch_create
     - controller.workflow_job_templates_launch_create
@@ -64,6 +64,9 @@ categories:
     - controller.metrics_list
     - controller.projects_list
     - controller.job_templates_list
+    - controller.workflow_job_templates_list
+    - controller.job_templates_read
+    - controller.workflow_job_templates_read
 
   inventory_management:
     - controller.inventories_list
@@ -81,14 +84,15 @@ categories:
     - controller.mesh_visualizer_list
     - controller.instances_create
     - gateway.activitystream_list
+    - gateway.activitystream_retrieve
     - gateway.authenticators_list
-    - gateway.http_ports_list
-    - gateway.http_ports_create
     - controller.activity_stream_list
+    - controller.activity_stream_read
     - controller.instances_read
     - gateway.status_retrieve
     - gateway.feature_flags_state_retrieve
 
+  # Phase 2
   user_management:
     - gateway.teams_list
     - gateway.teams_retrieve
@@ -122,10 +126,10 @@ categories:
     - gateway.authenticators_destroy
     - gateway.authenticator_maps_list
     - gateway.authenticator_maps_create
-    - galaxy.api_galaxy__ui_v1_namespaces_list
-    - galaxy.api_galaxy__ui_v1_namespaces_create
-    - galaxy.repositories_ansible_ansible_list
-    - galaxy.repositories_ansible_ansible_create
+    # - galaxy.api_galaxy__ui_v1_namespaces_list
+    # - galaxy.api_galaxy__ui_v1_namespaces_create
+    # - galaxy.repositories_ansible_ansible_list
+    # - galaxy.repositories_ansible_ansible_create
 
   security_compliance:
     - controller.credentials_list
@@ -135,8 +139,8 @@ categories:
     - controller.jobs_list
     - gateway.activitystream_list
     - controller.activity_stream_list
-    - galaxy.api_galaxy_content_v3_collections_versions_read
-    - galaxy.collection_import_read
+    # - galaxy.api_galaxy_content_v3_collections_versions_read
+    # - galaxy.collection_import_read
     - controller.credential_types_list
     - controller.credential_types_create
     - controller.credential_types_read
@@ -144,8 +148,10 @@ categories:
     - controller.credential_types_delete
 
   platform_configuration:
+    - controller.settings_list
     - controller.settings_read
     - controller.settings_partial_update
+    - gateway.settings_list
     - gateway.settings_getter
     - gateway.settings_update
     - controller.config_list
@@ -178,90 +184,92 @@ categories:
     - controller.workflow_jobs_read
     - controller.workflow_jobs_workflow_nodes_list
 
-  event_management:
-    - eda.event_streams_list
-    - eda.event_streams_create
-    - eda.event_streams_retrieve
-    - eda.event_streams_partial_update
-    - eda.event_streams_destroy
-    - eda.activations_list
-    - eda.activations_create
-    - eda.activations_retrieve
-    - eda.activations_partial_update
-    - eda.activations_destroy
-    - eda.activations_enable_create
-    - eda.activations_disable_create
-    - eda.activations_restart_create
-    - eda.activation_instances_list
-    - eda.activation_instances_retrieve
-    - eda.activation_instances_logs_list
-    - eda.audit_rules_list
-    - eda.audit_rules_retrieve
-    - eda.audit_rules_actions_list
-    - eda.audit_rules_events_list
-    - eda.decision_environments_list
-    - eda.decision_environments_create
-    - eda.decision_environments_retrieve
-    - eda.decision_environments_partial_update
-    - eda.decision_environments_destroy
-    - eda.rulebooks_list
-    - eda.rulebooks_retrieve
-    - eda.rulebooks_sources_list
-    - eda.rulebooks_json_retrieve
-    - eda.projects_list
-    - eda.projects_create
-    - eda.projects_retrieve
-    - eda.projects_partial_update
-    - eda.projects_destroy
-    - eda.projects_sync_create
+  # Categories below this comment have yet to be clarified/validated
+  # Phase 3
+  # event_management:
+  #   - eda.event_streams_list
+  #   - eda.event_streams_create
+  #   - eda.event_streams_retrieve
+  #   - eda.event_streams_partial_update
+  #   - eda.event_streams_destroy
+  #   - eda.activations_list
+  #   - eda.activations_create
+  #   - eda.activations_retrieve
+  #   - eda.activations_partial_update
+  #   - eda.activations_destroy
+  #   - eda.activations_enable_create
+  #   - eda.activations_disable_create
+  #   - eda.activations_restart_create
+  #   - eda.activation_instances_list
+  #   - eda.activation_instances_retrieve
+  #   - eda.activation_instances_logs_list
+  #   - eda.audit_rules_list
+  #   - eda.audit_rules_retrieve
+  #   - eda.audit_rules_actions_list
+  #   - eda.audit_rules_events_list
+  #   - eda.decision_environments_list
+  #   - eda.decision_environments_create
+  #   - eda.decision_environments_retrieve
+  #   - eda.decision_environments_partial_update
+  #   - eda.decision_environments_destroy
+  #   - eda.rulebooks_list
+  #   - eda.rulebooks_retrieve
+  #   - eda.rulebooks_sources_list
+  #   - eda.rulebooks_json_retrieve
+  #   - eda.projects_list
+  #   - eda.projects_create
+  #   - eda.projects_retrieve
+  #   - eda.projects_partial_update
+  #   - eda.projects_destroy
+  #   - eda.projects_sync_create
 
-  integration:
-    - controller.notification_templates_list
-    - controller.notification_templates_create
-    - controller.notification_templates_read
-    - controller.notification_templates_update
-    - controller.notification_templates_delete
-    - controller.notification_templates_test_create
-    - controller.job_templates_notification_templates_error_list
-    - controller.job_templates_notification_templates_started_list
-    - controller.job_templates_notification_templates_success_list
-    - controller.workflow_job_templates_notification_templates_error_list
-    - controller.workflow_job_templates_notification_templates_started_list
-    - controller.workflow_job_templates_notification_templates_success_list
-    - controller.job_templates_webhook_key_list
-    - controller.job_templates_webhook_key_create
-    - controller.workflow_job_templates_webhook_key_list
-    - controller.workflow_job_templates_webhook_key_create
-    - gateway.tokens_list
-    - gateway.tokens_create
-    - gateway.tokens_retrieve
-    - gateway.tokens_update
-    - gateway.tokens_partial_update
-    - gateway.tokens_destroy
-    - gateway.applications_list
-    - gateway.applications_create
-    - gateway.applications_retrieve
-    - gateway.applications_update
-    - gateway.applications_partial_update
-    - gateway.applications_destroy
-    - gateway.applications_tokens_list
-    - gateway.authenticator_maps_list
-    - gateway.authenticator_maps_create
-    - gateway.authenticator_maps_retrieve
-    - gateway.authenticator_maps_update
-    - gateway.authenticator_maps_partial_update
-    - gateway.authenticator_maps_destroy
-    - gateway.authenticator_maps_authenticators_list
-    - gateway.authenticator_maps_authenticators_associate_create
-    - gateway.authenticator_maps_authenticators_disassociate_create
-    - gateway.http_ports_update
-    - gateway.http_ports_partial_update
-    - gateway.http_ports_destroy
+  # integration:
+  #   - controller.notification_templates_list
+  #   - controller.notification_templates_create
+  #   - controller.notification_templates_read
+  #   - controller.notification_templates_update
+  #   - controller.notification_templates_delete
+  #   - controller.notification_templates_test_create
+  #   - controller.job_templates_notification_templates_error_list
+  #   - controller.job_templates_notification_templates_started_list
+  #   - controller.job_templates_notification_templates_success_list
+  #   - controller.workflow_job_templates_notification_templates_error_list
+  #   - controller.workflow_job_templates_notification_templates_started_list
+  #   - controller.workflow_job_templates_notification_templates_success_list
+  #   - controller.job_templates_webhook_key_list
+  #   - controller.job_templates_webhook_key_create
+  #   - controller.workflow_job_templates_webhook_key_list
+  #   - controller.workflow_job_templates_webhook_key_create
+  #   - gateway.tokens_list
+  #   - gateway.tokens_create
+  #   - gateway.tokens_retrieve
+  #   - gateway.tokens_update
+  #   - gateway.tokens_partial_update
+  #   - gateway.tokens_destroy
+  #   - gateway.applications_list
+  #   - gateway.applications_create
+  #   - gateway.applications_retrieve
+  #   - gateway.applications_update
+  #   - gateway.applications_partial_update
+  #   - gateway.applications_destroy
+  #   - gateway.applications_tokens_list
+  #   - gateway.authenticator_maps_list
+  #   - gateway.authenticator_maps_create
+  #   - gateway.authenticator_maps_retrieve
+  #   - gateway.authenticator_maps_update
+  #   - gateway.authenticator_maps_partial_update
+  #   - gateway.authenticator_maps_destroy
+  #   - gateway.authenticator_maps_authenticators_list
+  #   - gateway.authenticator_maps_authenticators_associate_create
+  #   - gateway.authenticator_maps_authenticators_disassociate_create
+  #   - gateway.http_ports_update
+  #   - gateway.http_ports_partial_update
+  #   - gateway.http_ports_destroy
 
-  developer_integration:
-    - controller.credentials_test_create
-    - controller.jobs_job_events_list
-    - controller.jobs_read
-    - controller.instance_groups_read
-    - controller.job_templates_launch_create
-    - controller.workflow_job_templates_launch_create
+  # developer_integration:
+  #   - controller.credentials_test_create
+  #   - controller.jobs_job_events_list
+  #   - controller.jobs_read
+  #   - controller.instance_groups_read
+  #   - controller.job_templates_launch_create
+  #   - controller.workflow_job_templates_launch_create

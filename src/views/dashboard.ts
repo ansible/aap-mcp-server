@@ -1,33 +1,61 @@
-import { ToolWithSize } from '../index.js';
+import { AAPMcpToolDefinition } from "../openapi-loader.js";
+import { renderHeader, getHeaderStyles } from "../header.js";
+import { getLogIcon } from "./utils.js";
 
 interface DashboardData {
-  allTools: ToolWithSize[];
+  allTools: AAPMcpToolDefinition[];
   allCategories: Record<string, string[]>;
   recordApiQueries: boolean;
+  allowWriteOperations: boolean;
 }
 
 export const renderDashboard = (data: DashboardData): string => {
-  const { allTools, allCategories, recordApiQueries } = data;
+  const { allTools, allCategories, recordApiQueries, allowWriteOperations } =
+    data;
 
   // Calculate summary statistics
   const totalSize = allTools.reduce((sum, tool) => sum + (tool.size || 0), 0);
 
   // Calculate category statistics dynamically
-  const categoryStats: Record<string, { tools: ToolWithSize[]; size: number }> = {};
+  const categoryStats: Record<
+    string,
+    { tools: AAPMcpToolDefinition[]; size: number }
+  > = {};
   for (const [categoryName, categoryTools] of Object.entries(allCategories)) {
-    const tools = allTools.filter(tool => categoryTools.includes(tool.name));
+    const tools = allTools.filter((tool) => categoryTools.includes(tool.name));
     categoryStats[categoryName] = {
       tools,
-      size: tools.reduce((sum, tool) => sum + (tool.size || 0), 0)
+      size: tools.reduce((sum, tool) => sum + (tool.size || 0), 0),
     };
   }
 
-  // Count tools by service
-  const serviceStats = allTools.reduce((acc, tool) => {
-    const service = tool.service || 'unknown';
-    acc[service] = (acc[service] || 0) + 1;
-    return acc;
-  }, {} as Record<string, number>);
+  // Count tools by service and calculate log statistics
+  const serviceStats = allTools.reduce(
+    (acc, tool) => {
+      const service = tool.service || "unknown";
+      if (!acc[service]) {
+        acc[service] = {
+          toolCount: 0,
+          logs: { err: 0, warn: 0, info: 0 },
+        };
+      }
+      acc[service].toolCount++;
+
+      // Count logs by severity for this tool
+      tool.logs.forEach((log) => {
+        const severity = log.severity.toLowerCase() as "err" | "warn" | "info";
+        if (severity === "err" || severity === "warn" || severity === "info") {
+          acc[service].logs[severity]++;
+        }
+      });
+
+      return acc;
+    },
+    {} as Record<
+      string,
+      { toolCount: number; logs: { err: number; warn: number; info: number } }
+    >,
+  );
 
   return `
 <!DOCTYPE html>
@@ -45,7 +73,7 @@ export const renderDashboard = (data: DashboardData): string => {
             min-height: 100vh;
         }
         .container {
-            max-width: 1200px;
+            max-width: 1560px;
             margin: 0 auto;
         }
         .header {
@@ -198,6 +226,80 @@ export const renderDashboard = (data: DashboardData): string => {
         .service-gateway { background: #4caf50; color: white; }
         .service-galaxy { background: #ff9800; color: white; }
         .service-unknown { background: #f44336; color: white; }
+
+        /* Service log display styles */
+        .services-with-logs {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .service-detail {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #f1f1f1;
+        }
+        .service-detail:last-child {
+            border-bottom: none;
+        }
+        .service-logs {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+        .log-count {
+            display: inline-block;
+            padding: 2px 6px;
+            border-radius: 8px;
+            font-size: 0.8em;
+            font-weight: bold;
+            text-decoration: none;
+        }
+        .log-count.clickable {
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: 1px solid transparent;
+        }
+        .log-count.clickable:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            text-decoration: none;
+        }
+        .log-count.err {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        .log-count.err.clickable:hover {
+            background-color: #f5c6cb;
+            color: #491217;
+            border-color: #f1b0b7;
+        }
+        .log-count.warn {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+        .log-count.warn.clickable:hover {
+            background-color: #ffeaa7;
+            color: #533f03;
+            border-color: #ffe08a;
+        }
+        .log-count.info {
+            background-color: #d1ecf1;
+            color: #0c5460;
+        }
+        .log-count.info.clickable:hover {
+            background-color: #b8daff;
+            color: #004085;
+            border-color: #9fcdff;
+        }
+        .no-logs {
+            font-size: 0.8em;
+            color: #6c757d;
+            font-style: italic;
+        }
+
+        ${getHeaderStyles()}
     </style>
 </head>
 <body>
@@ -206,6 +308,8 @@ export const renderDashboard = (data: DashboardData): string => {
             <h1>AAP MCP Dashboard</h1>
             <p>Ansible Automation Platform Model Context Protocol Interface</p>
         </div>
+
+        ${renderHeader()}
 
         <div class="summary-grid">
             <div class="summary-card">
@@ -222,8 +326,7 @@ export const renderDashboard = (data: DashboardData): string => {
                 <div class="summary-number">${Object.keys(serviceStats).length}</div>
             </div>
             <div class="summary-card">
-                <h3>Categories</h3>
-                <div class="summary-number">${Object.keys(allCategories).length}</div>
+                Write Operations: <div class="summary-number">${allowWriteOperations ? "ENABLED" : "DISABLED"}</div>
             </div>
         </div>
 
@@ -251,9 +354,12 @@ export const renderDashboard = (data: DashboardData): string => {
                     </div>
                 </div>
                 <div class="service-stats">
-                    ${Object.entries(serviceStats).map(([service, count]) =>
-                        `<span class="service-badge service-${service}">${service}: ${count}</span>`
-                    ).join('')}
+                    ${Object.entries(serviceStats)
+                      .map(
+                        ([service, stats]) =>
+                          `<span class="service-badge service-${service}">${service}: ${stats.toolCount}</span>`,
+                      )
+                      .join("")}
                 </div>
                 <br><br>
                 <a href="/tools" class="btn">Browse All Tools</a>
@@ -273,18 +379,46 @@ export const renderDashboard = (data: DashboardData): string => {
                         <div class="stat-label">Services</div>
                     </div>
                     <div class="stat">
-                        <div class="stat-number">${allTools.length}</div>
+                        <div class="stat-number">${Object.values(serviceStats).reduce((sum, s) => sum + s.toolCount, 0)}</div>
                         <div class="stat-label">Total Tools</div>
                     </div>
                     <div class="stat">
-                        <div class="stat-number">${Math.round(totalSize / 1000)}K</div>
-                        <div class="stat-label">Characters</div>
+                        <div class="stat-number">${Object.values(serviceStats).reduce((sum, s) => sum + s.logs.err, 0)}</div>
+                        <div class="stat-label">${getLogIcon("err")} Errors</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-number">${Object.values(serviceStats).reduce((sum, s) => sum + s.logs.warn, 0)}</div>
+                        <div class="stat-label">${getLogIcon("warn")} Warnings</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-number">${Object.values(serviceStats).reduce((sum, s) => sum + s.logs.info, 0)}</div>
+                        <div class="stat-label">${getLogIcon("info")} Info</div>
                     </div>
                 </div>
-                <div class="service-stats">
-                    ${Object.entries(serviceStats).map(([service, count]) =>
-                        `<span class="service-badge service-${service}">${service}: ${count}</span>`
-                    ).join('')}
+                <div class="services-with-logs">
+                    ${Object.entries(serviceStats)
+                      .map(([service, stats]) => {
+                        const hasLogs =
+                          stats.logs.err > 0 ||
+                          stats.logs.warn > 0 ||
+                          stats.logs.info > 0;
+                        return `
+                          <div class="service-detail">
+                            <span class="service-badge service-${service}">${service}: ${stats.toolCount} tools</span>
+                            ${
+                              hasLogs
+                                ? `
+                              <div class="service-logs">
+                                ${stats.logs.err > 0 ? `<a href="/services/${service}#logs" class="log-count err clickable">${getLogIcon("err")} ${stats.logs.err}</a>` : ""}
+                                ${stats.logs.warn > 0 ? `<a href="/services/${service}#logs" class="log-count warn clickable">${getLogIcon("warn")} ${stats.logs.warn}</a>` : ""}
+                                ${stats.logs.info > 0 ? `<a href="/services/${service}#logs" class="log-count info clickable">${getLogIcon("info")} ${stats.logs.info}</a>` : ""}
+                              </div>
+                            `
+                                : '<div class="service-logs"><span class="no-logs">No messages</span></div>'
+                            }
+                          </div>`;
+                      })
+                      .join("")}
                 </div>
                 <br><br>
                 <a href="/services" class="btn" style="background: linear-gradient(45deg, #ff6b6b, #ee5a24);">Explore Services</a>
@@ -299,18 +433,50 @@ export const renderDashboard = (data: DashboardData): string => {
                     Understand the different user categories and their tool access levels. Categories control which tools are available based on user permissions and authentication status.
                 </p>
                 <div class="card-stats">
-                    ${Object.entries(categoryStats).map(([categoryName, stats]) => `
+                    ${Object.entries(categoryStats)
+                      .map(
+                        ([categoryName, stats]) => `
                     <div class="stat">
                         <div class="stat-number">${stats.tools.length} tools</div>
                         <div class="stat-label">${categoryName.charAt(0).toUpperCase() + categoryName.slice(1)}</div>
                     </div>
-                    `).join('')}
+                    `,
+                      )
+                      .join("")}
                 </div>
                 <br>
                 <a href="/category" class="btn btn-categories">Explore Categories</a>
             </div>
 
-            ${recordApiQueries ? `
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-icon" style="background: linear-gradient(45deg, #ffc107, #e67e22);">🔗</div>
+                    <h2 class="card-title">API Endpoints</h2>
+                </div>
+                <p class="card-description">
+                    Browse all API endpoints organized by service. View HTTP methods, paths, and descriptions for each endpoint across the AAP platform services.
+                </p>
+                <div class="card-stats">
+                    <div class="stat">
+                        <div class="stat-number">${allTools.length}</div>
+                        <div class="stat-label">Endpoints</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-number">${Object.keys(serviceStats).length}</div>
+                        <div class="stat-label">Services</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-number">${[...new Set(allTools.map((t) => t.method.toUpperCase()))].length}</div>
+                        <div class="stat-label">HTTP Methods</div>
+                    </div>
+                </div>
+                <br>
+                <a href="/endpoints" class="btn" style="background: linear-gradient(45deg, #ffc107, #e67e22);">View API Endpoints</a>
+            </div>
+
+            ${
+              recordApiQueries
+                ? `
             <div class="card">
                 <div class="card-header">
                     <div class="card-icon" style="background: linear-gradient(45deg, #17a2b8, #138496);">📊</div>
@@ -336,7 +502,9 @@ export const renderDashboard = (data: DashboardData): string => {
                 <br>
                 <a href="/logs" class="btn" style="background: linear-gradient(45deg, #17a2b8, #138496);">View Request Logs</a>
             </div>
-            ` : ''}
+            `
+                : ""
+            }
         </div>
     </div>
 </body>

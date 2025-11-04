@@ -1,6 +1,7 @@
-import { ToolWithSize } from '../index.js';
+import { AAPMcpToolDefinition } from "../openapi-loader.js";
+import { renderHeader, getHeaderStyles } from "../header.js";
 
-interface ToolWithSuccessRate extends ToolWithSize {
+interface ToolWithSuccessRate extends AAPMcpToolDefinition {
   successRate: string;
   logCount: number;
 }
@@ -12,14 +13,18 @@ interface ToolsListData {
 export const renderToolsList = (data: ToolsListData): string => {
   const { tools } = data;
 
-  const toolRows = tools.map(tool => `
-    <tr data-name="${tool.name}" data-size="${tool.size}" data-service="${tool.service || 'unknown'}" data-success-rate="${tool.successRate === 'N/A' ? -1 : parseFloat(tool.successRate)}">
+  const toolRows = tools
+    .map(
+      (tool) => `
+    <tr data-name="${tool.name}" data-size="${tool.size}" data-service="${tool.service || "unknown"}" data-success-rate="${tool.successRate === "N/A" ? -1 : parseFloat(tool.successRate)}">
       <td><a href="/tools/${encodeURIComponent(tool.name)}" style="color: #007acc; text-decoration: none;">${tool.name}</a></td>
       <td>${tool.size}</td>
-      <td><span class="service-${tool.service || 'unknown'}">${tool.service || 'unknown'}</span></td>
-      <td><span class="success-rate ${tool.successRate === 'N/A' ? 'no-data' : (parseFloat(tool.successRate) >= 90 ? 'excellent' : parseFloat(tool.successRate) >= 70 ? 'good' : 'poor')}">${tool.successRate}</span></td>
+      <td><span class="service-${tool.service || "unknown"}">${tool.service || "unknown"}</span></td>
+      <td><span class="success-rate ${tool.successRate === "N/A" ? "no-data" : parseFloat(tool.successRate) >= 90 ? "excellent" : parseFloat(tool.successRate) >= 70 ? "good" : "poor"}">${tool.successRate}</span></td>
     </tr>
-  `).join('');
+  `,
+    )
+    .join("");
 
   return `
 <!DOCTYPE html>
@@ -35,7 +40,7 @@ export const renderToolsList = (data: ToolsListData): string => {
             background-color: #f5f5f5;
         }
         .container {
-            max-width: 1200px;
+            max-width: 1560px;
             margin: 0 auto;
             background-color: white;
             padding: 20px;
@@ -151,11 +156,14 @@ export const renderToolsList = (data: ToolsListData): string => {
         .sortable.desc .sort-indicator::after {
             content: ' ↓';
         }
+        ${getHeaderStyles()}
     </style>
 </head>
 <body>
     <div class="container">
         <h1>AAP MCP Tools List</h1>
+
+        ${renderHeader()}
 
         <div class="stats">
             <strong>Total Tools:</strong> ${tools.length}<br>

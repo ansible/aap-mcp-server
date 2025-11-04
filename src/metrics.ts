@@ -1,4 +1,10 @@
-import { register, collectDefaultMetrics, Counter, Histogram, Gauge } from 'prom-client';
+import {
+  register,
+  collectDefaultMetrics,
+  Counter,
+  Histogram,
+  Gauge,
+} from "prom-client";
 
 export class MetricsService {
   public readonly httpRequestsTotal: Counter<string>;
@@ -16,76 +22,98 @@ export class MetricsService {
 
     // HTTP request metrics
     this.httpRequestsTotal = new Counter({
-      name: 'http_requests_total',
-      help: 'Total number of HTTP requests',
-      labelNames: ['method', 'route', 'status_code'],
-      registers: [register]
+      name: "http_requests_total",
+      help: "Total number of HTTP requests",
+      labelNames: ["method", "route", "status_code"],
+      registers: [register],
     });
 
     this.httpRequestDuration = new Histogram({
-      name: 'http_request_duration_seconds',
-      help: 'HTTP request duration in seconds',
-      labelNames: ['method', 'route', 'status_code'],
+      name: "http_request_duration_seconds",
+      help: "HTTP request duration in seconds",
+      labelNames: ["method", "route", "status_code"],
       buckets: [0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1, 5, 10],
-      registers: [register]
+      registers: [register],
     });
 
     // MCP-specific metrics
     this.mcpToolExecutionsTotal = new Counter({
-      name: 'mcp_tool_executions_total',
-      help: 'Total number of MCP tool executions',
-      labelNames: ['tool_name', 'service', 'status'],
-      registers: [register]
+      name: "mcp_tool_executions_total",
+      help: "Total number of MCP tool executions",
+      labelNames: ["tool_name", "service", "category", "status"],
+      registers: [register],
     });
 
     this.mcpToolExecutionDuration = new Histogram({
-      name: 'mcp_tool_execution_duration_seconds',
-      help: 'MCP tool execution duration in seconds',
-      labelNames: ['tool_name', 'service'],
+      name: "mcp_tool_execution_duration_seconds",
+      help: "MCP tool execution duration in seconds",
+      labelNames: ["tool_name", "service", "category"],
       buckets: [0.01, 0.05, 0.1, 0.5, 1, 2, 5, 10, 30],
-      registers: [register]
+      registers: [register],
     });
 
     this.mcpToolErrors = new Counter({
-      name: 'mcp_tool_errors_total',
-      help: 'Total number of MCP tool execution errors',
-      labelNames: ['tool_name', 'service', 'error_type'],
-      registers: [register]
+      name: "mcp_tool_errors_total",
+      help: "Total number of MCP tool execution errors",
+      labelNames: ["tool_name", "service", "category", "error_type"],
+      registers: [register],
     });
 
     this.mcpActiveTools = new Gauge({
-      name: 'mcp_active_tools',
-      help: 'Number of currently active MCP tools',
-      labelNames: ['service'],
-      registers: [register]
+      name: "mcp_active_tools",
+      help: "Number of currently active MCP tools",
+      labelNames: ["service"],
+      registers: [register],
     });
 
     this.mcpActiveSessions = new Gauge({
-      name: 'mcp_active_sessions',
-      help: 'Number of currently active MCP sessions',
-      registers: [register]
+      name: "mcp_active_sessions",
+      help: "Number of currently active MCP sessions",
+      registers: [register],
     });
 
     this.mcpApiCallsTotal = new Counter({
-      name: 'mcp_api_calls_total',
-      help: 'Total number of AAP API calls made by tools',
-      labelNames: ['service', 'endpoint', 'method', 'status_code'],
-      registers: [register]
+      name: "mcp_api_calls_total",
+      help: "Total number of AAP API calls made by tools",
+      labelNames: ["service", "endpoint", "method", "status_code"],
+      registers: [register],
     });
   }
 
-  recordHttpRequest(method: string, route: string, statusCode: number, duration: number): void {
+  recordHttpRequest(
+    method: string,
+    route: string,
+    statusCode: number,
+    duration: number,
+  ): void {
     this.httpRequestsTotal.labels(method, route, statusCode.toString()).inc();
-    this.httpRequestDuration.labels(method, route, statusCode.toString()).observe(duration);
+    this.httpRequestDuration
+      .labels(method, route, statusCode.toString())
+      .observe(duration);
   }
 
-  recordToolExecution(toolName: string, service: string, status: 'success' | 'error', duration: number): void {
-    this.mcpToolExecutionsTotal.labels(toolName, service, status).inc();
-    this.mcpToolExecutionDuration.labels(toolName, service).observe(duration);
+  recordToolExecution(
+    toolName: string,
+    service: string,
+    category: string,
+    status: "success" | "error",
+    duration: number,
+  ): void {
+    this.mcpToolExecutionsTotal
+      .labels(toolName, service, category, status)
+      .inc();
+    this.mcpToolExecutionDuration
+      .labels(toolName, service, category)
+      .observe(duration);
   }
 
-  recordToolError(toolName: string, service: string, errorType: string): void {
-    this.mcpToolErrors.labels(toolName, service, errorType).inc();
+  recordToolError(
+    toolName: string,
+    service: string,
+    category: string,
+    errorType: string,
+  ): void {
+    this.mcpToolErrors.labels(toolName, service, category, errorType).inc();
   }
 
   setActiveTools(service: string, count: number): void {
@@ -100,8 +128,15 @@ export class MetricsService {
     this.mcpActiveSessions.dec();
   }
 
-  recordApiCall(service: string, endpoint: string, method: string, statusCode: number): void {
-    this.mcpApiCallsTotal.labels(service, endpoint, method, statusCode.toString()).inc();
+  recordApiCall(
+    service: string,
+    endpoint: string,
+    method: string,
+    statusCode: number,
+  ): void {
+    this.mcpApiCallsTotal
+      .labels(service, endpoint, method, statusCode.toString())
+      .inc();
   }
 
   getMetrics(): Promise<string> {
@@ -112,6 +147,5 @@ export class MetricsService {
     return register.contentType;
   }
 }
-
 // Singleton instance
 export const metricsService = new MetricsService();

@@ -1,3 +1,5 @@
+import { renderHeader, getHeaderStyles } from "../header.js";
+
 interface LogsEntry {
   timestamp: string;
   toolName: string;
@@ -16,10 +18,21 @@ interface LogsData {
   statusCodeSummary: Record<number, number>;
   toolSummary: Record<string, number>;
   userAgentSummary: Record<string, number>;
+  logEntriesSizeLimit: number;
 }
 
 export const renderLogs = (data: LogsData): string => {
-  const { lastEntries, totalRequests, statusCodeFilter, toolFilter, userAgentFilter, statusCodeSummary, toolSummary, userAgentSummary } = data;
+  const {
+    lastEntries,
+    totalRequests,
+    statusCodeFilter,
+    toolFilter,
+    userAgentFilter,
+    statusCodeSummary,
+    toolSummary,
+    userAgentSummary,
+    logEntriesSizeLimit,
+  } = data;
 
   // Helper function to format timestamp for display
   const formatTimestamp = (timestamp: string) => {
@@ -28,20 +41,20 @@ export const renderLogs = (data: LogsData): string => {
 
   // Helper function to get status color
   const getStatusColor = (code: number) => {
-    if (code >= 200 && code < 300) return '#28a745'; // green
-    if (code >= 300 && code < 400) return '#ffc107'; // yellow
-    if (code >= 400 && code < 500) return '#fd7e14'; // orange
-    if (code >= 500) return '#dc3545'; // red
-    return '#6c757d'; // gray
+    if (code >= 200 && code < 300) return "#28a745"; // green
+    if (code >= 300 && code < 400) return "#ffc107"; // yellow
+    if (code >= 400 && code < 500) return "#fd7e14"; // orange
+    if (code >= 500) return "#dc3545"; // red
+    return "#6c757d"; // gray
   };
 
   // Helper function to get status text
   const getStatusText = (code: number) => {
-    if (code >= 200 && code < 300) return 'Success';
-    if (code >= 300 && code < 400) return 'Redirect';
-    if (code >= 400 && code < 500) return 'Client Error';
-    if (code >= 500) return 'Server Error';
-    return 'Unknown';
+    if (code >= 200 && code < 300) return "Success";
+    if (code >= 300 && code < 400) return "Redirect";
+    if (code >= 400 && code < 500) return "Client Error";
+    if (code >= 500) return "Server Error";
+    return "Unknown";
   };
 
   return `
@@ -58,7 +71,7 @@ export const renderLogs = (data: LogsData): string => {
             background-color: #f5f5f5;
         }
         .container {
-            max-width: 1400px;
+            max-width: 1820px;
             margin: 0 auto;
             background-color: white;
             padding: 20px;
@@ -71,21 +84,7 @@ export const renderLogs = (data: LogsData): string => {
             padding-bottom: 10px;
             margin-bottom: 30px;
         }
-        .navigation {
-            margin-bottom: 30px;
-        }
-        .nav-link {
-            background-color: #6c757d;
-            color: white;
-            padding: 6px 12px;
-            text-decoration: none;
-            border-radius: 4px;
-            margin-right: 10px;
-            font-size: 0.9em;
-        }
-        .nav-link:hover {
-            background-color: #5a6268;
-        }
+        ${getHeaderStyles()}
         .summary {
             background-color: #e3f2fd;
             padding: 20px;
@@ -201,51 +200,61 @@ export const renderLogs = (data: LogsData): string => {
 </head>
 <body>
     <div class="container">
-        <h1>Request Logs<span style="color: #6c757d; font-size: 0.7em; margin-left: 15px;">Last 1000 requests</span></h1>
+        <h1>Request Logs<span style="color: #6c757d; font-size: 0.7em; margin-left: 15px;">Last ${logEntriesSizeLimit.toLocaleString()} requests</span></h1>
 
-        <div class="navigation">
-            <a href="/" class="nav-link">Dashboard</a>
-            <a href="/tools" class="nav-link">Tools</a>
-            <a href="/services" class="nav-link">Services</a>
-            <a href="/category" class="nav-link">Categories</a>
-        </div>
+        ${renderHeader()}
 
         <div class="summary">
             <h2>Log Summary</h2>
-            <p>Showing the last requests${(statusCodeFilter || toolFilter || userAgentFilter) ? ` out of ${lastEntries.length} filtered results` : ''} from ${totalRequests.toLocaleString()} total logged requests.${statusCodeFilter ? ` <strong>Filtered by status code: ${statusCodeFilter}</strong>` : ''}${toolFilter ? ` <strong>Filtered by tool: ${toolFilter}</strong>` : ''}${userAgentFilter ? ` <strong>Filtered by user-agent: ${userAgentFilter}</strong>` : ''}</p>
+            <p>Showing the last requests${statusCodeFilter || toolFilter || userAgentFilter ? ` out of ${lastEntries.length} filtered results` : ""} from ${totalRequests.toLocaleString()} total logged requests.${statusCodeFilter ? ` <strong>Filtered by status code: ${statusCodeFilter}</strong>` : ""}${toolFilter ? ` <strong>Filtered by tool: ${toolFilter}</strong>` : ""}${userAgentFilter ? ` <strong>Filtered by user-agent: ${userAgentFilter}</strong>` : ""}</p>
 
-            ${statusCodeFilter ? `
+            ${
+              statusCodeFilter
+                ? `
             <div style="margin: 20px 0; padding: 15px; background-color: #fff3cd; border: 1px solid #ffeaa7; border-radius: 5px;">
                 <strong>Filtering by status code: ${statusCodeFilter}</strong>
-                <a href="/logs${toolFilter || userAgentFilter ? `?${toolFilter ? `tool=${encodeURIComponent(toolFilter)}` : ''}${toolFilter && userAgentFilter ? '&' : ''}${userAgentFilter ? `user_agent=${encodeURIComponent(userAgentFilter)}` : ''}` : ''}" style="margin-left: 15px; padding: 5px 15px; background-color: #6c757d; color: white; text-decoration: none; border-radius: 4px;">Clear Status Filter</a>
+                <a href="/logs${toolFilter || userAgentFilter ? `?${toolFilter ? `tool=${encodeURIComponent(toolFilter)}` : ""}${toolFilter && userAgentFilter ? "&" : ""}${userAgentFilter ? `user_agent=${encodeURIComponent(userAgentFilter)}` : ""}` : ""}" style="margin-left: 15px; padding: 5px 15px; background-color: #6c757d; color: white; text-decoration: none; border-radius: 4px;">Clear Status Filter</a>
             </div>
-            ` : ''}
+            `
+                : ""
+            }
 
-            ${toolFilter ? `
+            ${
+              toolFilter
+                ? `
             <div style="margin: 20px 0; padding: 15px; background-color: #d1ecf1; border: 1px solid #bee5eb; border-radius: 5px;">
                 <strong>Filtering by tool: ${toolFilter}</strong>
-                <a href="/logs${statusCodeFilter || userAgentFilter ? `?${statusCodeFilter ? `status_code=${statusCodeFilter}` : ''}${statusCodeFilter && userAgentFilter ? '&' : ''}${userAgentFilter ? `user_agent=${encodeURIComponent(userAgentFilter)}` : ''}` : ''}" style="margin-left: 15px; padding: 5px 15px; background-color: #6c757d; color: white; text-decoration: none; border-radius: 4px;">Clear Tool Filter</a>
+                <a href="/logs${statusCodeFilter || userAgentFilter ? `?${statusCodeFilter ? `status_code=${statusCodeFilter}` : ""}${statusCodeFilter && userAgentFilter ? "&" : ""}${userAgentFilter ? `user_agent=${encodeURIComponent(userAgentFilter)}` : ""}` : ""}" style="margin-left: 15px; padding: 5px 15px; background-color: #6c757d; color: white; text-decoration: none; border-radius: 4px;">Clear Tool Filter</a>
             </div>
-            ` : ''}
+            `
+                : ""
+            }
 
-            ${userAgentFilter ? `
+            ${
+              userAgentFilter
+                ? `
             <div style="margin: 20px 0; padding: 15px; background-color: #e2e3e5; border: 1px solid #d6d8db; border-radius: 5px;">
                 <strong>Filtering by user-agent: ${userAgentFilter}</strong>
-                <a href="/logs${statusCodeFilter || toolFilter ? `?${statusCodeFilter ? `status_code=${statusCodeFilter}` : ''}${statusCodeFilter && toolFilter ? '&' : ''}${toolFilter ? `tool=${encodeURIComponent(toolFilter)}` : ''}` : ''}" style="margin-left: 15px; padding: 5px 15px; background-color: #6c757d; color: white; text-decoration: none; border-radius: 4px;">Clear User-Agent Filter</a>
+                <a href="/logs${statusCodeFilter || toolFilter ? `?${statusCodeFilter ? `status_code=${statusCodeFilter}` : ""}${statusCodeFilter && toolFilter ? "&" : ""}${toolFilter ? `tool=${encodeURIComponent(toolFilter)}` : ""}` : ""}" style="margin-left: 15px; padding: 5px 15px; background-color: #6c757d; color: white; text-decoration: none; border-radius: 4px;">Clear User-Agent Filter</a>
             </div>
-            ` : ''}
+            `
+                : ""
+            }
 
             <div class="summary-grid">
                 <div class="summary-card">
                     <h4>Status Codes</h4>
                     <div class="code-summary">
                         ${Object.entries(statusCodeSummary)
-                          .sort(([,a], [,b]) => b - a)
-                          .map(([code, count]) => `
+                          .sort(([, a], [, b]) => b - a)
+                          .map(
+                            ([code, count]) => `
                         <a href="/logs?status_code=${code}" class="code-entry" style="border-left-color: ${getStatusColor(Number(code))}; text-decoration: none; color: inherit; display: block; transition: background-color 0.2s ease;">
                             ${code}: ${count}
                         </a>
-                        `).join('')}
+                        `,
+                          )
+                          .join("")}
                     </div>
                 </div>
 
@@ -253,13 +262,16 @@ export const renderLogs = (data: LogsData): string => {
                     <h4>Most Used Tools</h4>
                     <div class="tool-summary">
                         ${Object.entries(toolSummary)
-                          .sort(([,a], [,b]) => b - a)
+                          .sort(([, a], [, b]) => b - a)
                           .slice(0, 8)
-                          .map(([tool, count]) => `
+                          .map(
+                            ([tool, count]) => `
                         <a href="/logs?tool=${encodeURIComponent(tool)}" class="tool-entry" style="text-decoration: none; color: inherit; display: block; transition: background-color 0.2s ease;">
                             ${tool}: ${count}
                         </a>
-                        `).join('')}
+                        `,
+                          )
+                          .join("")}
                     </div>
                 </div>
 
@@ -267,13 +279,16 @@ export const renderLogs = (data: LogsData): string => {
                     <h4>User Agents</h4>
                     <div class="tool-summary">
                         ${Object.entries(userAgentSummary)
-                          .sort(([,a], [,b]) => b - a)
+                          .sort(([, a], [, b]) => b - a)
                           .slice(0, 8)
-                          .map(([userAgent, count]) => `
+                          .map(
+                            ([userAgent, count]) => `
                         <a href="/logs?user_agent=${encodeURIComponent(userAgent)}" class="tool-entry" style="text-decoration: none; color: inherit; display: block; transition: background-color 0.2s ease;">
                             ${userAgent}: ${count}
                         </a>
-                        `).join('')}
+                        `,
+                          )
+                          .join("")}
                     </div>
                 </div>
             </div>
@@ -291,14 +306,16 @@ export const renderLogs = (data: LogsData): string => {
                 </tr>
             </thead>
             <tbody>
-                ${lastEntries.map(entry => `
+                ${lastEntries
+                  .map(
+                    (entry) => `
                 <tr>
                     <td class="timestamp">${formatTimestamp(entry.timestamp)}</td>
                     <td>
                         <a href="/tools/${encodeURIComponent(entry.toolName)}" class="tool-link">${entry.toolName}</a>
                     </td>
                     <td>
-                        <span class="method-badge method-${(entry.payload?.method || 'unknown').toLowerCase()}">${entry.payload?.method || 'N/A'}</span>
+                        <span class="method-badge method-${(entry.payload?.method || "unknown").toLowerCase()}">${entry.payload?.method || "N/A"}</span>
                     </td>
                     <td>
                         <span class="status-code" style="color: ${getStatusColor(entry.return_code)};">
@@ -306,9 +323,11 @@ export const renderLogs = (data: LogsData): string => {
                         </span>
                     </td>
                     <td class="endpoint">${entry.endpoint}</td>
-                    <td class="user-agent">${entry.userAgent || 'N/A'}</td>
+                    <td class="user-agent">${entry.userAgent || "N/A"}</td>
                 </tr>
-                `).join('')}
+                `,
+                  )
+                  .join("")}
             </tbody>
         </table>
     </div>

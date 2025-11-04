@@ -1,10 +1,11 @@
-import { ToolWithSize } from '../index.js';
+import { AAPMcpToolDefinition } from "../openapi-loader.js";
+import { renderHeader, getHeaderStyles } from "../header.js";
 
 interface CategoryData {
   name: string;
   displayName: string;
   description: string;
-  tools: ToolWithSize[];
+  tools: AAPMcpToolDefinition[];
   color: string;
   toolCount: number;
   totalSize: number;
@@ -12,18 +13,20 @@ interface CategoryData {
 
 interface CategoriesOverviewData {
   categories: CategoryData[];
-  allTools: ToolWithSize[];
+  allTools: AAPMcpToolDefinition[];
 }
 
 interface CategoryToolsData {
   categoryName: string;
   displayName: string;
-  filteredTools: ToolWithSize[];
+  filteredTools: AAPMcpToolDefinition[];
   totalSize: number;
   allCategories: Record<string, string[]>;
 }
 
-export const renderCategoriesOverview = (data: CategoriesOverviewData): string => {
+export const renderCategoriesOverview = (
+  data: CategoriesOverviewData,
+): string => {
   const { categories, allTools } = data;
 
   return `
@@ -40,7 +43,7 @@ export const renderCategoriesOverview = (data: CategoriesOverviewData): string =
             background-color: #f5f5f5;
         }
         .container {
-            max-width: 1000px;
+            max-width: 1300px;
             margin: 0 auto;
             background-color: white;
             padding: 20px;
@@ -52,21 +55,7 @@ export const renderCategoriesOverview = (data: CategoriesOverviewData): string =
             border-bottom: 2px solid #007acc;
             padding-bottom: 10px;
         }
-        .navigation {
-            margin-bottom: 30px;
-        }
-        .nav-link {
-            background-color: #6c757d;
-            color: white;
-            padding: 6px 12px;
-            text-decoration: none;
-            border-radius: 4px;
-            margin-right: 10px;
-            font-size: 0.9em;
-        }
-        .nav-link:hover {
-            background-color: #5a6268;
-        }
+        ${getHeaderStyles()}
         .category-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
@@ -141,10 +130,7 @@ export const renderCategoriesOverview = (data: CategoriesOverviewData): string =
     <div class="container">
         <h1>Categories Overview</h1>
 
-        <div class="navigation">
-            <a href="/tools" class="nav-link">All Tools</a>
-            <a href="/export/tools/csv" class="nav-link">Download CSV</a>
-        </div>
+        ${renderHeader()}
 
         <div class="summary">
             <h2>System Summary</h2>
@@ -152,7 +138,9 @@ export const renderCategoriesOverview = (data: CategoriesOverviewData): string =
         </div>
 
         <div class="category-grid">
-            ${categories.map(category => `
+            ${categories
+              .map(
+                (category) => `
             <a href="/category/${category.name}" class="category-card">
                 <div class="category-header">
                     <div class="category-icon" style="background-color: ${category.color};">
@@ -172,7 +160,9 @@ export const renderCategoriesOverview = (data: CategoriesOverviewData): string =
                     </div>
                 </div>
             </a>
-            `).join('')}
+            `,
+              )
+              .join("")}
         </div>
     </div>
 </body>
@@ -180,15 +170,20 @@ export const renderCategoriesOverview = (data: CategoriesOverviewData): string =
 };
 
 export const renderCategoryTools = (data: CategoryToolsData): string => {
-  const { categoryName, displayName, filteredTools, totalSize, allCategories } = data;
+  const { categoryName, displayName, filteredTools, totalSize, allCategories } =
+    data;
 
-  const toolRows = filteredTools.map(tool => `
+  const toolRows = filteredTools
+    .map(
+      (tool) => `
     <tr>
       <td><a href="/tools/${encodeURIComponent(tool.name)}" style="color: #007acc; text-decoration: none;">${tool.name}</a></td>
       <td>${tool.size}</td>
-      <td><span class="service-${tool.service || 'unknown'}">${tool.service || 'unknown'}</span></td>
+      <td><span class="service-${tool.service || "unknown"}">${tool.service || "unknown"}</span></td>
     </tr>
-  `).join('');
+  `,
+    )
+    .join("");
 
   return `
 <!DOCTYPE html>
@@ -204,7 +199,7 @@ export const renderCategoryTools = (data: CategoryToolsData): string => {
             background-color: #f5f5f5;
         }
         .container {
-            max-width: 1200px;
+            max-width: 1560px;
             margin: 0 auto;
             background-color: white;
             padding: 20px;
@@ -225,10 +220,13 @@ export const renderCategoryTools = (data: CategoryToolsData): string => {
             font-size: 0.9em;
             margin-left: 10px;
         }
-        .navigation {
-            margin-bottom: 30px;
+        ${getHeaderStyles()}
+        .category-nav {
+            margin-bottom: 20px;
+            padding: 15px 0;
+            border-bottom: 1px solid #dee2e6;
         }
-        .nav-link {
+        .category-nav-link {
             background-color: #6c757d;
             color: white;
             padding: 6px 12px;
@@ -237,10 +235,10 @@ export const renderCategoryTools = (data: CategoryToolsData): string => {
             margin-right: 10px;
             font-size: 0.9em;
         }
-        .nav-link:hover {
+        .category-nav-link:hover {
             background-color: #5a6268;
         }
-        .nav-link.active {
+        .category-nav-link.active {
             background-color: #007acc;
         }
         table {
@@ -287,11 +285,16 @@ export const renderCategoryTools = (data: CategoryToolsData): string => {
     <div class="container">
         <h1>${displayName} Category Tools<span class="category-badge">${filteredTools.length} tools</span></h1>
 
-        <div class="navigation">
-            ${Object.keys(allCategories).map(name => `
-            <a href="/category/${name}" class="nav-link ${categoryName === name ? 'active' : ''}">${name.charAt(0).toUpperCase() + name.slice(1)}</a>
-            `).join('')}
-            <a href="/tools" class="nav-link">All Tools</a>
+        ${renderHeader()}
+
+        <div class="category-nav">
+            ${Object.keys(allCategories)
+              .map(
+                (name) => `
+            <a href="/category/${name}" class="category-nav-link ${categoryName === name ? "active" : ""}">${name.charAt(0).toUpperCase() + name.slice(1)}</a>
+            `,
+              )
+              .join("")}
         </div>
 
         <div class="stats">
@@ -300,11 +303,14 @@ export const renderCategoryTools = (data: CategoryToolsData): string => {
             <strong>Total Size:</strong> ${totalSize.toLocaleString()} characters
         </div>
 
-        ${filteredTools.length === 0 ? `
+        ${
+          filteredTools.length === 0
+            ? `
         <div class="empty-state">
             <p>No tools are available for the ${displayName} category.</p>
         </div>
-        ` : `
+        `
+            : `
         <table>
             <thead>
                 <tr>
@@ -317,7 +323,8 @@ export const renderCategoryTools = (data: CategoryToolsData): string => {
                 ${toolRows}
             </tbody>
         </table>
-        `}
+        `
+        }
     </div>
 </body>
 </html>`;

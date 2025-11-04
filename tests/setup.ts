@@ -3,19 +3,19 @@
  * This file runs before all tests and sets up the testing environment
  */
 
-import { vi } from 'vitest';
+import { vi } from "vitest";
 
 // Mock environment variables for testing
-process.env.NODE_ENV = 'test';
-process.env.BASE_URL = 'https://test.example.com';
-process.env.BEARER_TOKEN = 'test-token';
-process.env.RECORD_API_QUERIES = 'false';
-process.env.ENABLE_UI = 'true';
-process.env.IGNORE_CERTIFICATE_ERRORS = 'true';
+process.env.NODE_ENV = "test";
+process.env.BASE_URL = "https://test.example.com";
+process.env.BEARER_TOKEN = "test-token";
+process.env.RECORD_API_QUERIES = "false";
+process.env.ENABLE_UI = "true";
+process.env.IGNORE_CERTIFICATE_ERRORS = "true";
 
 // Global mocks
-vi.mock('fs', async () => {
-  const actual = await vi.importActual('fs');
+vi.mock("fs", async () => {
+  const actual = await vi.importActual("fs");
   return {
     ...actual,
     readFileSync: vi.fn(),
@@ -25,23 +25,23 @@ vi.mock('fs', async () => {
       readFile: vi.fn(),
       writeFile: vi.fn(),
       access: vi.fn(),
-    }
+    },
   };
 });
 
 // Mock yaml module
-vi.mock('js-yaml', () => ({
+vi.mock("js-yaml", () => ({
   load: vi.fn(),
   dump: vi.fn(),
 }));
 
 // Mock dotenv
-vi.mock('dotenv', () => ({
+vi.mock("dotenv", () => ({
   config: vi.fn(),
 }));
 
 // Mock express
-vi.mock('express', () => {
+vi.mock("express", () => {
   const mockApp = {
     use: vi.fn(),
     get: vi.fn(),
@@ -59,7 +59,7 @@ vi.mock('express', () => {
 });
 
 // Mock CORS
-vi.mock('cors', () => ({
+vi.mock("cors", () => ({
   default: vi.fn(),
 }));
 
