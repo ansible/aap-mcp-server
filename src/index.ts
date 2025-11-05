@@ -461,8 +461,9 @@ server.setRequestHandler(ListToolsRequestSchema, async (request, extra) => {
   const overrideInfo = categoryOverride
     ? ` (override: ${categoryOverride})`
     : "";
+  const sessionIdShort = sessionId ? sessionId.substring(0, 8) : "none";
   console.log(
-    `Returning ${filteredTools.length} tools for ${categoryType} category${overrideInfo} (session: ${sessionId || "none"})`,
+    `[session:${sessionIdShort}] Returning ${filteredTools.length} tools for ${categoryType} category${overrideInfo}`,
   );
 
   return {
