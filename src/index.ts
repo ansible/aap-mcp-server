@@ -574,6 +574,10 @@ server.setRequestHandler(CallToolRequestSchema, async (request, extra) => {
       result = await response.text();
     }
 
+    // Log response with timing
+    const duration = ((Date.now() - _startTime) / 1000).toFixed(2);
+    console.log(`[category:${toolCategory}] ${tool.name} → ${response.status} ${response.statusText} (${duration}s)`)
+
     // Log the tool access (only if recording is enabled)
     if (recordApiQueries && toolLogger) {
       // Add category information to the tool for metrics
@@ -607,6 +611,11 @@ server.setRequestHandler(CallToolRequestSchema, async (request, extra) => {
       ],
     };
   } catch (error) {
+    // Log the error with timing
+    const duration = ((Date.now() - _startTime) / 1000).toFixed(2);
+    const statusInfo = response ? `${response.status} ${response.statusText}` : 'No Response';
+    console.error(`[category:${toolCategory}] ${tool.name} → ${statusInfo} (${duration}s) - ERROR: ${error instanceof Error ? error.message : String(error)}`);
+
     // Log the failed tool access (only if recording is enabled)
     if (recordApiQueries && toolLogger) {
       // Add category information to the tool for metrics
