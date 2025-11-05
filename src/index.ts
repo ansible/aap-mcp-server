@@ -494,6 +494,9 @@ server.setRequestHandler(CallToolRequestSchema, async (request, extra) => {
   const { name, arguments: args = {} } = request.params;
   const _startTime = Date.now();
 
+  // Generate correlation ID for this request
+  const correlationId = randomUUID().substring(0, 8);
+
   // Find the matching tool
   const tool = allTools.find((t) => t.name === name);
   if (!tool) {
@@ -505,6 +508,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request, extra) => {
 
   // Get the session ID from the transport context
   const sessionId = extra?.sessionId;
+  const sessionIdShort = sessionId ? sessionId.substring(0, 8) : "none";
 
   // Get user-agent from transport (if available)
   let userAgent = "unknown";
@@ -564,7 +568,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request, extra) => {
 
     // Make HTTP request
     fullUrl = `${CONFIG.BASE_URL}${url}`;
-    console.log(`[category:${toolCategory}] ${tool.name} → ${tool.method.toUpperCase()} ${fullUrl}`);
+    console.log(`[req:${correlationId}|session:${sessionIdShort}|category:${toolCategory}] ${tool.name} → ${tool.method.toUpperCase()} ${fullUrl}`);
     response = await fetch(fullUrl, requestOptions);
 
     const contentType = response.headers.get("content-type");
@@ -576,7 +580,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request, extra) => {
 
     // Log response with timing
     const duration = ((Date.now() - _startTime) / 1000).toFixed(2);
-    console.log(`[category:${toolCategory}] ${tool.name} → ${response.status} ${response.statusText} (${duration}s)`)
+    console.log(`[req:${correlationId}|session:${sessionIdShort}|category:${toolCategory}] ${tool.name} → ${response.status} ${response.statusText} (${duration}s)`)
 
     // Log the tool access (only if recording is enabled)
     if (recordApiQueries && toolLogger) {
@@ -614,7 +618,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request, extra) => {
     // Log the error with timing
     const duration = ((Date.now() - _startTime) / 1000).toFixed(2);
     const statusInfo = response ? `${response.status} ${response.statusText}` : 'No Response';
-    console.error(`[category:${toolCategory}] ${tool.name} → ${statusInfo} (${duration}s) - ERROR: ${error instanceof Error ? error.message : String(error)}`);
+    console.error(`[req:${correlationId}|session:${sessionIdShort}|category:${toolCategory}] ${tool.name} → ${statusInfo} (${duration}s) - ERROR: ${error instanceof Error ? error.message : String(error)}`);
 
     // Log the failed tool access (only if recording is enabled)
     if (recordApiQueries && toolLogger) {
@@ -667,7 +671,8 @@ const mcpPostHandler = async (
   const authHeader = req.headers["authorization"] as string;
 
   if (sessionId) {
-    console.log(`Received MCP request for session: ${sessionId}`);
+    const sessionIdShort = sessionId.substring(0, 8);
+    console.log(`[session:${sessionIdShort}] Received MCP request`);
   } else {
     console.log("Request body:", req.body);
   }
@@ -683,8 +688,9 @@ const mcpPostHandler = async (
       transport = new StreamableHTTPServerTransport({
         sessionIdGenerator: () => randomUUID(),
         onsessioninitialized: async (sessionId: string) => {
+          const sessionIdShort = sessionId.substring(0, 8);
           console.log(
-            `Session initialized with ID: ${sessionId}${categoryOverride ? ` with category override: ${categoryOverride}` : ""}`,
+            `[session:${sessionIdShort}] Session initialized${categoryOverride ? ` with category override: ${categoryOverride}` : ""}`,
           );
           transports[sessionId] = transport;
 
@@ -703,14 +709,14 @@ const mcpPostHandler = async (
               storeSessionData(sessionId, token, permissions);
             } catch (error) {
               console.error(
-                `Failed to validate token for session ${sessionId}:`,
+                `[session:${sessionIdShort}] Failed to validate token:`,
                 error,
               );
               // Token validation failed, we cannot create the session without valid token
               throw error;
             }
           } else {
-            console.warn(`No bearer token provided for session ${sessionId}`);
+            console.warn(`[session:${sessionIdShort}] No bearer token provided`);
           }
         },
       });
@@ -719,14 +725,15 @@ const mcpPostHandler = async (
       transport.onclose = () => {
         const sid = transport.sessionId;
         if (sid && transports[sid]) {
+          const sidShort = sid.substring(0, 8);
           console.log(
-            `Transport closed for session ${sid}, removing from transports map`,
+            `[session:${sidShort}] Transport closed, removing from transports map`,
           );
           delete transports[sid];
           // Clean up session data
           if (sessionData[sid]) {
             delete sessionData[sid];
-            console.log(`Removed session data for session: ${sid}`);
+            console.log(`[session:${sidShort}] Removed session data`);
           }
         }
       };
@@ -782,10 +789,11 @@ const mcpGetHandler = async (
   // Note: Token updates are not supported in GET requests - tokens are validated only during session initialization
 
   const lastEventId = req.headers["last-event-id"];
+  const sessionIdShort = sessionId.substring(0, 8);
   if (lastEventId) {
-    console.log(`Client reconnecting with Last-Event-ID: ${lastEventId}`);
+    console.log(`[session:${sessionIdShort}] Client reconnecting with Last-Event-ID: ${lastEventId}`);
   } else {
-    console.log(`Establishing a new stream for session ${sessionId}`);
+    console.log(`[session:${sessionIdShort}] Establishing new SSE stream`);
   }
 
   const transport = transports[sessionId];
@@ -805,7 +813,8 @@ const mcpDeleteHandler = async (
     return;
   }
 
-  console.log(`Received session termination request for session ${sessionId}`);
+  const sessionIdShort = sessionId.substring(0, 8);
+  console.log(`[session:${sessionIdShort}] Received session termination request`);
 
   try {
     const transport = transports[sessionId];
@@ -814,7 +823,7 @@ const mcpDeleteHandler = async (
     // Clean up session data when session is terminated
     if (sessionData[sessionId]) {
       delete sessionData[sessionId];
-      console.log(`Removed session data for terminated session: ${sessionId}`);
+      console.log(`[session:${sessionIdShort}] Removed session data for terminated session`);
     }
   } catch (error) {
     console.error("Error handling session termination:", error);
@@ -1491,7 +1500,8 @@ process.on("SIGINT", async () => {
   // Close all active transports
   for (const sessionId in transports) {
     try {
-      console.log(`Closing transport for session ${sessionId}`);
+      const sessionIdShort = sessionId.substring(0, 8);
+      console.log(`[session:${sessionIdShort}] Closing transport during shutdown`);
       await transports[sessionId].close();
       delete transports[sessionId];
       // Clean up session data
@@ -1499,7 +1509,8 @@ process.on("SIGINT", async () => {
         delete sessionData[sessionId];
       }
     } catch (error) {
-      console.error(`Error closing transport for session ${sessionId}:`, error);
+      const sessionIdShort = sessionId.substring(0, 8);
+      console.error(`[session:${sessionIdShort}] Error closing transport:`, error);
     }
   }
 
