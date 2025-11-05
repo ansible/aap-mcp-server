@@ -89,9 +89,6 @@ const CONFIG = {
 // Log entries size limit for /logs endpoint
 const logEntriesSizeLimit = 10000;
 
-// Log configuration settings
-console.log(`BASE_URL: ${CONFIG.BASE_URL}`);
-
 // Helper function to get boolean configuration with environment variable override
 const getBooleanConfig = (
   envVar: string,
@@ -107,27 +104,17 @@ const recordApiQueries = getBooleanConfig(
   "RECORD_API_QUERIES",
   localConfig.record_api_queries,
 );
-console.log(
-  `API query recording: ${recordApiQueries ? "ENABLED" : "DISABLED"}`,
-);
 
 const ignoreCertificateErrors = getBooleanConfig(
   "IGNORE_CERTIFICATE_ERRORS",
   localConfig["ignore-certificate-errors"],
 );
-console.log(
-  `Certificate validation: ${ignoreCertificateErrors ? "DISABLED" : "ENABLED"}`,
-);
 
 const enableUI = getBooleanConfig("ENABLE_UI", localConfig.enable_ui);
-console.log(`Web UI: ${enableUI ? "ENABLED" : "DISABLED"}`);
 
 const allowWriteOperations = getBooleanConfig(
   "ALLOW_WRITE_OPERATIONS",
   localConfig.allow_write_operations,
-);
-console.log(
-  `Write operations (POST/DELETE/PATCH): ${allowWriteOperations ? "ENABLED" : "DISABLED"}`,
 );
 
 // Initialize allowed operations list based on configuration
@@ -137,9 +124,6 @@ const allowedOperations = allowWriteOperations
 
 // Get services configuration
 const servicesConfig = localConfig.services || [];
-console.log(
-  `Services configured: ${servicesConfig.length > 0 ? servicesConfig.map((s) => s.name).join(", ") : "none"}`,
-);
 
 // Configure HTTPS certificate validation globally
 if (ignoreCertificateErrors) {
@@ -303,7 +287,7 @@ const generateTools = async (): Promise<AAPMcpToolDefinition[]> => {
   let rawToolList: AAPMcpToolDefinition[] = [];
 
   for (const spec of openApiSpecs) {
-    console.log(`Loading ${spec.service}`);
+    console.log(`  Loading ${spec.service}...`);
     let oas = new OASNormalize(spec.spec);
     const derefedDocument = await oas.deref();
     oas = new OASNormalize(derefedDocument);
@@ -1459,14 +1443,29 @@ if (enableMetrics) {
       res.status(500).send("Error generating metrics");
     }
   });
-  console.log(`Prometheus metrics: ENABLED`);
-} else {
-  console.log(`Prometheus metrics: DISABLED`);
 }
 
 async function main(): Promise<void> {
+  // Print startup banner
+  console.log("");
+  console.log("═══════════════════════════════════════════════════════════");
+  console.log("           AAP MCP Server Starting");
+  console.log("═══════════════════════════════════════════════════════════");
+  console.log("");
+  console.log("Configuration:");
+  console.log(`  Base URL: ${CONFIG.BASE_URL}`);
+  console.log(`  Services: ${servicesConfig.length > 0 ? servicesConfig.map((s) => s.name).join(", ") : "none"}`);
+  console.log(`  Categories: ${Object.keys(allCategories).length} enabled`);
+  console.log(`  Write operations: ${allowWriteOperations ? "ENABLED" : "DISABLED"}`);
+  console.log(`  API recording: ${recordApiQueries ? "ENABLED" : "DISABLED"}`);
+  console.log(`  Certificate validation: ${ignoreCertificateErrors ? "DISABLED" : "ENABLED"}`);
+  console.log(`  Web UI: ${enableUI ? "ENABLED" : "DISABLED"}`);
+  console.log(`  Metrics: ${enableMetrics ? "ENABLED" : "DISABLED"}`);
+  console.log("");
+  console.log("───────────────────────────────────────────────────────────");
+
   // Initialize tools before starting server
-  console.log("Loading OpenAPI specifications and generating tools...");
+  console.log("Loading OpenAPI specifications...");
   allTools = await generateTools();
   allTools.forEach((tool) => {
     if (tool.deprecated)
@@ -1478,18 +1477,38 @@ async function main(): Promise<void> {
     }
   });
 
-  console.log(`Successfully loaded ${allTools.length} tools`);
+  // Count tools by service
+  const toolsByService: Record<string, number> = {};
+  allTools.forEach((tool) => {
+    const service = tool.service || "unknown";
+    toolsByService[service] = (toolsByService[service] || 0) + 1;
+  });
+
+  console.log("");
+  for (const [service, count] of Object.entries(toolsByService)) {
+    console.log(`  ✓ ${service}: ${count} tools`);
+  }
+  console.log("");
+  console.log(`Total tools loaded: ${allTools.length}`);
+  console.log("");
+  console.log("═══════════════════════════════════════════════════════════");
+
   const PORT = process.env.MCP_PORT || 3000;
 
   app.listen(PORT, () => {
-    console.log(`AAP MCP Server running on port ${PORT}`);
-    console.log(`Web UI available at: http://localhost:${PORT}`);
-    console.log(`MCP endpoint available at: http://localhost:${PORT}/mcp`);
-    if (enableMetrics) {
-      console.log(
-        `Metrics endpoint available at: http://localhost:${PORT}/metrics`,
-      );
+    console.log(`Server ready on port ${PORT}`);
+    console.log("");
+    console.log("Available endpoints:");
+    console.log(`  • MCP endpoint: http://localhost:${PORT}/mcp`);
+    if (enableUI) {
+      console.log(`  • Web UI: http://localhost:${PORT}`);
     }
+    if (enableMetrics) {
+      console.log(`  • Metrics: http://localhost:${PORT}/metrics`);
+    }
+    console.log("");
+    console.log("═══════════════════════════════════════════════════════════");
+    console.log("");
   });
 }
 
