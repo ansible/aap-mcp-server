@@ -500,6 +500,9 @@ server.setRequestHandler(CallToolRequestSchema, async (request, extra) => {
     throw new Error(`Unknown tool: ${name}`);
   }
 
+  // Get category for this tool
+  const toolCategory = getCategoryForTool(tool.name);
+
   // Get the session ID from the transport context
   const sessionId = extra?.sessionId;
 
@@ -561,7 +564,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request, extra) => {
 
     // Make HTTP request
     fullUrl = `${CONFIG.BASE_URL}${url}`;
-    console.log(`Calling: ${fullUrl}`);
+    console.log(`[category:${toolCategory}] ${tool.name} → ${tool.method.toUpperCase()} ${fullUrl}`);
     response = await fetch(fullUrl, requestOptions);
 
     const contentType = response.headers.get("content-type");
@@ -576,7 +579,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request, extra) => {
       // Add category information to the tool for metrics
       const toolWithCategory = {
         ...tool,
-        category: getCategoryForTool(tool.name),
+        category: toolCategory,
       };
       await toolLogger.logToolAccess(
         toolWithCategory,
@@ -609,7 +612,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request, extra) => {
       // Add category information to the tool for metrics
       const toolWithCategory = {
         ...tool,
-        category: getCategoryForTool(tool.name),
+        category: toolCategory,
       };
       await toolLogger.logToolAccess(
         toolWithCategory,
