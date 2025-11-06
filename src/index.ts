@@ -473,9 +473,8 @@ server.setRequestHandler(ListToolsRequestSchema, async (request, extra) => {
   const overrideInfo = categoryOverride
     ? ` (override: ${categoryOverride})`
     : "";
-  const sessionIdShort = sessionId ? sessionId.substring(0, 8) : "none";
   console.log(
-    `${getTimestamp()} [session:${sessionIdShort}] Returning ${filteredTools.length} tools for ${categoryType} category${overrideInfo}`,
+    `${getTimestamp()} Returning ${filteredTools.length} tools for ${categoryType} category${overrideInfo}`,
   );
 
   return {
@@ -505,7 +504,6 @@ server.setRequestHandler(CallToolRequestSchema, async (request, extra) => {
 
   // Get the session ID from the transport context
   const sessionId = extra?.sessionId;
-  const sessionIdShort = sessionId ? sessionId.substring(0, 8) : "none";
 
   // Get user-agent from transport (if available)
   let userAgent = "unknown";
@@ -566,7 +564,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request, extra) => {
     // Make HTTP request
     fullUrl = `${CONFIG.BASE_URL}${url}`;
     console.log(
-      `${getTimestamp()} [req:${correlationId}|session:${sessionIdShort}|category:${toolCategory}] ${tool.name} → ${tool.method.toUpperCase()} ${fullUrl}`,
+      `${getTimestamp()} [req:${correlationId}|category:${toolCategory}] ${tool.name} → ${tool.method.toUpperCase()} ${fullUrl}`,
     );
     response = await fetch(fullUrl, requestOptions);
 
@@ -580,7 +578,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request, extra) => {
     // Log response with timing
     const duration = ((Date.now() - _startTime) / 1000).toFixed(2);
     console.log(
-      `${getTimestamp()} [req:${correlationId}|session:${sessionIdShort}|category:${toolCategory}] ${tool.name} → ${response.status} ${response.statusText} (${duration}s)`,
+      `${getTimestamp()} [req:${correlationId}|category:${toolCategory}] ${tool.name} → ${response.status} ${response.statusText} (${duration}s)`,
     );
 
     // Log the tool access (only if recording is enabled)
@@ -622,7 +620,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request, extra) => {
       ? `${response.status} ${response.statusText}`
       : "No Response";
     console.error(
-      `${getTimestamp()} [req:${correlationId}|session:${sessionIdShort}|category:${toolCategory}] ${tool.name} → ${statusInfo} (${duration}s) - ERROR: ${error instanceof Error ? error.message : String(error)}`,
+      `${getTimestamp()} [req:${correlationId}|category:${toolCategory}] ${tool.name} → ${statusInfo} (${duration}s) - ERROR: ${error instanceof Error ? error.message : String(error)}`,
     );
 
     // Log the failed tool access (only if recording is enabled)
@@ -676,10 +674,7 @@ const mcpPostHandler = async (
   const authHeader = req.headers["authorization"] as string;
 
   if (sessionId) {
-    const sessionIdShort = sessionId.substring(0, 8);
-    console.log(
-      `${getTimestamp()} [session:${sessionIdShort}] Received MCP request`,
-    );
+    console.log(`${getTimestamp()} Received MCP request`);
   } else {
     console.log(`${getTimestamp()} Request body:`, req.body);
   }
@@ -695,9 +690,8 @@ const mcpPostHandler = async (
       transport = new StreamableHTTPServerTransport({
         sessionIdGenerator: () => randomUUID(),
         onsessioninitialized: async (sessionId: string) => {
-          const sessionIdShort = sessionId.substring(0, 8);
           console.log(
-            `${getTimestamp()} [session:${sessionIdShort}] Session initialized${categoryOverride ? ` with category override: ${categoryOverride}` : ""}`,
+            `${getTimestamp()} Session initialized${categoryOverride ? ` with category override: ${categoryOverride}` : ""}`,
           );
           transports[sessionId] = transport;
 
@@ -716,16 +710,14 @@ const mcpPostHandler = async (
               storeSessionData(sessionId, token, permissions);
             } catch (error) {
               console.error(
-                `${getTimestamp()} [session:${sessionIdShort}] Failed to validate token:`,
+                `${getTimestamp()} Failed to validate token:`,
                 error,
               );
               // Token validation failed, we cannot create the session without valid token
               throw error;
             }
           } else {
-            console.warn(
-              `${getTimestamp()} [session:${sessionIdShort}] No bearer token provided`,
-            );
+            console.warn(`${getTimestamp()} No bearer token provided`);
           }
         },
       });
@@ -734,17 +726,14 @@ const mcpPostHandler = async (
       transport.onclose = () => {
         const sid = transport.sessionId;
         if (sid && transports[sid]) {
-          const sidShort = sid.substring(0, 8);
           console.log(
-            `${getTimestamp()} [session:${sidShort}] Transport closed, removing from transports map`,
+            `${getTimestamp()} Transport closed, removing from transports map`,
           );
           delete transports[sid];
           // Clean up session data
           if (sessionData[sid]) {
             delete sessionData[sid];
-            console.log(
-              `${getTimestamp()} [session:${sidShort}] Removed session data`,
-            );
+            console.log(`${getTimestamp()} Removed session data`);
           }
         }
       };
@@ -800,15 +789,12 @@ const mcpGetHandler = async (
   // Note: Token updates are not supported in GET requests - tokens are validated only during session initialization
 
   const lastEventId = req.headers["last-event-id"];
-  const sessionIdShort = sessionId.substring(0, 8);
   if (lastEventId) {
     console.log(
-      `${getTimestamp()} [session:${sessionIdShort}] Client reconnecting with Last-Event-ID: ${lastEventId}`,
+      `${getTimestamp()} Client reconnecting with Last-Event-ID: ${lastEventId}`,
     );
   } else {
-    console.log(
-      `${getTimestamp()} [session:${sessionIdShort}] Establishing new SSE stream`,
-    );
+    console.log(`${getTimestamp()} Establishing new SSE stream`);
   }
 
   const transport = transports[sessionId];
@@ -828,10 +814,7 @@ const mcpDeleteHandler = async (
     return;
   }
 
-  const sessionIdShort = sessionId.substring(0, 8);
-  console.log(
-    `${getTimestamp()} [session:${sessionIdShort}] Received session termination request`,
-  );
+  console.log(`${getTimestamp()} Received session termination request`);
 
   try {
     const transport = transports[sessionId];
@@ -841,7 +824,7 @@ const mcpDeleteHandler = async (
     if (sessionData[sessionId]) {
       delete sessionData[sessionId];
       console.log(
-        `${getTimestamp()} [session:${sessionIdShort}] Removed session data for terminated session`,
+        `${getTimestamp()} Removed session data for terminated session`,
       );
     }
   } catch (error) {
@@ -1593,10 +1576,7 @@ process.on("SIGINT", async () => {
   // Close all active transports
   for (const sessionId in transports) {
     try {
-      const sessionIdShort = sessionId.substring(0, 8);
-      console.log(
-        `${getTimestamp()} [session:${sessionIdShort}] Closing transport during shutdown`,
-      );
+      console.log(`${getTimestamp()} Closing transport during shutdown`);
       await transports[sessionId].close();
       delete transports[sessionId];
       // Clean up session data
@@ -1604,11 +1584,7 @@ process.on("SIGINT", async () => {
         delete sessionData[sessionId];
       }
     } catch (error) {
-      const sessionIdShort = sessionId.substring(0, 8);
-      console.error(
-        `${getTimestamp()} [session:${sessionIdShort}] Error closing transport:`,
-        error,
-      );
+      console.error(`${getTimestamp()} Error closing transport:`, error);
     }
   }
 
