@@ -25954,7 +25954,6 @@
                     },
                     "organization": {
                         "type": "integer",
-                        "readOnly": true,
                         "description": "The organization of this team."
                     },
                     "description": {
@@ -28462,7 +28461,7 @@
             "SessionAuthentication": {
                 "type": "apiKey",
                 "in": "cookie",
-                "name": "gateway_sessionid"
+                "name": "gateway_sessionid44926"
             }
         }
     }
