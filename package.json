@@ -27,6 +27,7 @@
     "@modelcontextprotocol/sdk": "^1.18.1",
     "@types/js-yaml": "^4.0.9",
     "@types/node": "^24.5.2",
+    "compression": "^1.8.1",
     "cors": "^2.8.5",
     "dotenv": "^17.2.2",
     "js-yaml": "^4.1.0",

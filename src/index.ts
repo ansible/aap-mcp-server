@@ -5,6 +5,7 @@ import { config } from "dotenv";
 import express from "express";
 import cors from "cors";
 import { randomUUID } from "node:crypto";
+import http from "http";
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import {
@@ -49,6 +50,10 @@ import { tokenCache } from "./token-cache.js";
 
 // Load environment variables
 config();
+
+// Configure Node.js HTTP global agent for better concurrency
+http.globalAgent.maxSockets = 100; // Increase max concurrent connections
+http.globalAgent.maxFreeSockets = 10; // Keep some sockets alive
 
 type Category = string[];
 
@@ -653,7 +658,40 @@ const sessionData: SessionData = {};
 let activeInitializations = 0;
 let peakConcurrentInitializations = 0;
 
+// Mutex for server.connect() to prevent concurrent connection issues
+let serverConnectMutex = Promise.resolve();
+const acquireServerConnectLock = async (): Promise<() => void> => {
+  let release: () => void;
+  const newMutex = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+
+  const currentMutex = serverConnectMutex;
+  serverConnectMutex = newMutex;
+
+  await currentMutex;
+
+  return release!;
+};
+
 const app = express();
+
+// Track all incoming requests for debugging
+let totalRequests = 0;
+const requestsByCategory = new Map<string, number>();
+
+app.use((req, res, next) => {
+  totalRequests++;
+  const categoryMatch = req.url.match(/\/(\w+)\/mcp/);
+  const category = categoryMatch ? categoryMatch[1] : 'base';
+  requestsByCategory.set(category, (requestsByCategory.get(category) || 0) + 1);
+
+  console.log(
+    `${getTimestamp()} [REQ #${totalRequests}] ${req.method} ${req.url} (category: ${category}, total for ${category}: ${requestsByCategory.get(category)})`
+  );
+  next();
+});
+
 app.use(express.json());
 
 // Allow CORS for all domains, expose the Mcp-Session-Id header
@@ -767,23 +805,44 @@ const mcpPostHandler = async (
 
       // Connect the transport to the MCP server BEFORE handling the request
       try {
+        // Acquire lock to serialize server.connect() calls
         const connectStartTime = Date.now();
         console.log(
-          `${getTimestamp()} [INIT] Connecting transport for category: ${categoryOverride || "default"}`,
+          `${getTimestamp()} [INIT] Waiting for connection lock for category: ${categoryOverride || "default"}`,
         );
-        await server.connect(transport);
+        const releaseLock = await acquireServerConnectLock();
+        const lockWaitDuration = Date.now() - connectStartTime;
+        console.log(
+          `${getTimestamp()} [INIT] Lock acquired (waited ${lockWaitDuration}ms), connecting transport for category: ${categoryOverride || "default"}`,
+        );
+
+        try {
+          await server.connect(transport);
+        } finally {
+          releaseLock();
+        }
+
         const connectDuration = Date.now() - connectStartTime;
         console.log(
-          `${getTimestamp()} [INIT] Transport connected (${connectDuration}ms)`,
+          `${getTimestamp()} [INIT] Transport connected (${connectDuration}ms total, lock wait: ${lockWaitDuration}ms)`,
         );
 
         const handleStartTime = Date.now();
+        console.log(
+          `${getTimestamp()} [INIT] Calling handleRequest for category: ${categoryOverride || "default"}`,
+        );
+
+        // Set response headers before handling
+        res.setHeader("Cache-Control", "no-cache");
+        res.setHeader("X-MCP-Category", categoryOverride || "default");
+
         await transport.handleRequest(req, res, req.body);
+
         const handleDuration = Date.now() - handleStartTime;
         const totalDuration = Date.now() - initStartTime;
         activeInitializations--;
         console.log(
-          `${getTimestamp()} [INIT] Request handled for category: ${categoryOverride || "default"} (handle: ${handleDuration}ms, total: ${totalDuration}ms, active: ${activeInitializations})`,
+          `${getTimestamp()} [INIT] Request handled for category: ${categoryOverride || "default"} (handle: ${handleDuration}ms, total: ${totalDuration}ms, active: ${activeInitializations}, response ended: ${res.writableEnded})`,
         );
       } catch (error) {
         const totalDuration = Date.now() - initStartTime;
@@ -809,7 +868,13 @@ const mcpPostHandler = async (
     }
 
     // Handle the request with existing transport
+    console.log(
+      `${getTimestamp()} [MCP] Handling request for existing session (category: ${(transport as any).categoryOverride || "unknown"})`,
+    );
     await transport.handleRequest(req, res, req.body);
+    console.log(
+      `${getTimestamp()} [MCP] Request handled for session (response ended: ${res.writableEnded})`,
+    );
   } catch (error) {
     console.error(`${getTimestamp()} Error handling MCP request:`, error);
     if (!res.headersSent) {
@@ -835,23 +900,33 @@ const mcpGetHandler = async (
   const _authHeader = req.headers["authorization"] as string;
 
   if (!sessionId || !transports[sessionId]) {
+    console.error(
+      `${getTimestamp()} [SSE] Invalid or missing session ID: ${sessionId}, available sessions: ${Object.keys(transports).length}`,
+    );
     res.status(400).send("Invalid or missing session ID");
     return;
   }
 
   // Note: Token updates are not supported in GET requests - tokens are validated only during session initialization
 
+  const transport = transports[sessionId];
+  const category = (transport as any).categoryOverride || "unknown";
+
   const lastEventId = req.headers["last-event-id"];
   if (lastEventId) {
     console.log(
-      `${getTimestamp()} Client reconnecting with Last-Event-ID: ${lastEventId}`,
+      `${getTimestamp()} [SSE] Client reconnecting with Last-Event-ID: ${lastEventId} (category: ${category})`,
     );
   } else {
-    console.log(`${getTimestamp()} Establishing new SSE stream`);
+    console.log(
+      `${getTimestamp()} [SSE] Establishing new SSE stream (category: ${category}, session: ${sessionId.substring(0, 8)})`,
+    );
   }
 
-  const transport = transports[sessionId];
   await transport.handleRequest(req, res);
+  console.log(
+    `${getTimestamp()} [SSE] Stream request handled (category: ${category})`,
+  );
 };
 
 // MCP DELETE endpoint for session termination
@@ -1605,7 +1680,7 @@ async function main(): Promise<void> {
 
   const PORT = process.env.MCP_PORT || 3000;
 
-  app.listen(PORT, () => {
+  const server = app.listen(PORT, () => {
     console.log(`Server ready on port ${PORT}`);
     console.log("");
     console.log("Available endpoints:");
@@ -1619,6 +1694,29 @@ async function main(): Promise<void> {
     console.log("");
     console.log("═══════════════════════════════════════════════════════════");
     console.log("");
+  });
+
+  // Increase max connections and configure timeouts
+  server.maxConnections = 1000; // Allow many concurrent connections
+  server.timeout = 120000; // 2 minute timeout
+  server.keepAliveTimeout = 65000; // Keep connections alive
+  server.headersTimeout = 66000; // Slightly higher than keepAliveTimeout
+
+  // Log connection events
+  server.on('connection', (socket) => {
+    console.log(`${getTimestamp()} [SERVER] New connection (total: ${server.connections || 'unknown'})`);
+
+    socket.on('error', (err) => {
+      console.error(`${getTimestamp()} [SERVER] Socket error:`, err);
+    });
+
+    socket.on('close', () => {
+      console.log(`${getTimestamp()} [SERVER] Connection closed (remaining: ${server.connections || 'unknown'})`);
+    });
+  });
+
+  server.on('error', (err) => {
+    console.error(`${getTimestamp()} [SERVER] Server error:`, err);
   });
 }
 
