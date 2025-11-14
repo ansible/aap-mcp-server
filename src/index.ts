@@ -45,6 +45,7 @@ import {
   type AAPMcpToolDefinition,
   type ServiceConfig,
 } from "./openapi-loader.js";
+import { tokenCache } from "./token-cache.js";
 
 // Load environment variables
 config();
@@ -648,6 +649,10 @@ server.setRequestHandler(CallToolRequestSchema, async (request, extra) => {
 const transports: Record<string, StreamableHTTPServerTransport> = {};
 const sessionData: SessionData = {};
 
+// Track concurrent initializations for debugging
+let activeInitializations = 0;
+let peakConcurrentInitializations = 0;
+
 const app = express();
 app.use(express.json());
 
@@ -682,11 +687,22 @@ const mcpPostHandler = async (
       transport = transports[sessionId];
     } else if (!sessionId && isInitializeRequest(req.body)) {
       // New initialization request
+      activeInitializations++;
+      peakConcurrentInitializations = Math.max(
+        peakConcurrentInitializations,
+        activeInitializations,
+      );
+      const initStartTime = Date.now();
+      console.log(
+        `${getTimestamp()} [INIT] Starting initialization for category: ${categoryOverride || "default"} (active: ${activeInitializations}, peak: ${peakConcurrentInitializations})`,
+      );
+
       transport = new StreamableHTTPServerTransport({
         sessionIdGenerator: () => randomUUID(),
         onsessioninitialized: async (sessionId: string) => {
+          const sessionInitStartTime = Date.now();
           console.log(
-            `${getTimestamp()} Session initialized${categoryOverride ? ` with category override: ${categoryOverride}` : ""}`,
+            `${getTimestamp()} [INIT:${sessionId.substring(0, 8)}] Session initialized for category: ${categoryOverride || "default"}`,
           );
           transports[sessionId] = transport;
 
@@ -698,21 +714,37 @@ const mcpPostHandler = async (
           const token = extractBearerToken(authHeader);
           if (token) {
             try {
-              // Validate token and get user permissions
-              const permissions = await validateTokenAndGetPermissions(token);
+              console.log(
+                `${getTimestamp()} [INIT:${sessionId.substring(0, 8)}] Validating token...`,
+              );
+
+              // Use token cache to prevent duplicate validation requests
+              const permissions = await tokenCache.getOrValidate(
+                token,
+                () => validateTokenAndGetPermissions(token),
+              );
 
               // Store both token and permissions in session data
               storeSessionData(sessionId, token, permissions);
+
+              const sessionInitDuration = Date.now() - sessionInitStartTime;
+              const totalInitDuration = Date.now() - initStartTime;
+              console.log(
+                `${getTimestamp()} [INIT:${sessionId.substring(0, 8)}] Session ready (session init: ${sessionInitDuration}ms, total: ${totalInitDuration}ms)`,
+              );
             } catch (error) {
+              const sessionInitDuration = Date.now() - sessionInitStartTime;
               console.error(
-                `${getTimestamp()} Failed to validate token:`,
+                `${getTimestamp()} [INIT:${sessionId.substring(0, 8)}] Failed to validate token after ${sessionInitDuration}ms:`,
                 error,
               );
               // Token validation failed, we cannot create the session without valid token
               throw error;
             }
           } else {
-            console.warn(`${getTimestamp()} No bearer token provided`);
+            console.warn(
+              `${getTimestamp()} [INIT:${sessionId.substring(0, 8)}] No bearer token provided`,
+            );
           }
         },
       });
@@ -734,8 +766,34 @@ const mcpPostHandler = async (
       };
 
       // Connect the transport to the MCP server BEFORE handling the request
-      await server.connect(transport);
-      await transport.handleRequest(req, res, req.body);
+      try {
+        const connectStartTime = Date.now();
+        console.log(
+          `${getTimestamp()} [INIT] Connecting transport for category: ${categoryOverride || "default"}`,
+        );
+        await server.connect(transport);
+        const connectDuration = Date.now() - connectStartTime;
+        console.log(
+          `${getTimestamp()} [INIT] Transport connected (${connectDuration}ms)`,
+        );
+
+        const handleStartTime = Date.now();
+        await transport.handleRequest(req, res, req.body);
+        const handleDuration = Date.now() - handleStartTime;
+        const totalDuration = Date.now() - initStartTime;
+        activeInitializations--;
+        console.log(
+          `${getTimestamp()} [INIT] Request handled for category: ${categoryOverride || "default"} (handle: ${handleDuration}ms, total: ${totalDuration}ms, active: ${activeInitializations})`,
+        );
+      } catch (error) {
+        const totalDuration = Date.now() - initStartTime;
+        activeInitializations--;
+        console.error(
+          `${getTimestamp()} [INIT] Failed to connect/handle request for category: ${categoryOverride || "default"} after ${totalDuration}ms (active: ${activeInitializations}):`,
+          error,
+        );
+        throw error;
+      }
       return;
     } else {
       // Invalid request - no session ID or not initialization request
