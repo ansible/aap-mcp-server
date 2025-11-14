@@ -222,7 +222,12 @@ export const reformatControllerTool = (
     "/api/v2",
     "/api/controller/v2",
   );
-  tool.name = tool.name.replace(/api_(.+)/, "controller.$1");
+
+  // Remove api_ prefix if it exists (backwards compatibility),
+  // then always prepend controller.
+  tool.name = tool.name.replace(/^api_/, "");
+  tool.name = "controller." + tool.name;
+
   return tool;
 };
 
