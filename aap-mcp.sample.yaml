@@ -49,9 +49,9 @@ categories:
   job_management:
     - controller.job_templates_launch_create
     - controller.workflow_job_templates_launch_create
-    - controller.jobs_read
-    - controller.workflow_jobs_read
-    - controller.jobs_stdout_read
+    - controller.jobs_retrieve
+    - controller.workflow_jobs_retrieve
+    - controller.jobs_stdout_retrieve
     - controller.jobs_job_events_list
     - controller.jobs_cancel_create
     - controller.workflow_jobs_cancel_create
@@ -60,35 +60,35 @@ categories:
     - controller.jobs_list
     - eda.activation_instances_list
     - eda.activation_instances_logs_list
-    - controller.analytics_list
-    - controller.metrics_list
+    - controller.analytics_retrieve
+    - controller.metrics_retrieve
     - controller.projects_list
     - controller.job_templates_list
     - controller.workflow_job_templates_list
-    - controller.job_templates_read
-    - controller.workflow_job_templates_read
+    - controller.job_templates_retrieve
+    - controller.workflow_job_templates_retrieve
 
   inventory_management:
     - controller.inventories_list
     - controller.inventory_sources_update_create
     - controller.hosts_list
-    - controller.hosts_read
-    - controller.hosts_variable_data_read
+    - controller.hosts_retrieve
+    - controller.hosts_variable_data_retrieve
     - controller.groups_list
     - controller.groups_create
 
   system_monitoring:
     - controller.instance_groups_list
     - controller.instance_groups_create
-    - controller.instance_groups_read
-    - controller.mesh_visualizer_list
+    - controller.instance_groups_retrieve
+    - controller.mesh_visualizer_retrieve
     - controller.instances_create
     - gateway.activitystream_list
     - gateway.activitystream_retrieve
     - gateway.authenticators_list
     - controller.activity_stream_list
-    - controller.activity_stream_read
-    - controller.instances_read
+    - controller.activity_stream_retrieve
+    - controller.instances_retrieve
     - gateway.status_retrieve
     - gateway.feature_flags_state_retrieve
 
@@ -134,7 +134,7 @@ categories:
   security_compliance:
     - controller.credentials_list
     - controller.credentials_create
-    - controller.credentials_read
+    - controller.credentials_retrieve
     - controller.credentials_test_create
     - controller.jobs_list
     - gateway.activitystream_list
@@ -143,40 +143,40 @@ categories:
     # - galaxy.collection_import_read
     - controller.credential_types_list
     - controller.credential_types_create
-    - controller.credential_types_read
+    - controller.credential_types_retrieve
     - controller.credential_types_update
-    - controller.credential_types_delete
+    - controller.credential_types_destroy
 
   platform_configuration:
     - controller.settings_list
-    - controller.settings_read
+    - controller.settings_retrieve
     - controller.settings_partial_update
     - gateway.settings_list
     - gateway.settings_getter
     - gateway.settings_update
-    - controller.config_list
+    - controller.config_retrieve
     - controller.config_create
     - controller.notification_templates_list
     - controller.notification_templates_create
-    - controller.notification_templates_read
+    - controller.notification_templates_retrieve
     - controller.notification_templates_update
-    - controller.notification_templates_delete
+    - controller.notification_templates_destroy
     - controller.execution_environments_list
     - controller.execution_environments_create
-    - controller.execution_environments_read
+    - controller.execution_environments_retrieve
     - controller.execution_environments_update
-    - controller.execution_environments_delete
+    - controller.execution_environments_destroy
 
   developer_testing:
     - controller.job_templates_launch_create
     - controller.workflow_job_templates_launch_create
     - controller.jobs_list
-    - controller.jobs_read
+    - controller.jobs_retrieve
     - controller.jobs_job_events_list
     - controller.jobs_job_host_summaries_list
-    - controller.jobs_stdout_read
+    - controller.jobs_stdout_retrieve
     - controller.workflow_jobs_list
-    - controller.workflow_jobs_read
+    - controller.workflow_jobs_retrieve
     - controller.workflow_jobs_workflow_nodes_list
 
   # Categories below this comment have yet to be clarified/validated
@@ -221,9 +221,9 @@ categories:
   # integration:
   #   - controller.notification_templates_list
   #   - controller.notification_templates_create
-  #   - controller.notification_templates_read
+  #   - controller.notification_templates_retrieve
   #   - controller.notification_templates_update
-  #   - controller.notification_templates_delete
+  #   - controller.notification_templates_destroy
   #   - controller.notification_templates_test_create
   #   - controller.job_templates_notification_templates_error_list
   #   - controller.job_templates_notification_templates_started_list
@@ -264,7 +264,7 @@ categories:
   # developer_integration:
   #   - controller.credentials_test_create
   #   - controller.jobs_job_events_list
-  #   - controller.jobs_read
-  #   - controller.instance_groups_read
+  #   - controller.jobs_retrieve
+  #   - controller.instance_groups_retrieve
   #   - controller.job_templates_launch_create
   #   - controller.workflow_job_templates_launch_create
