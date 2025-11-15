@@ -371,6 +371,7 @@ const generateTools = async (): Promise<AAPMcpToolDefinition[]> => {
 
 let allTools: AAPMcpToolDefinition[] = [];
 
+const processUUID = randomUUID();
 // Initialize logger only if recording is enabled
 const toolLogger = recordApiQueries ? new ToolLogger() : null;
 
@@ -832,6 +833,25 @@ const mcpDeleteHandler = async (
     }
   }
 };
+
+async function sendStatusEvent(): null {
+  console.log("---");
+  console.log(`Server process UUID ${processUUID}`);
+  console.log(`Active session ${Object.keys(sessionData).length}`);
+  console.log(`Uptime ${Math.floor(process.uptime())}`);
+  console.log(`Tools ${Object.keys(allTools).length}`);
+  try {
+    await fetch(`${CONFIG.BASE_URL}/`, {
+      headers: {
+        Accept: "application/json",
+      },
+      timeout: 1000,
+    });
+    console.log(`AAP is reachable OK`);
+  } catch (_error) {
+    console.log(`AAP is reachable KO`);
+  }
+}
 
 // Web UI routes (only enabled if enable_ui is true)
 if (enableUI) {
@@ -1546,6 +1566,10 @@ async function main(): Promise<void> {
   console.log("═══════════════════════════════════════════════════════════");
 
   const PORT = process.env.MCP_PORT || 3000;
+
+  const _intervalId: NodeJS.Timeout = setInterval(() => {
+    sendStatusEvent();
+  }, 2000);
 
   app.listen(PORT, () => {
     console.log(`Server ready on port ${PORT}`);
