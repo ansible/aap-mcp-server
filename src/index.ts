@@ -427,59 +427,45 @@ const getAllLogEntries = async (): Promise<
   }
 };
 
-const server = new Server(
-  {
-    name: "aap",
-    version: "0.1.0",
-  },
-  {
-    capabilities: {
-      tools: {},
+// Factory function to create a new Server instance with request handlers
+// Each transport gets its own Server instance to prevent session routing conflicts
+const createMcpServer = (): Server => {
+  const server = new Server(
+    {
+      name: "aap",
+      version: "0.1.0",
     },
-  },
-);
-
-server.setRequestHandler(ListToolsRequestSchema, async (request, extra) => {
-  // Get the session ID from the transport context
-  const sessionId = extra?.sessionId;
-  const _startTime = Date.now();
-
-  // Get category override from transport if available
-  const transport = sessionId ? transports[sessionId] : null;
-  const categoryOverride = transport
-    ? (transport as any).categoryOverride
-    : undefined;
-
-  // Determine user category based on category override
-  const category = getUserCategory(categoryOverride);
-
-  // Filter tools based on category
-  const filteredTools = filterToolsByCategory(allTools, category);
-
-  // Determine category type by comparing with known categories
-  let categoryType = "unknown";
-  for (const [name, tools] of Object.entries(allCategories)) {
-    if (category === tools) {
-      categoryType = name;
-      break;
-    }
-  }
-
-  const overrideInfo = categoryOverride
-    ? ` (override: ${categoryOverride})`
-    : "";
-  console.log(
-    `${getTimestamp()} Returning ${filteredTools.length} tools for ${categoryType} category${overrideInfo}`,
+    {
+      capabilities: {
+        tools: {},
+      },
+    },
   );
 
-  return {
-    tools: filteredTools.map((tool) => ({
-      name: tool.name,
-      description: tool.description,
-      inputSchema: tool.inputSchema,
-    })),
-  };
-});
+  server.setRequestHandler(ListToolsRequestSchema, async (request, extra) => {
+    // Get the session ID from the transport context
+    const sessionId = extra?.sessionId;
+
+    // Get category override from transport if available
+    const transport = sessionId ? transports[sessionId] : null;
+    const categoryOverride = transport
+      ? (transport as any).categoryOverride
+      : undefined;
+
+    // Determine user category based on category override
+    const category = getUserCategory(categoryOverride);
+
+    // Filter tools based on category
+    const filteredTools = filterToolsByCategory(allTools, category);
+
+    return {
+      tools: filteredTools.map((tool) => ({
+        name: tool.name,
+        description: tool.description,
+        inputSchema: tool.inputSchema,
+      })),
+    };
+  });
 
 server.setRequestHandler(CallToolRequestSchema, async (request, extra) => {
   const { name, arguments: args = {} } = request.params;
@@ -642,13 +628,18 @@ server.setRequestHandler(CallToolRequestSchema, async (request, extra) => {
       `Tool execution failed: ${error instanceof Error ? error.message : String(error)}`,
     );
   }
-});
+  });
+
+  return server;
+};
 
 // Global state management
 const transports: Record<string, StreamableHTTPServerTransport> = {};
+const servers: Record<string, Server> = {};
 const sessionData: SessionData = {};
 
 const app = express();
+
 app.use(express.json());
 
 // Allow CORS for all domains, expose the Mcp-Session-Id header
@@ -685,34 +676,39 @@ const mcpPostHandler = async (
       transport = new StreamableHTTPServerTransport({
         sessionIdGenerator: () => randomUUID(),
         onsessioninitialized: async (sessionId: string) => {
-          console.log(
-            `${getTimestamp()} Session initialized${categoryOverride ? ` with category override: ${categoryOverride}` : ""}`,
-          );
-          transports[sessionId] = transport;
+          try {
+            transports[sessionId] = transport;
 
-          // Store category override and user-agent in transport for later access
-          (transport as any).categoryOverride = categoryOverride;
-          (transport as any).userAgent = req.headers["user-agent"] || "unknown";
+            // Store category override and user-agent in transport for later access
+            (transport as any).categoryOverride = categoryOverride;
+            (transport as any).userAgent = req.headers["user-agent"] || "unknown";
 
-          // Extract and validate the bearer token
-          const token = extractBearerToken(authHeader);
-          if (token) {
-            try {
-              // Validate token and get user permissions
-              const permissions = await validateTokenAndGetPermissions(token);
+            // Extract and validate the bearer token
+            const token = extractBearerToken(authHeader);
+            if (token) {
+              try {
+                // Validate token and get user permissions
+                const permissions = await validateTokenAndGetPermissions(token);
 
-              // Store both token and permissions in session data
-              storeSessionData(sessionId, token, permissions);
-            } catch (error) {
-              console.error(
-                `${getTimestamp()} Failed to validate token:`,
-                error,
-              );
-              // Token validation failed, we cannot create the session without valid token
-              throw error;
+                // Store both token and permissions in session data
+                storeSessionData(sessionId, token, permissions);
+              } catch (error) {
+                console.error(
+                  `${getTimestamp()} Failed to validate token:`,
+                  error,
+                );
+                // Token validation failed, we cannot create the session without valid token
+                throw error;
+              }
+            } else {
+              console.warn(`${getTimestamp()} No bearer token provided`);
             }
-          } else {
-            console.warn(`${getTimestamp()} No bearer token provided`);
+          } catch (error) {
+            console.error(
+              `${getTimestamp()} Session init callback failed:`,
+              error,
+            );
+            throw error;
           }
         },
       });
@@ -722,9 +718,14 @@ const mcpPostHandler = async (
         const sid = transport.sessionId;
         if (sid && transports[sid]) {
           console.log(
-            `${getTimestamp()} Transport closed, removing from transports map`,
+            `${getTimestamp()} Transport closed, removing from transports and servers map`,
           );
           delete transports[sid];
+          // Clean up server instance
+          if (servers[sid]) {
+            delete servers[sid];
+            console.log(`${getTimestamp()} Removed server instance`);
+          }
           // Clean up session data
           if (sessionData[sid]) {
             delete sessionData[sid];
@@ -733,9 +734,28 @@ const mcpPostHandler = async (
         }
       };
 
+      // Create a new Server instance for this transport
+      // Each transport needs its own Server to prevent session routing conflicts
+      const server = createMcpServer();
+
       // Connect the transport to the MCP server BEFORE handling the request
-      await server.connect(transport);
-      await transport.handleRequest(req, res, req.body);
+      try {
+        await server.connect(transport);
+
+        // Store the server instance for this session
+        const sid = transport.sessionId;
+        if (sid) {
+          servers[sid] = server;
+        }
+
+        await transport.handleRequest(req, res, req.body);
+      } catch (error) {
+        console.error(
+          `${getTimestamp()} Failed during server.connect() or handleRequest():`,
+          error,
+        );
+        throw error;
+      }
       return;
     } else {
       // Invalid request - no session ID or not initialization request
@@ -753,13 +773,17 @@ const mcpPostHandler = async (
     // Handle the request with existing transport
     await transport.handleRequest(req, res, req.body);
   } catch (error) {
-    console.error(`${getTimestamp()} Error handling MCP request:`, error);
+    console.error(
+      `${getTimestamp()} Error handling MCP request:`,
+      error,
+    );
     if (!res.headersSent) {
       res.status(500).json({
         jsonrpc: "2.0",
         error: {
           code: -32603,
           message: "Internal server error",
+          data: error instanceof Error ? error.message : String(error),
         },
         id: null,
       });
@@ -1574,6 +1598,10 @@ process.on("SIGINT", async () => {
       console.log(`${getTimestamp()} Closing transport during shutdown`);
       await transports[sessionId].close();
       delete transports[sessionId];
+      // Clean up server instance
+      if (servers[sessionId]) {
+        delete servers[sessionId];
+      }
       // Clean up session data
       if (sessionData[sessionId]) {
         delete sessionData[sessionId];
