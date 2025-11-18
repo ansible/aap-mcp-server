@@ -27497,74 +27497,147 @@
             },
             "RoleUserAssignment": {
                 "type": "object",
-                "properties": {
-                    "id": {
-                        "type": "integer",
-                        "readOnly": true
-                    },
-                    "url": {
-                        "type": "string",
-                        "readOnly": true
-                    },
-                    "related": {
+                "oneOf": [
+                    {
+                        "description": "Role assignment using user ID",
                         "type": "object",
-                        "additionalProperties": {
-                            "type": "string"
+                        "properties": {
+                            "id": {
+                                "type": "integer",
+                                "readOnly": true
+                            },
+                            "url": {
+                                "type": "string",
+                                "readOnly": true
+                            },
+                            "related": {
+                                "type": "object",
+                                "additionalProperties": {
+                                    "type": "string"
+                                },
+                                "readOnly": true
+                            },
+                            "summary_fields": {
+                                "type": "object",
+                                "additionalProperties": {
+                                    "type": "object",
+                                    "additionalProperties": {}
+                                },
+                                "readOnly": true
+                            },
+                            "created": {
+                                "type": "string",
+                                "format": "date-time",
+                                "readOnly": true,
+                                "description": "The date/time this resource was created."
+                            },
+                            "created_by": {
+                                "type": "integer",
+                                "readOnly": true,
+                                "nullable": true,
+                                "description": "The user who created this resource."
+                            },
+                            "content_type": {
+                                "type": "string",
+                                "description": "String to use for references to this type from other models in the API.",
+                                "readOnly": true
+                            },
+                            "object_id": {
+                                "type": "string",
+                                "nullable": true,
+                                "description": "The primary key of the object this assignment applies to; null value indicates system-wide assignment."
+                            },
+                            "object_ansible_id": {
+                                "type": "string",
+                                "format": "uuid",
+                                "nullable": true,
+                                "description": "The resource id of the object this role applies to. An alternative to the object_id field."
+                            },
+                            "role_definition": {
+                                "type": "integer",
+                                "description": "The role definition which defines permissions conveyed by this assignment."
+                            },
+                            "user": {
+                                "type": "integer",
+                                "description": "The ID of the user who will receive permissions from this assignment."
+                            }
                         },
-                        "readOnly": true
+                        "required": [
+                            "role_definition",
+                            "user"
+                        ]
                     },
-                    "summary_fields": {
+                    {
+                        "description": "Role assignment using user Ansible ID (resource ID)",
                         "type": "object",
-                        "additionalProperties": {
-                            "type": "object",
-                            "additionalProperties": {}
+                        "properties": {
+                            "id": {
+                                "type": "integer",
+                                "readOnly": true
+                            },
+                            "url": {
+                                "type": "string",
+                                "readOnly": true
+                            },
+                            "related": {
+                                "type": "object",
+                                "additionalProperties": {
+                                    "type": "string"
+                                },
+                                "readOnly": true
+                            },
+                            "summary_fields": {
+                                "type": "object",
+                                "additionalProperties": {
+                                    "type": "object",
+                                    "additionalProperties": {}
+                                },
+                                "readOnly": true
+                            },
+                            "created": {
+                                "type": "string",
+                                "format": "date-time",
+                                "readOnly": true,
+                                "description": "The date/time this resource was created."
+                            },
+                            "created_by": {
+                                "type": "integer",
+                                "readOnly": true,
+                                "nullable": true,
+                                "description": "The user who created this resource."
+                            },
+                            "content_type": {
+                                "type": "string",
+                                "description": "String to use for references to this type from other models in the API.",
+                                "readOnly": true
+                            },
+                            "object_id": {
+                                "type": "string",
+                                "nullable": true,
+                                "description": "The primary key of the object this assignment applies to; null value indicates system-wide assignment."
+                            },
+                            "object_ansible_id": {
+                                "type": "string",
+                                "format": "uuid",
+                                "nullable": true,
+                                "description": "The resource id of the object this role applies to. An alternative to the object_id field."
+                            },
+                            "role_definition": {
+                                "type": "integer",
+                                "description": "The role definition which defines permissions conveyed by this assignment."
+                            },
+                            "user_ansible_id": {
+                                "type": "string",
+                                "format": "uuid",
+                                "nullable": true,
+                                "description": "The resource ID of the user who will receive permissions from this assignment. An alternative to user field."
+                            }
                         },
-                        "readOnly": true
-                    },
-                    "created": {
-                        "type": "string",
-                        "format": "date-time",
-                        "readOnly": true,
-                        "description": "The date/time this resource was created."
-                    },
-                    "created_by": {
-                        "type": "integer",
-                        "readOnly": true,
-                        "nullable": true,
-                        "description": "The user who created this resource."
-                    },
-                    "content_type": {
-                        "type": "string",
-                        "description": "String to use for references to this type from other models in the API.",
-                        "readOnly": true
-                    },
-                    "object_id": {
-                        "type": "string",
-                        "nullable": true,
-                        "description": "The primary key of the object this assignment applies to; null value indicates system-wide assignment."
-                    },
-                    "object_ansible_id": {
-                        "type": "string",
-                        "format": "uuid",
-                        "nullable": true,
-                        "description": "The resource id of the object this role applies to. An alternative to the object_id field."
-                    },
-                    "role_definition": {
-                        "type": "integer",
-                        "description": "The role definition which defines permissions conveyed by this assignment."
-                    },
-                    "user": {
-                        "type": "integer"
-                    },
-                    "user_ansible_id": {
-                        "type": "string",
-                        "format": "uuid",
-                        "nullable": true,
-                        "description": "The resource ID of the user who will receive permissions from this assignment. An alternative to user field."
+                        "required": [
+                            "role_definition",
+                            "user_ansible_id"
+                        ]
                     }
-                },
-                "required": [
-                    "role_definition"
                 ]
             },
             "SSOAuthenticator": {
