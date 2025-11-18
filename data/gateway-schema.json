@@ -35,7 +35,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "Retrieve single api"
             }
         },
         "/api/gateway/": {
@@ -67,7 +68,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "Retrieve single api gateway"
             }
         },
         "/api/gateway/v1/": {
@@ -98,7 +100,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "Retrieve single root"
             }
         },
         "/api/gateway/v1/activitystream/": {
@@ -183,7 +186,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "List audit trail entries for tracking system changes and user actions"
             }
         },
         "/api/gateway/v1/activitystream/{id}/": {
@@ -226,7 +230,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "Retrieve a audit trail entry for tracking system changes and user actions"
             }
         },
         "/api/gateway/v1/app_urls/": {
@@ -319,7 +324,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "List all app urls"
             }
         },
         "/api/gateway/v1/applications/": {
@@ -731,7 +737,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "List all applications"
             },
             "post": {
                 "operationId": "applications_create",
@@ -780,7 +787,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "Create new application"
             }
         },
         "/api/gateway/v1/applications/{id}/": {
@@ -822,7 +830,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "Retrieve single application"
             },
             "put": {
                 "operationId": "applications_update",
@@ -882,7 +891,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "Update existing application"
             },
             "patch": {
                 "operationId": "applications_partial_update",
@@ -941,7 +951,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "Partially update existing application"
             },
             "delete": {
                 "operationId": "applications_destroy",
@@ -974,7 +985,8 @@
                     "204": {
                         "description": "No response body"
                     }
-                }
+                },
+                "x-ai-description": "Delete existing application"
             }
         },
         "/api/gateway/v1/applications/{id}/tokens/": {
@@ -1380,7 +1392,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "List all tokens for an application"
             }
         },
         "/api/gateway/v1/authenticator_maps/": {
@@ -1753,7 +1766,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "List conditional rule for granting access, membership or roles based on user attributes or groups"
             },
             "post": {
                 "operationId": "authenticator_maps_create",
@@ -1803,7 +1817,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "Create a conditional rule for granting access, membership or roles based on user attributes or groups"
             }
         },
         "/api/gateway/v1/authenticator_maps/{id}/": {
@@ -1846,7 +1861,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "Retrieve a conditional rule for granting access, membership or roles based on user attributes or groups"
             },
             "put": {
                 "operationId": "authenticator_maps_update",
@@ -1907,7 +1923,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "Update a conditional rule for granting access, membership or roles based on user attributes or groups"
             },
             "patch": {
                 "operationId": "authenticator_maps_partial_update",
@@ -1967,7 +1984,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "Update a conditional rule for granting access, membership or roles based on user attributes or groups"
             },
             "delete": {
                 "operationId": "authenticator_maps_destroy",
@@ -2001,7 +2019,8 @@
                     "204": {
                         "description": "No response body"
                     }
-                }
+                },
+                "x-ai-description": "Delete a conditional rule for granting access, membership or roles based on user attributes or groups"
             }
         },
         "/api/gateway/v1/authenticator_maps/{id}/authenticators/": {
@@ -2367,7 +2386,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "List authentication types for configuring user login methods (LDAP, SAML, OAuth)"
             }
         },
         "/api/gateway/v1/authenticator_maps/{id}/authenticators/associate/": {
@@ -2430,7 +2450,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "Associate authenticators with an authenticator map"
             }
         },
         "/api/gateway/v1/authenticator_maps/{id}/authenticators/disassociate/": {
@@ -2493,7 +2514,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "Disassociate authenticators from an authenticator map"
             }
         },
         "/api/gateway/v1/authenticator_plugins/": {
@@ -2517,7 +2539,8 @@
                     "200": {
                         "description": "No response body"
                     }
-                }
+                },
+                "x-ai-description": "Retrieve single authenticator plugin"
             }
         },
         "/api/gateway/v1/authenticator_users/": {
@@ -2810,7 +2833,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "List all authenticator users"
             }
         },
         "/api/gateway/v1/authenticator_users/{id}/": {
@@ -2853,7 +2877,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "Retrieve single authenticator user"
             }
         },
         "/api/gateway/v1/authenticator_users/{id}/move/": {
@@ -2916,7 +2941,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "Create new move for an authenticator_user"
             }
         },
         "/api/gateway/v1/authenticators/": {
@@ -3273,7 +3299,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "List authentication types for configuring user login methods (LDAP, SAML, OAuth)"
             },
             "post": {
                 "operationId": "authenticators_create",
@@ -3323,7 +3350,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "Create a authentication type for configuring user login methods (LDAP, SAML, OAuth)"
             }
         },
         "/api/gateway/v1/authenticators/{id}/": {
@@ -3366,7 +3394,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "Retrieve a authentication type for configuring user login methods (LDAP, SAML, OAuth)"
             },
             "put": {
                 "operationId": "authenticators_update",
@@ -3427,7 +3456,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "Update a authentication type for configuring user login methods (LDAP, SAML, OAuth)"
             },
             "patch": {
                 "operationId": "authenticators_partial_update",
@@ -3487,7 +3517,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "Update a authentication type for configuring user login methods (LDAP, SAML, OAuth)"
             },
             "delete": {
                 "operationId": "authenticators_destroy",
@@ -3521,7 +3552,8 @@
                     "204": {
                         "description": "No response body"
                     }
-                }
+                },
+                "x-ai-description": "Delete a authentication type for configuring user login methods (LDAP, SAML, OAuth)"
             }
         },
         "/api/gateway/v1/authenticators/{id}/authenticator_maps/": {
@@ -3903,7 +3935,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "List conditional rule for granting access, membership or roles based on user attributes or groups"
             }
         },
         "/api/gateway/v1/authenticators/{id}/users/": {
@@ -4357,7 +4390,555 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "List all users for an authenticator"
+            }
+        },
+        "/api/gateway/v1/ca_certificates/": {
+            "get": {
+                "operationId": "ca_certificates_list",
+                "description": "API endpoint that allows to manage a CA Certificate",
+                "parameters": [
+                    {
+                        "in": "query",
+                        "name": "created",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by created (exact match)"
+                    },
+                    {
+                        "in": "query",
+                        "name": "created__gt",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by created (gt)"
+                    },
+                    {
+                        "in": "query",
+                        "name": "created__gte",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by created (gte)"
+                    },
+                    {
+                        "in": "query",
+                        "name": "created__lt",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by created (lt)"
+                    },
+                    {
+                        "in": "query",
+                        "name": "created__lte",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by created (lte)"
+                    },
+                    {
+                        "in": "query",
+                        "name": "created_by",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by created_by (exact match)"
+                    },
+                    {
+                        "in": "query",
+                        "name": "id",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by id (exact match)"
+                    },
+                    {
+                        "in": "query",
+                        "name": "id__gt",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by id (gt)"
+                    },
+                    {
+                        "in": "query",
+                        "name": "id__gte",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by id (gte)"
+                    },
+                    {
+                        "in": "query",
+                        "name": "id__lt",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by id (lt)"
+                    },
+                    {
+                        "in": "query",
+                        "name": "id__lte",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by id (lte)"
+                    },
+                    {
+                        "in": "query",
+                        "name": "modified",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by modified (exact match)"
+                    },
+                    {
+                        "in": "query",
+                        "name": "modified__gt",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by modified (gt)"
+                    },
+                    {
+                        "in": "query",
+                        "name": "modified__gte",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by modified (gte)"
+                    },
+                    {
+                        "in": "query",
+                        "name": "modified__lt",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by modified (lt)"
+                    },
+                    {
+                        "in": "query",
+                        "name": "modified__lte",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by modified (lte)"
+                    },
+                    {
+                        "in": "query",
+                        "name": "modified_by",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by modified_by (exact match)"
+                    },
+                    {
+                        "in": "query",
+                        "name": "name",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by name (exact match)"
+                    },
+                    {
+                        "in": "query",
+                        "name": "name__icontains",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by name (case-insensitive partial match)"
+                    },
+                    {
+                        "in": "query",
+                        "name": "order",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Order results by field name. Prefix with '-' for descending order. Supports comma-separated values for multiple fields."
+                    },
+                    {
+                        "in": "query",
+                        "name": "order_by",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Order results by field name. Prefix with '-' for descending order. Supports comma-separated values for multiple fields."
+                    },
+                    {
+                        "name": "page",
+                        "required": false,
+                        "in": "query",
+                        "description": "A page number within the paginated result set.",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "page_size",
+                        "required": false,
+                        "in": "query",
+                        "description": "Number of results to return per page.",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "pem_data",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by pem_data (exact match)"
+                    },
+                    {
+                        "in": "query",
+                        "name": "pem_data__icontains",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by pem_data (case-insensitive partial match)"
+                    },
+                    {
+                        "in": "query",
+                        "name": "related_id_reference",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by related_id_reference (exact match)"
+                    },
+                    {
+                        "in": "query",
+                        "name": "related_id_reference__icontains",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by related_id_reference (case-insensitive partial match)"
+                    },
+                    {
+                        "in": "query",
+                        "name": "role_level",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by role level for RBAC"
+                    },
+                    {
+                        "name": "search",
+                        "required": false,
+                        "in": "query",
+                        "description": "A search term.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "sha256",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by sha256 (exact match)"
+                    },
+                    {
+                        "in": "query",
+                        "name": "sha256__icontains",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by sha256 (case-insensitive partial match)"
+                    },
+                    {
+                        "in": "query",
+                        "name": "type",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by object type. Supports comma-separated values for multiple types."
+                    }
+                ],
+                "tags": [
+                    "ca_certificates"
+                ],
+                "security": [
+                    {
+                        "OAuth2_Authentication": []
+                    },
+                    {
+                        "SessionAuthentication": []
+                    },
+                    {
+                        "Basic_Authentication": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PaginatedCACertificateList"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                },
+                "x-ai-description": "List all ca certificates"
+            },
+            "post": {
+                "operationId": "ca_certificates_create",
+                "description": "API endpoint that allows to manage a CA Certificate",
+                "tags": [
+                    "ca_certificates"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CACertificate"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CACertificate"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CACertificate"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "security": [
+                    {
+                        "OAuth2_Authentication": []
+                    },
+                    {
+                        "SessionAuthentication": []
+                    },
+                    {
+                        "Basic_Authentication": []
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CACertificate"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                },
+                "x-ai-description": "Create new ca certificate"
+            }
+        },
+        "/api/gateway/v1/ca_certificates/{id}/": {
+            "get": {
+                "operationId": "ca_certificates_retrieve",
+                "description": "API endpoint that allows to manage a CA Certificate",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "description": "A unique integer value identifying this ca certificate.",
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "ca_certificates"
+                ],
+                "security": [
+                    {
+                        "OAuth2_Authentication": []
+                    },
+                    {
+                        "SessionAuthentication": []
+                    },
+                    {
+                        "Basic_Authentication": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CACertificate"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                },
+                "x-ai-description": "Retrieve single ca certificate"
+            },
+            "put": {
+                "operationId": "ca_certificates_update",
+                "description": "API endpoint that allows to manage a CA Certificate",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "description": "A unique integer value identifying this ca certificate.",
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "ca_certificates"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CACertificate"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CACertificate"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CACertificate"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "security": [
+                    {
+                        "OAuth2_Authentication": []
+                    },
+                    {
+                        "SessionAuthentication": []
+                    },
+                    {
+                        "Basic_Authentication": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CACertificate"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                },
+                "x-ai-description": "Update existing ca certificate"
+            },
+            "patch": {
+                "operationId": "ca_certificates_partial_update",
+                "description": "API endpoint that allows to manage a CA Certificate",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "description": "A unique integer value identifying this ca certificate.",
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "ca_certificates"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PatchedCACertificate"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PatchedCACertificate"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PatchedCACertificate"
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "OAuth2_Authentication": []
+                    },
+                    {
+                        "SessionAuthentication": []
+                    },
+                    {
+                        "Basic_Authentication": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CACertificate"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                },
+                "x-ai-description": "Partially update existing ca certificate"
+            },
+            "delete": {
+                "operationId": "ca_certificates_destroy",
+                "description": "API endpoint that allows to manage a CA Certificate",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "description": "A unique integer value identifying this ca certificate.",
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "ca_certificates"
+                ],
+                "security": [
+                    {
+                        "OAuth2_Authentication": []
+                    },
+                    {
+                        "SessionAuthentication": []
+                    },
+                    {
+                        "Basic_Authentication": []
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No response body"
+                    }
+                },
+                "x-ai-description": "Delete existing ca certificate"
             }
         },
         "/api/gateway/v1/docs/schema/": {
@@ -4529,7 +5110,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "Retrieve single docs schema"
             }
         },
         "/api/gateway/v1/feature_flags_state/": {
@@ -4571,7 +5153,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "Retrieve a feature flag configuration for controlling platform capabilities"
             }
         },
         "/api/gateway/v1/http_ports/": {
@@ -4888,7 +5471,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "List all http ports"
             },
             "post": {
                 "operationId": "http_ports_create",
@@ -4938,7 +5522,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "Create new http port"
             }
         },
         "/api/gateway/v1/http_ports/{id}/": {
@@ -4981,7 +5566,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "Retrieve single http port"
             },
             "put": {
                 "operationId": "http_ports_update",
@@ -5042,7 +5628,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "Update existing http port"
             },
             "patch": {
                 "operationId": "http_ports_partial_update",
@@ -5102,7 +5689,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "Partially update existing http port"
             },
             "delete": {
                 "operationId": "http_ports_destroy",
@@ -5136,7 +5724,8 @@
                     "204": {
                         "description": "No response body"
                     }
-                }
+                },
+                "x-ai-description": "Delete existing http port"
             }
         },
         "/api/gateway/v1/http_ports/{id}/routes/": {
@@ -5215,6 +5804,14 @@
                             "type": "string"
                         },
                         "description": "Filter by enable_gateway_auth (exact match)"
+                    },
+                    {
+                        "in": "query",
+                        "name": "enable_mtls",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by enable_mtls (exact match)"
                     },
                     {
                         "in": "query",
@@ -5590,7 +6187,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "List all routes for a http_port"
             }
         },
         "/api/gateway/v1/http_ports/{id}/routes/associate/": {
@@ -5653,7 +6251,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "Associate routes with a http port"
             }
         },
         "/api/gateway/v1/http_ports/{id}/routes/disassociate/": {
@@ -5716,7 +6315,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "Disassociate routes from a http port"
             }
         },
         "/api/gateway/v1/jwt_claims/{user_ansible_id}/": {
@@ -5770,7 +6370,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "Retrieve single jwt claim"
             }
         },
         "/api/gateway/v1/jwt_key/": {
@@ -5801,7 +6402,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "Retrieve single jwt key"
             }
         },
         "/api/gateway/v1/me/": {
@@ -5893,7 +6495,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "List all me"
             }
         },
         "/api/gateway/v1/organizations/": {
@@ -6170,7 +6773,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "List all organizations"
             },
             "post": {
                 "operationId": "organizations_create",
@@ -6220,7 +6824,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "Create new organization"
             }
         },
         "/api/gateway/v1/organizations/{id}/": {
@@ -6263,7 +6868,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "Retrieve single organization"
             },
             "put": {
                 "operationId": "organizations_update",
@@ -6324,7 +6930,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "Update existing organization"
             },
             "patch": {
                 "operationId": "organizations_partial_update",
@@ -6384,7 +6991,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "Partially update existing organization"
             },
             "delete": {
                 "operationId": "organizations_destroy",
@@ -6418,7 +7026,8 @@
                     "204": {
                         "description": "No response body"
                     }
-                }
+                },
+                "x-ai-description": "Delete existing organization"
             }
         },
         "/api/gateway/v1/organizations/{id}/admins/": {
@@ -6861,6 +7470,7 @@
                         "Basic_Authentication": []
                     }
                 ],
+                "deprecated": true,
                 "responses": {
                     "200": {
                         "content": {
@@ -6872,7 +7482,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "List all admins for an organization"
             }
         },
         "/api/gateway/v1/organizations/{id}/admins/associate/": {
@@ -6924,6 +7535,7 @@
                         "Basic_Authentication": []
                     }
                 ],
+                "deprecated": true,
                 "responses": {
                     "200": {
                         "content": {
@@ -6935,7 +7547,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "Associate admins with an organization"
             }
         },
         "/api/gateway/v1/organizations/{id}/admins/disassociate/": {
@@ -6987,6 +7600,7 @@
                         "Basic_Authentication": []
                     }
                 ],
+                "deprecated": true,
                 "responses": {
                     "200": {
                         "content": {
@@ -6998,7 +7612,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "Disassociate admins from an organization"
             }
         },
         "/api/gateway/v1/organizations/{id}/teams/": {
@@ -7284,7 +7899,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "List all teams for an organization"
             }
         },
         "/api/gateway/v1/organizations/{id}/users/": {
@@ -7727,6 +8343,7 @@
                         "Basic_Authentication": []
                     }
                 ],
+                "deprecated": true,
                 "responses": {
                     "200": {
                         "content": {
@@ -7738,7 +8355,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "List all users for an organization"
             }
         },
         "/api/gateway/v1/organizations/{id}/users/associate/": {
@@ -7790,6 +8408,7 @@
                         "Basic_Authentication": []
                     }
                 ],
+                "deprecated": true,
                 "responses": {
                     "200": {
                         "content": {
@@ -7801,7 +8420,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "Associate users with an organization"
             }
         },
         "/api/gateway/v1/organizations/{id}/users/disassociate/": {
@@ -7853,6 +8473,7 @@
                         "Basic_Authentication": []
                     }
                 ],
+                "deprecated": true,
                 "responses": {
                     "200": {
                         "content": {
@@ -7864,7 +8485,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "Disassociate users from an organization"
             }
         },
         "/api/gateway/v1/ping/": {
@@ -7895,7 +8517,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "Retrieve single ping"
             }
         },
         "/api/gateway/v1/role_definitions/": {
@@ -8180,7 +8803,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "List RBAC roles defining permissions that can be managed and assigned to users and teams"
             },
             "post": {
                 "operationId": "role_definitions_create",
@@ -8230,7 +8854,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "Create a RBAC roles defining permissions that can be managed and assigned to users and teams"
             }
         },
         "/api/gateway/v1/role_definitions/{id}/": {
@@ -8273,7 +8898,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "Retrieve a RBAC roles defining permissions that can be managed and assigned to users and teams"
             },
             "put": {
                 "operationId": "role_definitions_update",
@@ -8334,7 +8960,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "Update a RBAC roles defining permissions that can be managed and assigned to users and teams"
             },
             "patch": {
                 "operationId": "role_definitions_partial_update",
@@ -8394,7 +9021,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "Update a RBAC roles defining permissions that can be managed and assigned to users and teams"
             },
             "delete": {
                 "operationId": "role_definitions_destroy",
@@ -8428,7 +9056,8 @@
                     "204": {
                         "description": "No response body"
                     }
-                }
+                },
+                "x-ai-description": "Delete a RBAC roles defining permissions that can be managed and assigned to users and teams"
             }
         },
         "/api/gateway/v1/role_definitions/{id}/team_assignments/": {
@@ -8524,13 +9153,14 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/PaginatedRoleTeamAssignmentList"
+                                    "$ref": "#/components/schemas/PaginatedGatewayRoleTeamAssignmentList"
                                 }
                             }
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "List all assignments for a role_definition"
             }
         },
         "/api/gateway/v1/role_definitions/{id}/user_assignments/": {
@@ -8632,7 +9262,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "List all assignments for a role_definition"
             }
         },
         "/api/gateway/v1/role_team_access/{model_name}/{id}/": {
@@ -8742,7 +9373,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "List all role team access"
             }
         },
         "/api/gateway/v1/role_team_access/{model_name}/{id}/{actor_pk}/": {
@@ -8860,7 +9492,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "List all role team access"
             }
         },
         "/api/gateway/v1/role_team_assignments/": {
@@ -8947,13 +9580,14 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/PaginatedRoleTeamAssignmentList"
+                                    "$ref": "#/components/schemas/PaginatedGatewayRoleTeamAssignmentList"
                                 }
                             }
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "List RBAC role grants assigning permissions to teams for specific resources"
             },
             "post": {
                 "operationId": "role_team_assignments_create",
@@ -8965,17 +9599,17 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/RoleTeamAssignment"
+                                "$ref": "#/components/schemas/GatewayRoleTeamAssignment"
                             }
                         },
                         "application/x-www-form-urlencoded": {
                             "schema": {
-                                "$ref": "#/components/schemas/RoleTeamAssignment"
+                                "$ref": "#/components/schemas/GatewayRoleTeamAssignment"
                             }
                         },
                         "multipart/form-data": {
                             "schema": {
-                                "$ref": "#/components/schemas/RoleTeamAssignment"
+                                "$ref": "#/components/schemas/GatewayRoleTeamAssignment"
                             }
                         }
                     },
@@ -8997,13 +9631,14 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/RoleTeamAssignment"
+                                    "$ref": "#/components/schemas/GatewayRoleTeamAssignment"
                                 }
                             }
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "Create a RBAC role grants assigning permissions to team for specific resources"
             }
         },
         "/api/gateway/v1/role_team_assignments/{id}/": {
@@ -9040,13 +9675,14 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/RoleTeamAssignment"
+                                    "$ref": "#/components/schemas/GatewayRoleTeamAssignment"
                                 }
                             }
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "Retrieve a RBAC role grants assigning permissions to team for specific resources"
             },
             "delete": {
                 "operationId": "role_team_assignments_destroy",
@@ -9080,7 +9716,8 @@
                     "204": {
                         "description": "No response body"
                     }
-                }
+                },
+                "x-ai-description": "Delete a RBAC role grants assigning permissions to team for specific resources"
             }
         },
         "/api/gateway/v1/role_user_access/{model_name}/{id}/": {
@@ -9190,7 +9827,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "List all role user access"
             }
         },
         "/api/gateway/v1/role_user_access/{model_name}/{id}/{actor_pk}/": {
@@ -9308,7 +9946,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "List all role user access"
             }
         },
         "/api/gateway/v1/role_user_assignments/": {
@@ -9401,7 +10040,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "List RBAC role grants assigning permissions to users for specific resources"
             },
             "post": {
                 "operationId": "role_user_assignments_create",
@@ -9451,7 +10091,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "Create a RBAC role grants assigning permissions to user for specific resources"
             }
         },
         "/api/gateway/v1/role_user_assignments/{id}/": {
@@ -9494,7 +10135,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "Retrieve a RBAC role grants assigning permissions to user for specific resources"
             },
             "delete": {
                 "operationId": "role_user_assignments_destroy",
@@ -9528,7 +10170,8 @@
                     "204": {
                         "description": "No response body"
                     }
-                }
+                },
+                "x-ai-description": "Delete a RBAC role grants assigning permissions to user for specific resources"
             }
         },
         "/api/gateway/v1/routes/": {
@@ -9607,6 +10250,14 @@
                             "type": "string"
                         },
                         "description": "Filter by enable_gateway_auth (exact match)"
+                    },
+                    {
+                        "in": "query",
+                        "name": "enable_mtls",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by enable_mtls (exact match)"
                     },
                     {
                         "in": "query",
@@ -9973,7 +10624,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "List all routes"
             },
             "post": {
                 "operationId": "routes_create",
@@ -10023,7 +10675,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "Create new route"
             }
         },
         "/api/gateway/v1/routes/{id}/": {
@@ -10066,7 +10719,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "Retrieve single route"
             },
             "put": {
                 "operationId": "routes_update",
@@ -10127,7 +10781,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "Update existing route"
             },
             "patch": {
                 "operationId": "routes_partial_update",
@@ -10187,7 +10842,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "Partially update existing route"
             },
             "delete": {
                 "operationId": "routes_destroy",
@@ -10221,7 +10877,8 @@
                     "204": {
                         "description": "No response body"
                     }
-                }
+                },
+                "x-ai-description": "Delete existing route"
             }
         },
         "/api/gateway/v1/service-index/": {
@@ -10246,7 +10903,8 @@
                     "200": {
                         "description": "No response body"
                     }
-                }
+                },
+                "x-ai-description": "Retrieve single service index"
             }
         },
         "/api/gateway/v1/service-index/metadata/": {
@@ -10270,7 +10928,8 @@
                     "200": {
                         "description": "No response body"
                     }
-                }
+                },
+                "x-ai-description": "Retrieve single service index metadatum"
             }
         },
         "/api/gateway/v1/service-index/object-delete/": {
@@ -10295,7 +10954,8 @@
                     "201": {
                         "description": "No response body"
                     }
-                }
+                },
+                "x-ai-description": "Remove all role assignments for a resource indexed from connected AAP services"
             }
         },
         "/api/gateway/v1/service-index/resource-types/": {
@@ -10442,7 +11102,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "List all service index resource types"
             }
         },
         "/api/gateway/v1/service-index/resource-types/{name}/": {
@@ -10485,7 +11146,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "Retrieve single service index resource type"
             }
         },
         "/api/gateway/v1/service-index/resource-types/{name}/manifest/": {
@@ -10528,7 +11190,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "Retrieve single manifest for a resource-type"
             }
         },
         "/api/gateway/v1/service-index/resources/": {
@@ -10715,7 +11378,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "List all service index resources"
             },
             "post": {
                 "operationId": "service_index_resources_create",
@@ -10765,7 +11429,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "Create new service index resource"
             }
         },
         "/api/gateway/v1/service-index/resources/{ansible_id}/": {
@@ -10809,7 +11474,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "Retrieve single service index resource"
             },
             "put": {
                 "operationId": "service_index_resources_update",
@@ -10871,7 +11537,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "Update existing service index resource"
             },
             "patch": {
                 "operationId": "service_index_resources_partial_update",
@@ -10932,7 +11599,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "Partially update existing service index resource"
             },
             "delete": {
                 "operationId": "service_index_resources_destroy",
@@ -10967,7 +11635,8 @@
                     "204": {
                         "description": "No response body"
                     }
-                }
+                },
+                "x-ai-description": "Delete existing service index resource"
             }
         },
         "/api/gateway/v1/service-index/role-permissions/": {
@@ -11156,7 +11825,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "List all service index role permissions"
             }
         },
         "/api/gateway/v1/service-index/role-team-assignments/": {
@@ -11393,7 +12063,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "List all service index role team assignments"
             }
         },
         "/api/gateway/v1/service-index/role-team-assignments/assign/": {
@@ -11445,7 +12116,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "Create new service index role team assignments assign"
             }
         },
         "/api/gateway/v1/service-index/role-team-assignments/unassign/": {
@@ -11497,7 +12169,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "Create new service index role team assignments unassign"
             }
         },
         "/api/gateway/v1/service-index/role-types/": {
@@ -11718,7 +12391,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "List all service index role types"
             }
         },
         "/api/gateway/v1/service-index/role-user-assignments/": {
@@ -11955,7 +12629,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "List all service index role user assignments"
             }
         },
         "/api/gateway/v1/service-index/role-user-assignments/assign/": {
@@ -12007,7 +12682,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "Create new service index role user assignments assign"
             }
         },
         "/api/gateway/v1/service-index/role-user-assignments/unassign/": {
@@ -12059,7 +12735,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "Create new service index role user assignments unassign"
             }
         },
         "/api/gateway/v1/service_clusters/": {
@@ -12760,7 +13437,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "List all service clusters"
             },
             "post": {
                 "operationId": "service_clusters_create",
@@ -12810,7 +13488,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "Create new service cluster"
             }
         },
         "/api/gateway/v1/service_clusters/{id}/": {
@@ -12853,7 +13532,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "Retrieve single service cluster"
             },
             "put": {
                 "operationId": "service_clusters_update",
@@ -12914,7 +13594,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "Update existing service cluster"
             },
             "patch": {
                 "operationId": "service_clusters_partial_update",
@@ -12974,7 +13655,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "Partially update existing service cluster"
             },
             "delete": {
                 "operationId": "service_clusters_destroy",
@@ -13008,7 +13690,8 @@
                     "204": {
                         "description": "No response body"
                     }
-                }
+                },
+                "x-ai-description": "Delete existing service cluster"
             }
         },
         "/api/gateway/v1/service_clusters/{id}/nodes/": {
@@ -13302,7 +13985,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "List all nodes for a service_cluster"
             }
         },
         "/api/gateway/v1/service_clusters/{id}/routes/": {
@@ -13381,6 +14065,14 @@
                             "type": "string"
                         },
                         "description": "Filter by enable_gateway_auth (exact match)"
+                    },
+                    {
+                        "in": "query",
+                        "name": "enable_mtls",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by enable_mtls (exact match)"
                     },
                     {
                         "in": "query",
@@ -13756,7 +14448,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "List all routes for a service_cluster"
             }
         },
         "/api/gateway/v1/service_clusters/{id}/routes/associate/": {
@@ -13819,7 +14512,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "Associate routes with a service cluster"
             }
         },
         "/api/gateway/v1/service_clusters/{id}/routes/disassociate/": {
@@ -13882,7 +14576,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "Disassociate routes from a service cluster"
             }
         },
         "/api/gateway/v1/service_clusters/{id}/service_keys/": {
@@ -14184,7 +14879,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "List all keys for a service_cluster"
             }
         },
         "/api/gateway/v1/service_clusters/{id}/service_types/": {
@@ -14502,7 +15198,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "List all types for a service_cluster"
             }
         },
         "/api/gateway/v1/service_clusters/{id}/service_types/associate/": {
@@ -14565,7 +15262,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "Associate service types with a service cluster"
             }
         },
         "/api/gateway/v1/service_clusters/{id}/service_types/disassociate/": {
@@ -14628,7 +15326,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "Disassociate service types from a service cluster"
             }
         },
         "/api/gateway/v1/service_keys/": {
@@ -14921,7 +15620,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "List all service keys"
             },
             "post": {
                 "operationId": "service_keys_create",
@@ -14971,7 +15671,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "Create new service key"
             }
         },
         "/api/gateway/v1/service_keys/{id}/": {
@@ -15014,7 +15715,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "Retrieve single service key"
             },
             "put": {
                 "operationId": "service_keys_update",
@@ -15075,7 +15777,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "Update existing service key"
             },
             "patch": {
                 "operationId": "service_keys_partial_update",
@@ -15135,7 +15838,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "Partially update existing service key"
             },
             "delete": {
                 "operationId": "service_keys_destroy",
@@ -15169,7 +15873,8 @@
                     "204": {
                         "description": "No response body"
                     }
-                }
+                },
+                "x-ai-description": "Delete existing service key"
             }
         },
         "/api/gateway/v1/service_nodes/": {
@@ -15454,7 +16159,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "List all service nodes"
             },
             "post": {
                 "operationId": "service_nodes_create",
@@ -15504,7 +16210,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "Create new service node"
             }
         },
         "/api/gateway/v1/service_nodes/{id}/": {
@@ -15547,7 +16254,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "Retrieve single service node"
             },
             "put": {
                 "operationId": "service_nodes_update",
@@ -15608,7 +16316,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "Update existing service node"
             },
             "patch": {
                 "operationId": "service_nodes_partial_update",
@@ -15668,7 +16377,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "Partially update existing service node"
             },
             "delete": {
                 "operationId": "service_nodes_destroy",
@@ -15702,7 +16412,8 @@
                     "204": {
                         "description": "No response body"
                     }
-                }
+                },
+                "x-ai-description": "Delete existing service node"
             }
         },
         "/api/gateway/v1/service_types/": {
@@ -16011,7 +16722,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "List all service types"
             },
             "post": {
                 "operationId": "service_types_create",
@@ -16061,7 +16773,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "Create new service type"
             }
         },
         "/api/gateway/v1/service_types/{id}/": {
@@ -16104,7 +16817,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "Retrieve single service type"
             },
             "put": {
                 "operationId": "service_types_update",
@@ -16165,7 +16879,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "Update existing service type"
             },
             "patch": {
                 "operationId": "service_types_partial_update",
@@ -16225,7 +16940,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "Partially update existing service type"
             },
             "delete": {
                 "operationId": "service_types_destroy",
@@ -16259,7 +16975,8 @@
                     "204": {
                         "description": "No response body"
                     }
-                }
+                },
+                "x-ai-description": "Delete existing service type"
             }
         },
         "/api/gateway/v1/service_types/{id}/clusters/": {
@@ -16969,7 +17686,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "List all clusters for a service_type"
             }
         },
         "/api/gateway/v1/services/": {
@@ -17064,6 +17782,14 @@
                             "type": "string"
                         },
                         "description": "Filter by enable_gateway_auth (exact match)"
+                    },
+                    {
+                        "in": "query",
+                        "name": "enable_mtls",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by enable_mtls (exact match)"
                     },
                     {
                         "in": "query",
@@ -17430,7 +18156,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "List all services"
             },
             "post": {
                 "operationId": "services_create",
@@ -17480,7 +18207,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "Create new service"
             }
         },
         "/api/gateway/v1/services/{id}/": {
@@ -17523,7 +18251,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "Retrieve single service"
             },
             "put": {
                 "operationId": "services_update",
@@ -17584,7 +18313,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "Update existing service"
             },
             "patch": {
                 "operationId": "services_partial_update",
@@ -17644,7 +18374,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "Partially update existing service"
             },
             "delete": {
                 "operationId": "services_destroy",
@@ -17678,7 +18409,8 @@
                     "204": {
                         "description": "No response body"
                     }
-                }
+                },
+                "x-ai-description": "Delete existing service"
             }
         },
         "/api/gateway/v1/session/": {
@@ -17719,7 +18451,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "Retrieve single session"
             },
             "post": {
                 "operationId": "session_create",
@@ -17748,7 +18481,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "Create new session"
             }
         },
         "/api/gateway/v1/settings/": {
@@ -17800,7 +18534,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "List all settings"
             }
         },
         "/api/gateway/v1/settings/{category_slug}/": {
@@ -17843,7 +18578,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "Getter a group of settings for a specific category"
             },
             "put": {
                 "operationId": "settings_update",
@@ -17903,7 +18639,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "Update existing setting"
             },
             "delete": {
                 "operationId": "settings_destroyer",
@@ -17937,7 +18674,8 @@
                     "204": {
                         "description": "No response body"
                     }
-                }
+                },
+                "x-ai-description": "Destroyer Revert all preferences in the current category to their default values except for read_only or encrypted settings"
             }
         },
         "/api/gateway/v1/settings/{category_slug}/{preference_name}/": {
@@ -17989,7 +18727,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "Retrieve single setting"
             },
             "delete": {
                 "operationId": "settings_destroy",
@@ -18032,7 +18771,8 @@
                     "204": {
                         "description": "No response body"
                     }
-                }
+                },
+                "x-ai-description": "Delete existing setting"
             }
         },
         "/api/gateway/v1/status/": {
@@ -18074,7 +18814,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "Retrieve single status"
             }
         },
         "/api/gateway/v1/teams/": {
@@ -18351,7 +19092,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "List all teams"
             },
             "post": {
                 "operationId": "teams_create",
@@ -18401,7 +19143,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "Create new team"
             }
         },
         "/api/gateway/v1/teams/{id}/": {
@@ -18444,7 +19187,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "Retrieve single team"
             },
             "put": {
                 "operationId": "teams_update",
@@ -18505,7 +19249,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "Update existing team"
             },
             "patch": {
                 "operationId": "teams_partial_update",
@@ -18565,7 +19310,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "Partially update existing team"
             },
             "delete": {
                 "operationId": "teams_destroy",
@@ -18599,7 +19345,8 @@
                     "204": {
                         "description": "No response body"
                     }
-                }
+                },
+                "x-ai-description": "Delete existing team"
             }
         },
         "/api/gateway/v1/teams/{id}/admins/": {
@@ -19042,6 +19789,7 @@
                         "Basic_Authentication": []
                     }
                 ],
+                "deprecated": true,
                 "responses": {
                     "200": {
                         "content": {
@@ -19053,7 +19801,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "List all admins for a team"
             }
         },
         "/api/gateway/v1/teams/{id}/admins/associate/": {
@@ -19105,6 +19854,7 @@
                         "Basic_Authentication": []
                     }
                 ],
+                "deprecated": true,
                 "responses": {
                     "200": {
                         "content": {
@@ -19116,7 +19866,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "Associate admins with a team"
             }
         },
         "/api/gateway/v1/teams/{id}/admins/disassociate/": {
@@ -19168,6 +19919,7 @@
                         "Basic_Authentication": []
                     }
                 ],
+                "deprecated": true,
                 "responses": {
                     "200": {
                         "content": {
@@ -19179,7 +19931,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "Disassociate admins from a team"
             }
         },
         "/api/gateway/v1/teams/{id}/users/": {
@@ -19622,6 +20375,7 @@
                         "Basic_Authentication": []
                     }
                 ],
+                "deprecated": true,
                 "responses": {
                     "200": {
                         "content": {
@@ -19633,7 +20387,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "List all users for a team"
             }
         },
         "/api/gateway/v1/teams/{id}/users/associate/": {
@@ -19685,6 +20440,7 @@
                         "Basic_Authentication": []
                     }
                 ],
+                "deprecated": true,
                 "responses": {
                     "200": {
                         "content": {
@@ -19696,7 +20452,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "Associate users with a team"
             }
         },
         "/api/gateway/v1/teams/{id}/users/disassociate/": {
@@ -19748,6 +20505,7 @@
                         "Basic_Authentication": []
                     }
                 ],
+                "deprecated": true,
                 "responses": {
                     "200": {
                         "content": {
@@ -19759,7 +20517,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "Disassociate users from a team"
             }
         },
         "/api/gateway/v1/tokens/": {
@@ -20155,7 +20914,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "List all tokens"
             },
             "post": {
                 "operationId": "tokens_create",
@@ -20203,7 +20963,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "Create new token"
             }
         },
         "/api/gateway/v1/tokens/{id}/": {
@@ -20245,7 +21006,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "Retrieve single token"
             },
             "put": {
                 "operationId": "tokens_update",
@@ -20304,7 +21066,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "Update existing token"
             },
             "patch": {
                 "operationId": "tokens_partial_update",
@@ -20363,7 +21126,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "Partially update existing token"
             },
             "delete": {
                 "operationId": "tokens_destroy",
@@ -20396,7 +21160,8 @@
                     "204": {
                         "description": "No response body"
                     }
-                }
+                },
+                "x-ai-description": "Delete existing token"
             }
         },
         "/api/gateway/v1/trigger_definition/": {
@@ -20420,7 +21185,8 @@
                     "200": {
                         "description": "No response body"
                     }
-                }
+                },
+                "x-ai-description": "Retrieve single trigger definition"
             }
         },
         "/api/gateway/v1/ui_auth/": {
@@ -20441,7 +21207,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "Retrieve single ui auth"
             }
         },
         "/api/gateway/v1/ui_plugin_routes/": {
@@ -20520,6 +21287,14 @@
                             "type": "string"
                         },
                         "description": "Filter by enable_gateway_auth (exact match)"
+                    },
+                    {
+                        "in": "query",
+                        "name": "enable_mtls",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by enable_mtls (exact match)"
                     },
                     {
                         "in": "query",
@@ -20902,7 +21677,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "List all ui plugin routes"
             },
             "post": {
                 "operationId": "ui_plugin_routes_create",
@@ -20952,7 +21728,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "Create new ui plugin route"
             }
         },
         "/api/gateway/v1/ui_plugin_routes/{id}/": {
@@ -20995,7 +21772,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "Retrieve single ui plugin route"
             },
             "put": {
                 "operationId": "ui_plugin_routes_update",
@@ -21056,7 +21834,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "Update existing ui plugin route"
             },
             "patch": {
                 "operationId": "ui_plugin_routes_partial_update",
@@ -21116,7 +21895,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "Partially update existing ui plugin route"
             },
             "delete": {
                 "operationId": "ui_plugin_routes_destroy",
@@ -21150,7 +21930,8 @@
                     "204": {
                         "description": "No response body"
                     }
-                }
+                },
+                "x-ai-description": "Delete existing ui plugin route"
             }
         },
         "/api/gateway/v1/users/": {
@@ -21595,7 +22376,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "List all users"
             },
             "post": {
                 "operationId": "users_create",
@@ -21645,7 +22427,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "Create new user"
             }
         },
         "/api/gateway/v1/users/{id}/": {
@@ -21688,7 +22471,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "Retrieve single user"
             },
             "put": {
                 "operationId": "users_update",
@@ -21749,7 +22533,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "Update existing user"
             },
             "patch": {
                 "operationId": "users_partial_update",
@@ -21809,7 +22594,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "Partially update existing user"
             },
             "delete": {
                 "operationId": "users_destroy",
@@ -21843,7 +22629,8 @@
                     "204": {
                         "description": "No response body"
                     }
-                }
+                },
+                "x-ai-description": "Delete existing user"
             }
         },
         "/api/gateway/v1/users/{id}/authenticators/": {
@@ -21886,7 +22673,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "Retrieve single authenticator for an user"
             }
         },
         "/api/gateway/v1/users/{id}/authorized_tokens/": {
@@ -21929,7 +22717,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "Retrieve single token for an user"
             }
         },
         "/api/gateway/v1/users/{id}/organizations/": {
@@ -22020,6 +22809,7 @@
                         "Basic_Authentication": []
                     }
                 ],
+                "deprecated": true,
                 "responses": {
                     "200": {
                         "content": {
@@ -22031,7 +22821,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "List all organizations for an user"
             }
         },
         "/api/gateway/v1/users/{id}/personal_tokens/": {
@@ -22074,7 +22865,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "Retrieve single token for an user"
             }
         },
         "/api/gateway/v1/users/{id}/teams/": {
@@ -22165,6 +22957,7 @@
                         "Basic_Authentication": []
                     }
                 ],
+                "deprecated": true,
                 "responses": {
                     "200": {
                         "content": {
@@ -22176,7 +22969,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "List all teams for an user"
             }
         },
         "/api/gateway/v1/users/{id}/tokens/": {
@@ -22219,7 +23013,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "Retrieve single token for an user"
             }
         },
         "/o/": {
@@ -22244,7 +23039,8 @@
                     "200": {
                         "description": "No response body"
                     }
-                }
+                },
+                "x-ai-description": "Retrieve single o"
             }
         },
         "/role_metadata/": {
@@ -22276,7 +23072,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "Retrieve single role metadatum"
             }
         }
     },
@@ -22284,6 +23081,7 @@
         "schemas": {
             "AdditionalRoute": {
                 "type": "object",
+                "description": "Base serializer for route models.\n\nProvides common validation logic for routes including:\n- Gateway authentication validation for internal routes\n- Mutual TLS (mTLS) validation with gateway authentication\n- Gateway path normalization (collapsing consecutive slashes)\n- Node tags normalization\n\nSubclasses can override validate() and call super().validate()\nto add their own validation logic.",
                 "properties": {
                     "id": {
                         "type": "integer",
@@ -22383,6 +23181,10 @@
                         "type": "string",
                         "description": "A comma-separated list of nodes in the service cluster to receive traffic from this route.  Leave blank to select all nodes.",
                         "maxLength": 255
+                    },
+                    "enable_mtls": {
+                        "type": "boolean",
+                        "description": "If true, the route requires mutual TLS. Connecting clients have to provide one or more certificates."
                     }
                 },
                 "required": [
@@ -22494,15 +23296,6 @@
                     "name"
                 ]
             },
-            "AuthTypeEnum": {
-                "enum": [
-                    "JWT",
-                    "BASIC",
-                    "TOKEN"
-                ],
-                "type": "string",
-                "description": "* `JWT` - JWT\n* `BASIC` - Basic auth\n* `TOKEN` - Bearer token"
-            },
             "Authenticator": {
                 "type": "object",
                 "properties": {
@@ -22576,7 +23369,25 @@
                         "description": "The required configuration for this source."
                     },
                     "type": {
-                        "$ref": "#/components/schemas/TypeEnum"
+                        "enum": [
+                            "ansible_base.authentication.authenticator_plugins.oidc",
+                            "ansible_base.authentication.authenticator_plugins.ldap",
+                            "ansible_base.authentication.authenticator_plugins.local",
+                            "ansible_base.authentication.authenticator_plugins.github_team",
+                            "ansible_base.authentication.authenticator_plugins.saml",
+                            "ansible_base.authentication.authenticator_plugins.github_enterprise_org",
+                            "ansible_base.authentication.authenticator_plugins.google_oauth2",
+                            "ansible_base.authentication.authenticator_plugins.keycloak",
+                            "ansible_base.authentication.authenticator_plugins.radius",
+                            "ansible_base.authentication.authenticator_plugins.github_enterprise_team",
+                            "ansible_base.authentication.authenticator_plugins.github",
+                            "ansible_base.authentication.authenticator_plugins.azuread",
+                            "ansible_base.authentication.authenticator_plugins.tacacs",
+                            "ansible_base.authentication.authenticator_plugins.github_enterprise",
+                            "ansible_base.authentication.authenticator_plugins.github_org"
+                        ],
+                        "type": "string",
+                        "description": "* `ansible_base.authentication.authenticator_plugins.oidc` - ansible_base.authentication.authenticator_plugins.oidc\n* `ansible_base.authentication.authenticator_plugins.ldap` - ansible_base.authentication.authenticator_plugins.ldap\n* `ansible_base.authentication.authenticator_plugins.local` - ansible_base.authentication.authenticator_plugins.local\n* `ansible_base.authentication.authenticator_plugins.github_team` - ansible_base.authentication.authenticator_plugins.github_team\n* `ansible_base.authentication.authenticator_plugins.saml` - ansible_base.authentication.authenticator_plugins.saml\n* `ansible_base.authentication.authenticator_plugins.github_enterprise_org` - ansible_base.authentication.authenticator_plugins.github_enterprise_org\n* `ansible_base.authentication.authenticator_plugins.google_oauth2` - ansible_base.authentication.authenticator_plugins.google_oauth2\n* `ansible_base.authentication.authenticator_plugins.keycloak` - ansible_base.authentication.authenticator_plugins.keycloak\n* `ansible_base.authentication.authenticator_plugins.radius` - ansible_base.authentication.authenticator_plugins.radius\n* `ansible_base.authentication.authenticator_plugins.github_enterprise_team` - ansible_base.authentication.authenticator_plugins.github_enterprise_team\n* `ansible_base.authentication.authenticator_plugins.github` - ansible_base.authentication.authenticator_plugins.github\n* `ansible_base.authentication.authenticator_plugins.azuread` - ansible_base.authentication.authenticator_plugins.azuread\n* `ansible_base.authentication.authenticator_plugins.tacacs` - ansible_base.authentication.authenticator_plugins.tacacs\n* `ansible_base.authentication.authenticator_plugins.github_enterprise` - ansible_base.authentication.authenticator_plugins.github_enterprise\n* `ansible_base.authentication.authenticator_plugins.github_org` - ansible_base.authentication.authenticator_plugins.github_org"
                     },
                     "order": {
                         "type": "integer",
@@ -22693,11 +23504,14 @@
                         "description": "The authenticator this mapping belongs to."
                     },
                     "map_type": {
-                        "allOf": [
-                            {
-                                "$ref": "#/components/schemas/MapTypeEnum"
-                            }
+                        "enum": [
+                            "allow",
+                            "is_superuser",
+                            "role",
+                            "organization",
+                            "team"
                         ],
+                        "type": "string",
                         "description": "What will the map grant the user? System access (allow) a team or organization membership, the superuser flag or a role in the system.\n\n* `allow` - allow\n* `is_superuser` - is_superuser\n* `role` - role\n* `organization` - organization\n* `team` - team"
                     },
                     "role": {
@@ -22846,33 +23660,78 @@
                     "remove_other_authenticators"
                 ]
             },
-            "AuthenticatorsEnum": {
-                "enum": [
-                    1
-                ],
-                "type": "integer",
-                "description": "* `1` - Local Database Authenticator"
-            },
-            "AuthorizationGrantTypeEnum": {
-                "enum": [
-                    "authorization-code",
-                    "password"
-                ],
-                "type": "string",
-                "description": "* `authorization-code` - Authorization code\n* `password` - Resource owner password-based"
-            },
-            "BlankEnum": {
-                "enum": [
-                    ""
+            "CACertificate": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "readOnly": true
+                    },
+                    "url": {
+                        "type": "string",
+                        "readOnly": true
+                    },
+                    "related": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "type": "string"
+                        },
+                        "readOnly": true
+                    },
+                    "summary_fields": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "type": "object",
+                            "additionalProperties": {}
+                        },
+                        "readOnly": true
+                    },
+                    "created": {
+                        "type": "string",
+                        "format": "date-time",
+                        "readOnly": true,
+                        "description": "The date/time this resource was created."
+                    },
+                    "created_by": {
+                        "type": "integer",
+                        "readOnly": true,
+                        "nullable": true,
+                        "description": "The user who created this resource."
+                    },
+                    "modified": {
+                        "type": "string",
+                        "format": "date-time",
+                        "readOnly": true,
+                        "description": "The date/time this resource was created."
+                    },
+                    "modified_by": {
+                        "type": "integer",
+                        "readOnly": true,
+                        "nullable": true,
+                        "description": "The user who last modified this resource."
+                    },
+                    "name": {
+                        "type": "string",
+                        "description": "The name of this resource.",
+                        "maxLength": 512
+                    },
+                    "pem_data": {
+                        "type": "string"
+                    },
+                    "sha256": {
+                        "type": "string"
+                    },
+                    "related_id_reference": {
+                        "type": "string",
+                        "description": "Reference to an object that is related to this CA.",
+                        "maxLength": 64
+                    }
+                },
+                "required": [
+                    "name",
+                    "pem_data",
+                    "sha256"
                 ]
-            },
-            "ClientTypeEnum": {
-                "enum": [
-                    "confidential",
-                    "public"
-                ],
-                "type": "string",
-                "description": "* `confidential` - Confidential\n* `public` - Public"
             },
             "ClusterInfo": {
                 "type": "object",
@@ -22992,25 +23851,6 @@
                     "name"
                 ]
             },
-            "DnsDiscoveryTypeEnum": {
-                "enum": [
-                    "LOGICAL_DNS",
-                    "STRICT_DNS"
-                ],
-                "type": "string",
-                "description": "* `LOGICAL_DNS` - Logical DNS\n* `STRICT_DNS` - Strict DNS"
-            },
-            "DnsLookupFamilyEnum": {
-                "enum": [
-                    "V4_ONLY",
-                    "V6_ONLY",
-                    "AUTO",
-                    "ALL",
-                    "V4_PREFERRED"
-                ],
-                "type": "string",
-                "description": "* `V4_ONLY` - IPv4 only\n* `V6_ONLY` - IPv6 only\n* `AUTO` - Auto (IPv6 preferred)\n* `ALL` - All IPv4 and IPv6 addresses\n* `V4_PREFERRED` - IPv4 preferred"
-            },
             "Entry": {
                 "type": "object",
                 "properties": {
@@ -23050,11 +23890,14 @@
                         "description": "The user who created this resource."
                     },
                     "operation": {
-                        "allOf": [
-                            {
-                                "$ref": "#/components/schemas/OperationEnum"
-                            }
+                        "enum": [
+                            "create",
+                            "update",
+                            "delete",
+                            "associate",
+                            "disassociate"
                         ],
+                        "type": "string",
                         "description": "The type of change recorded by the entry (i.e. create/update/delete/etc).\n\n* `create` - Entity created\n* `update` - Entity updated\n* `delete` - Entity deleted\n* `associate` - Entity was associated with another entity\n* `disassociate` - Entity was disassociated with another entity"
                     },
                     "changes": {
@@ -23184,6 +24027,79 @@
                     "permissions"
                 ]
             },
+            "GatewayRoleTeamAssignment": {
+                "type": "object",
+                "description": "Custom serializer with Galaxy-specific validation for team role assignments\n\nTeams can only be assigned roles where all permissions are in the 'galaxy' service.",
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "readOnly": true
+                    },
+                    "url": {
+                        "type": "string",
+                        "readOnly": true
+                    },
+                    "related": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "type": "string"
+                        },
+                        "readOnly": true
+                    },
+                    "summary_fields": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "type": "object",
+                            "additionalProperties": {}
+                        },
+                        "readOnly": true
+                    },
+                    "created": {
+                        "type": "string",
+                        "format": "date-time",
+                        "readOnly": true,
+                        "description": "The date/time this resource was created."
+                    },
+                    "created_by": {
+                        "type": "integer",
+                        "readOnly": true,
+                        "nullable": true,
+                        "description": "The user who created this resource."
+                    },
+                    "content_type": {
+                        "type": "string",
+                        "description": "String to use for references to this type from other models in the API.",
+                        "readOnly": true
+                    },
+                    "object_id": {
+                        "type": "string",
+                        "nullable": true,
+                        "description": "The primary key of the object this assignment applies to; null value indicates system-wide assignment."
+                    },
+                    "object_ansible_id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "nullable": true,
+                        "description": "The resource id of the object this role applies to. An alternative to the object_id field."
+                    },
+                    "role_definition": {
+                        "type": "integer",
+                        "description": "The role definition which defines permissions conveyed by this assignment."
+                    },
+                    "team": {
+                        "type": "integer"
+                    },
+                    "team_ansible_id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "nullable": true,
+                        "description": "The resource ID of the team who will receive permissions from this assignment. An alternative to team field."
+                    }
+                },
+                "required": [
+                    "role_definition"
+                ]
+            },
             "HTTPPort": {
                 "type": "object",
                 "properties": {
@@ -23259,31 +24175,6 @@
                     "number"
                 ]
             },
-            "MapTypeEnum": {
-                "enum": [
-                    "allow",
-                    "is_superuser",
-                    "role",
-                    "organization",
-                    "team"
-                ],
-                "type": "string",
-                "description": "* `allow` - allow\n* `is_superuser` - is_superuser\n* `role` - role\n* `organization` - organization\n* `team` - team"
-            },
-            "ModeEnum": {
-                "enum": [
-                    "cluster",
-                    "standalone",
-                    "Unknown"
-                ],
-                "type": "string",
-                "description": "* `cluster` - cluster\n* `standalone` - standalone\n* `Unknown` - Unknown"
-            },
-            "NullEnum": {
-                "enum": [
-                    null
-                ]
-            },
             "OAuth2Application": {
                 "type": "object",
                 "properties": {
@@ -23352,14 +24243,14 @@
                         "description": "Allowed Post Logout URIs list, space separated"
                     },
                     "algorithm": {
-                        "oneOf": [
-                            {
-                                "$ref": "#/components/schemas/OAuth2ApplicationAlgorithmEnum"
-                            },
-                            {
-                                "$ref": "#/components/schemas/BlankEnum"
-                            }
-                        ]
+                        "enum": [
+                            "",
+                            "RS256",
+                            "HS256",
+                            ""
+                        ],
+                        "type": "string",
+                        "description": "* `` - No OIDC support\n* `RS256` - RSA with SHA-2 256\n* `HS256` - HMAC with SHA-2 256"
                     },
                     "user": {
                         "type": "integer",
@@ -23388,11 +24279,11 @@
                         "description": "Hashed on Save. Copy it now if this is a new secret."
                     },
                     "client_type": {
-                        "allOf": [
-                            {
-                                "$ref": "#/components/schemas/ClientTypeEnum"
-                            }
+                        "enum": [
+                            "confidential",
+                            "public"
                         ],
+                        "type": "string",
                         "description": "Set to Public or Confidential depending on how secure the client device is.\n\n* `confidential` - Confidential\n* `public` - Public"
                     },
                     "skip_authorization": {
@@ -23400,11 +24291,11 @@
                         "description": "Set True to skip authorization step for completely trusted applications."
                     },
                     "authorization_grant_type": {
-                        "allOf": [
-                            {
-                                "$ref": "#/components/schemas/AuthorizationGrantTypeEnum"
-                            }
+                        "enum": [
+                            "authorization-code",
+                            "password"
                         ],
+                        "type": "string",
                         "description": "The Grant type the user must use for acquire tokens for this application.\n\n* `authorization-code` - Authorization code\n* `password` - Resource owner password-based"
                     }
                 },
@@ -23414,14 +24305,6 @@
                     "name",
                     "organization"
                 ]
-            },
-            "OAuth2ApplicationAlgorithmEnum": {
-                "enum": [
-                    "RS256",
-                    "HS256"
-                ],
-                "type": "string",
-                "description": "* `` - No OIDC support\n* `RS256` - RSA with SHA-2 256\n* `HS256` - HMAC with SHA-2 256"
             },
             "OAuth2Token": {
                 "type": "object",
@@ -23515,17 +24398,6 @@
                         "readOnly": true
                     }
                 }
-            },
-            "OperationEnum": {
-                "enum": [
-                    "create",
-                    "update",
-                    "delete",
-                    "associate",
-                    "disassociate"
-                ],
-                "type": "string",
-                "description": "* `create` - Entity created\n* `update` - Entity updated\n* `delete` - Entity deleted\n* `associate` - Entity was associated with another entity\n* `disassociate` - Entity was disassociated with another entity"
             },
             "Organization": {
                 "type": "object",
@@ -23751,6 +24623,37 @@
                     }
                 }
             },
+            "PaginatedCACertificateList": {
+                "type": "object",
+                "required": [
+                    "count",
+                    "results"
+                ],
+                "properties": {
+                    "count": {
+                        "type": "integer",
+                        "example": 123
+                    },
+                    "next": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uri",
+                        "example": "http://api.example.org/accounts/?page=4"
+                    },
+                    "previous": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uri",
+                        "example": "http://api.example.org/accounts/?page=2"
+                    },
+                    "results": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/CACertificate"
+                        }
+                    }
+                }
+            },
             "PaginatedDABContentTypeList": {
                 "type": "object",
                 "required": [
@@ -23871,6 +24774,37 @@
                         "type": "array",
                         "items": {
                             "$ref": "#/components/schemas/GatewayRoleDefinition"
+                        }
+                    }
+                }
+            },
+            "PaginatedGatewayRoleTeamAssignmentList": {
+                "type": "object",
+                "required": [
+                    "count",
+                    "results"
+                ],
+                "properties": {
+                    "count": {
+                        "type": "integer",
+                        "example": 123
+                    },
+                    "next": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uri",
+                        "example": "http://api.example.org/accounts/?page=4"
+                    },
+                    "previous": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uri",
+                        "example": "http://api.example.org/accounts/?page=2"
+                    },
+                    "results": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/GatewayRoleTeamAssignment"
                         }
                     }
                 }
@@ -24057,37 +24991,6 @@
                         "type": "array",
                         "items": {
                             "$ref": "#/components/schemas/ResourceType"
-                        }
-                    }
-                }
-            },
-            "PaginatedRoleTeamAssignmentList": {
-                "type": "object",
-                "required": [
-                    "count",
-                    "results"
-                ],
-                "properties": {
-                    "count": {
-                        "type": "integer",
-                        "example": 123
-                    },
-                    "next": {
-                        "type": "string",
-                        "nullable": true,
-                        "format": "uri",
-                        "example": "http://api.example.org/accounts/?page=4"
-                    },
-                    "previous": {
-                        "type": "string",
-                        "nullable": true,
-                        "format": "uri",
-                        "example": "http://api.example.org/accounts/?page=2"
-                    },
-                    "results": {
-                        "type": "array",
-                        "items": {
-                            "$ref": "#/components/schemas/RoleTeamAssignment"
                         }
                     }
                 }
@@ -24600,6 +25503,7 @@
             },
             "PatchedAdditionalRoute": {
                 "type": "object",
+                "description": "Base serializer for route models.\n\nProvides common validation logic for routes including:\n- Gateway authentication validation for internal routes\n- Mutual TLS (mTLS) validation with gateway authentication\n- Gateway path normalization (collapsing consecutive slashes)\n- Node tags normalization\n\nSubclasses can override validate() and call super().validate()\nto add their own validation logic.",
                 "properties": {
                     "id": {
                         "type": "integer",
@@ -24699,6 +25603,10 @@
                         "type": "string",
                         "description": "A comma-separated list of nodes in the service cluster to receive traffic from this route.  Leave blank to select all nodes.",
                         "maxLength": 255
+                    },
+                    "enable_mtls": {
+                        "type": "boolean",
+                        "description": "If true, the route requires mutual TLS. Connecting clients have to provide one or more certificates."
                     }
                 }
             },
@@ -24775,7 +25683,25 @@
                         "description": "The required configuration for this source."
                     },
                     "type": {
-                        "$ref": "#/components/schemas/TypeEnum"
+                        "enum": [
+                            "ansible_base.authentication.authenticator_plugins.oidc",
+                            "ansible_base.authentication.authenticator_plugins.ldap",
+                            "ansible_base.authentication.authenticator_plugins.local",
+                            "ansible_base.authentication.authenticator_plugins.github_team",
+                            "ansible_base.authentication.authenticator_plugins.saml",
+                            "ansible_base.authentication.authenticator_plugins.github_enterprise_org",
+                            "ansible_base.authentication.authenticator_plugins.google_oauth2",
+                            "ansible_base.authentication.authenticator_plugins.keycloak",
+                            "ansible_base.authentication.authenticator_plugins.radius",
+                            "ansible_base.authentication.authenticator_plugins.github_enterprise_team",
+                            "ansible_base.authentication.authenticator_plugins.github",
+                            "ansible_base.authentication.authenticator_plugins.azuread",
+                            "ansible_base.authentication.authenticator_plugins.tacacs",
+                            "ansible_base.authentication.authenticator_plugins.github_enterprise",
+                            "ansible_base.authentication.authenticator_plugins.github_org"
+                        ],
+                        "type": "string",
+                        "description": "* `ansible_base.authentication.authenticator_plugins.oidc` - ansible_base.authentication.authenticator_plugins.oidc\n* `ansible_base.authentication.authenticator_plugins.ldap` - ansible_base.authentication.authenticator_plugins.ldap\n* `ansible_base.authentication.authenticator_plugins.local` - ansible_base.authentication.authenticator_plugins.local\n* `ansible_base.authentication.authenticator_plugins.github_team` - ansible_base.authentication.authenticator_plugins.github_team\n* `ansible_base.authentication.authenticator_plugins.saml` - ansible_base.authentication.authenticator_plugins.saml\n* `ansible_base.authentication.authenticator_plugins.github_enterprise_org` - ansible_base.authentication.authenticator_plugins.github_enterprise_org\n* `ansible_base.authentication.authenticator_plugins.google_oauth2` - ansible_base.authentication.authenticator_plugins.google_oauth2\n* `ansible_base.authentication.authenticator_plugins.keycloak` - ansible_base.authentication.authenticator_plugins.keycloak\n* `ansible_base.authentication.authenticator_plugins.radius` - ansible_base.authentication.authenticator_plugins.radius\n* `ansible_base.authentication.authenticator_plugins.github_enterprise_team` - ansible_base.authentication.authenticator_plugins.github_enterprise_team\n* `ansible_base.authentication.authenticator_plugins.github` - ansible_base.authentication.authenticator_plugins.github\n* `ansible_base.authentication.authenticator_plugins.azuread` - ansible_base.authentication.authenticator_plugins.azuread\n* `ansible_base.authentication.authenticator_plugins.tacacs` - ansible_base.authentication.authenticator_plugins.tacacs\n* `ansible_base.authentication.authenticator_plugins.github_enterprise` - ansible_base.authentication.authenticator_plugins.github_enterprise\n* `ansible_base.authentication.authenticator_plugins.github_org` - ansible_base.authentication.authenticator_plugins.github_org"
                     },
                     "order": {
                         "type": "integer",
@@ -24855,11 +25781,14 @@
                         "description": "The authenticator this mapping belongs to."
                     },
                     "map_type": {
-                        "allOf": [
-                            {
-                                "$ref": "#/components/schemas/MapTypeEnum"
-                            }
+                        "enum": [
+                            "allow",
+                            "is_superuser",
+                            "role",
+                            "organization",
+                            "team"
                         ],
+                        "type": "string",
                         "description": "What will the map grant the user? System access (allow) a team or organization membership, the superuser flag or a role in the system.\n\n* `allow` - allow\n* `is_superuser` - is_superuser\n* `role` - role\n* `organization` - organization\n* `team` - team"
                     },
                     "role": {
@@ -24894,6 +25823,74 @@
                         "maximum": 2147483647,
                         "minimum": 0,
                         "description": "The order in which this rule should be processed, smaller numbers are of higher precedence. Items with the same order will be executed in random order."
+                    }
+                }
+            },
+            "PatchedCACertificate": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "readOnly": true
+                    },
+                    "url": {
+                        "type": "string",
+                        "readOnly": true
+                    },
+                    "related": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "type": "string"
+                        },
+                        "readOnly": true
+                    },
+                    "summary_fields": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "type": "object",
+                            "additionalProperties": {}
+                        },
+                        "readOnly": true
+                    },
+                    "created": {
+                        "type": "string",
+                        "format": "date-time",
+                        "readOnly": true,
+                        "description": "The date/time this resource was created."
+                    },
+                    "created_by": {
+                        "type": "integer",
+                        "readOnly": true,
+                        "nullable": true,
+                        "description": "The user who created this resource."
+                    },
+                    "modified": {
+                        "type": "string",
+                        "format": "date-time",
+                        "readOnly": true,
+                        "description": "The date/time this resource was created."
+                    },
+                    "modified_by": {
+                        "type": "integer",
+                        "readOnly": true,
+                        "nullable": true,
+                        "description": "The user who last modified this resource."
+                    },
+                    "name": {
+                        "type": "string",
+                        "description": "The name of this resource.",
+                        "maxLength": 512
+                    },
+                    "pem_data": {
+                        "type": "string"
+                    },
+                    "sha256": {
+                        "type": "string"
+                    },
+                    "related_id_reference": {
+                        "type": "string",
+                        "description": "Reference to an object that is related to this CA.",
+                        "maxLength": 64
                     }
                 }
             },
@@ -25114,14 +26111,14 @@
                         "description": "Allowed Post Logout URIs list, space separated"
                     },
                     "algorithm": {
-                        "oneOf": [
-                            {
-                                "$ref": "#/components/schemas/OAuth2ApplicationAlgorithmEnum"
-                            },
-                            {
-                                "$ref": "#/components/schemas/BlankEnum"
-                            }
-                        ]
+                        "enum": [
+                            "",
+                            "RS256",
+                            "HS256",
+                            ""
+                        ],
+                        "type": "string",
+                        "description": "* `` - No OIDC support\n* `RS256` - RSA with SHA-2 256\n* `HS256` - HMAC with SHA-2 256"
                     },
                     "user": {
                         "type": "integer",
@@ -25150,11 +26147,11 @@
                         "description": "Hashed on Save. Copy it now if this is a new secret."
                     },
                     "client_type": {
-                        "allOf": [
-                            {
-                                "$ref": "#/components/schemas/ClientTypeEnum"
-                            }
+                        "enum": [
+                            "confidential",
+                            "public"
                         ],
+                        "type": "string",
                         "description": "Set to Public or Confidential depending on how secure the client device is.\n\n* `confidential` - Confidential\n* `public` - Public"
                     },
                     "skip_authorization": {
@@ -25162,11 +26159,11 @@
                         "description": "Set True to skip authorization step for completely trusted applications."
                     },
                     "authorization_grant_type": {
-                        "allOf": [
-                            {
-                                "$ref": "#/components/schemas/AuthorizationGrantTypeEnum"
-                            }
+                        "enum": [
+                            "authorization-code",
+                            "password"
                         ],
+                        "type": "string",
                         "description": "The Grant type the user must use for acquire tokens for this application.\n\n* `authorization-code` - Authorization code\n* `password` - Resource owner password-based"
                     }
                 }
@@ -25381,6 +26378,7 @@
             },
             "PatchedServiceAPIRoute": {
                 "type": "object",
+                "description": "Base serializer for route models.\n\nProvides common validation logic for routes including:\n- Gateway authentication validation for internal routes\n- Mutual TLS (mTLS) validation with gateway authentication\n- Gateway path normalization (collapsing consecutive slashes)\n- Node tags normalization\n\nSubclasses can override validate() and call super().validate()\nto add their own validation logic.",
                 "properties": {
                     "id": {
                         "type": "integer",
@@ -25492,6 +26490,10 @@
                         "type": "string",
                         "description": "A comma-separated list of nodes in the service cluster to receive traffic from this route.  Leave blank to select all nodes.",
                         "maxLength": 255
+                    },
+                    "enable_mtls": {
+                        "type": "boolean",
+                        "description": "If true, the route requires mutual TLS. Connecting clients have to provide one or more certificates."
                     }
                 }
             },
@@ -25562,11 +26564,12 @@
                         "description": "The unique service ID provided by the service."
                     },
                     "auth_type": {
-                        "allOf": [
-                            {
-                                "$ref": "#/components/schemas/AuthTypeEnum"
-                            }
+                        "enum": [
+                            "JWT",
+                            "BASIC",
+                            "TOKEN"
                         ],
+                        "type": "string",
                         "description": "The authorization type for this service.\n\n* `JWT` - JWT\n* `BASIC` - Basic auth\n* `TOKEN` - Bearer token"
                     },
                     "upstream_hostname": {
@@ -25575,19 +26578,22 @@
                         "maxLength": 255
                     },
                     "dns_discovery_type": {
-                        "allOf": [
-                            {
-                                "$ref": "#/components/schemas/DnsDiscoveryTypeEnum"
-                            }
+                        "enum": [
+                            "LOGICAL_DNS",
+                            "STRICT_DNS"
                         ],
+                        "type": "string",
                         "description": "The DNS service discovery type for this service.\n\n* `LOGICAL_DNS` - Logical DNS\n* `STRICT_DNS` - Strict DNS"
                     },
                     "dns_lookup_family": {
-                        "allOf": [
-                            {
-                                "$ref": "#/components/schemas/DnsLookupFamilyEnum"
-                            }
+                        "enum": [
+                            "V4_ONLY",
+                            "V6_ONLY",
+                            "AUTO",
+                            "ALL",
+                            "V4_PREFERRED"
                         ],
+                        "type": "string",
                         "description": "DNS lookup type for this service.\n\n* `V4_ONLY` - IPv4 only\n* `V6_ONLY` - IPv6 only\n* `AUTO` - Auto (IPv6 preferred)\n* `ALL` - All IPv4 and IPv6 addresses\n* `V4_PREFERRED` - IPv4 preferred"
                     },
                     "outlier_detection_enabled": {
@@ -25719,11 +26725,13 @@
                         "description": "Is this service key active."
                     },
                     "algorithm": {
-                        "allOf": [
-                            {
-                                "$ref": "#/components/schemas/ServiceKeyAlgorithmEnum"
-                            }
+                        "enum": [
+                            "HS256",
+                            "HS384",
+                            "HS512"
                         ],
+                        "type": "string",
+                        "description": "* `HS256` - HMAC with SHA256\n* `HS384` - HMAC with SHA384\n* `HS512` - HMAC with SHA512",
                         "default": "HS256"
                     },
                     "secret_length": {
@@ -26161,26 +27169,24 @@
                     "authenticators": {
                         "type": "array",
                         "items": {
-                            "oneOf": [
-                                {
-                                    "$ref": "#/components/schemas/AuthenticatorsEnum"
-                                },
-                                {
-                                    "$ref": "#/components/schemas/BlankEnum"
-                                },
-                                {
-                                    "$ref": "#/components/schemas/NullEnum"
-                                }
-                            ]
+                            "enum": [
+                                1,
+                                "",
+                                null
+                            ],
+                            "type": "integer",
+                            "description": "* `1` - Local Database Authenticator"
                         },
                         "writeOnly": true,
                         "nullable": true,
-                        "description": "DEPRECATED: This field is deprecated and will be removed in a future version. Please use 'associated_authenticators' instead."
+                        "description": "DEPRECATED: This field is deprecated and will be removed in a future version. Please use 'associated_authenticators' instead.",
+                        "deprecated": true
                     },
                     "authenticator_uid": {
                         "type": "string",
                         "writeOnly": true,
-                        "description": "DEPRECATED: This field is deprecated and will be removed in a future version. Please use 'associated_authenticators' instead."
+                        "description": "DEPRECATED: This field is deprecated and will be removed in a future version. Please use 'associated_authenticators' instead.",
+                        "deprecated": true
                     },
                     "associated_authenticators": {
                         "type": "object",
@@ -26202,7 +27208,13 @@
                 "type": "object",
                 "properties": {
                     "status": {
-                        "$ref": "#/components/schemas/StatusEnum"
+                        "enum": [
+                            "good",
+                            "degraded",
+                            "failed"
+                        ],
+                        "type": "string",
+                        "description": "* `good` - good\n* `degraded` - degraded\n* `failed` - failed"
                     },
                     "version": {
                         "type": "string"
@@ -26232,10 +27244,22 @@
                 "type": "object",
                 "properties": {
                     "status": {
-                        "$ref": "#/components/schemas/StatusEnum"
+                        "enum": [
+                            "good",
+                            "degraded",
+                            "failed"
+                        ],
+                        "type": "string",
+                        "description": "* `good` - good\n* `degraded` - degraded\n* `failed` - failed"
                     },
                     "mode": {
-                        "$ref": "#/components/schemas/ModeEnum"
+                        "enum": [
+                            "cluster",
+                            "standalone",
+                            "Unknown"
+                        ],
+                        "type": "string",
+                        "description": "* `cluster` - cluster\n* `standalone` - standalone\n* `Unknown` - Unknown"
                     },
                     "ping": {
                         "type": "boolean"
@@ -26470,78 +27494,6 @@
                     "allowed_permissions"
                 ]
             },
-            "RoleTeamAssignment": {
-                "type": "object",
-                "properties": {
-                    "id": {
-                        "type": "integer",
-                        "readOnly": true
-                    },
-                    "url": {
-                        "type": "string",
-                        "readOnly": true
-                    },
-                    "related": {
-                        "type": "object",
-                        "additionalProperties": {
-                            "type": "string"
-                        },
-                        "readOnly": true
-                    },
-                    "summary_fields": {
-                        "type": "object",
-                        "additionalProperties": {
-                            "type": "object",
-                            "additionalProperties": {}
-                        },
-                        "readOnly": true
-                    },
-                    "created": {
-                        "type": "string",
-                        "format": "date-time",
-                        "readOnly": true,
-                        "description": "The date/time this resource was created."
-                    },
-                    "created_by": {
-                        "type": "integer",
-                        "readOnly": true,
-                        "nullable": true,
-                        "description": "The user who created this resource."
-                    },
-                    "content_type": {
-                        "type": "string",
-                        "description": "String to use for references to this type from other models in the API.",
-                        "readOnly": true
-                    },
-                    "object_id": {
-                        "type": "string",
-                        "nullable": true,
-                        "description": "The primary key of the object this assignment applies to; null value indicates system-wide assignment."
-                    },
-                    "object_ansible_id": {
-                        "type": "string",
-                        "format": "uuid",
-                        "nullable": true,
-                        "description": "The resource id of the object this role applies to. An alternative to the object_id field."
-                    },
-                    "role_definition": {
-                        "type": "integer",
-                        "description": "The role definition which defines permissions conveyed by this assignment."
-                    },
-                    "team": {
-                        "type": "integer"
-                    },
-                    "team_ansible_id": {
-                        "type": "string",
-                        "format": "uuid",
-                        "nullable": true,
-                        "description": "The resource ID of the team who will receive permissions from this assignment. An alternative to team field."
-                    }
-                },
-                "required": [
-                    "role_definition"
-                ]
-            },
             "RoleUserAssignment": {
                 "type": "object",
                 "properties": {
@@ -26635,6 +27587,7 @@
             },
             "ServiceAPIRoute": {
                 "type": "object",
+                "description": "Base serializer for route models.\n\nProvides common validation logic for routes including:\n- Gateway authentication validation for internal routes\n- Mutual TLS (mTLS) validation with gateway authentication\n- Gateway path normalization (collapsing consecutive slashes)\n- Node tags normalization\n\nSubclasses can override validate() and call super().validate()\nto add their own validation logic.",
                 "properties": {
                     "id": {
                         "type": "integer",
@@ -26746,6 +27699,10 @@
                         "type": "string",
                         "description": "A comma-separated list of nodes in the service cluster to receive traffic from this route.  Leave blank to select all nodes.",
                         "maxLength": 255
+                    },
+                    "enable_mtls": {
+                        "type": "boolean",
+                        "description": "If true, the route requires mutual TLS. Connecting clients have to provide one or more certificates."
                     }
                 },
                 "required": [
@@ -26825,11 +27782,12 @@
                         "description": "The unique service ID provided by the service."
                     },
                     "auth_type": {
-                        "allOf": [
-                            {
-                                "$ref": "#/components/schemas/AuthTypeEnum"
-                            }
+                        "enum": [
+                            "JWT",
+                            "BASIC",
+                            "TOKEN"
                         ],
+                        "type": "string",
                         "description": "The authorization type for this service.\n\n* `JWT` - JWT\n* `BASIC` - Basic auth\n* `TOKEN` - Bearer token"
                     },
                     "upstream_hostname": {
@@ -26838,19 +27796,22 @@
                         "maxLength": 255
                     },
                     "dns_discovery_type": {
-                        "allOf": [
-                            {
-                                "$ref": "#/components/schemas/DnsDiscoveryTypeEnum"
-                            }
+                        "enum": [
+                            "LOGICAL_DNS",
+                            "STRICT_DNS"
                         ],
+                        "type": "string",
                         "description": "The DNS service discovery type for this service.\n\n* `LOGICAL_DNS` - Logical DNS\n* `STRICT_DNS` - Strict DNS"
                     },
                     "dns_lookup_family": {
-                        "allOf": [
-                            {
-                                "$ref": "#/components/schemas/DnsLookupFamilyEnum"
-                            }
+                        "enum": [
+                            "V4_ONLY",
+                            "V6_ONLY",
+                            "AUTO",
+                            "ALL",
+                            "V4_PREFERRED"
                         ],
+                        "type": "string",
                         "description": "DNS lookup type for this service.\n\n* `V4_ONLY` - IPv4 only\n* `V6_ONLY` - IPv6 only\n* `AUTO` - Auto (IPv6 preferred)\n* `ALL` - All IPv4 and IPv6 addresses\n* `V4_PREFERRED` - IPv4 preferred"
                     },
                     "outlier_detection_enabled": {
@@ -26986,11 +27947,13 @@
                         "description": "Is this service key active."
                     },
                     "algorithm": {
-                        "allOf": [
-                            {
-                                "$ref": "#/components/schemas/ServiceKeyAlgorithmEnum"
-                            }
+                        "enum": [
+                            "HS256",
+                            "HS384",
+                            "HS512"
                         ],
+                        "type": "string",
+                        "description": "* `HS256` - HMAC with SHA256\n* `HS384` - HMAC with SHA384\n* `HS512` - HMAC with SHA512",
                         "default": "HS256"
                     },
                     "secret_length": {
@@ -27015,20 +27978,17 @@
                     "service_cluster"
                 ]
             },
-            "ServiceKeyAlgorithmEnum": {
-                "enum": [
-                    "HS256",
-                    "HS384",
-                    "HS512"
-                ],
-                "type": "string",
-                "description": "* `HS256` - HMAC with SHA256\n* `HS384` - HMAC with SHA384\n* `HS512` - HMAC with SHA512"
-            },
             "ServiceKeysStatus": {
                 "type": "object",
                 "properties": {
                     "status": {
-                        "$ref": "#/components/schemas/StatusEnum"
+                        "enum": [
+                            "good",
+                            "degraded",
+                            "failed"
+                        ],
+                        "type": "string",
+                        "description": "* `good` - good\n* `degraded` - degraded\n* `failed` - failed"
                     },
                     "time": {
                         "type": "string",
@@ -27374,6 +28334,7 @@
                     "gateway_proxy_url_ignore_cert": {
                         "type": "boolean",
                         "default": false,
+                        "title": "Gateway Proxy URL Ignore Certificate",
                         "description": "Ignore certificate to the gateway proxy layer."
                     },
                     "jwt_private_key": {
@@ -27390,6 +28351,7 @@
                     "status_endpoint_backend_timeout_seconds": {
                         "type": "integer",
                         "default": 5,
+                        "title": "Status Endpoint Backend Timeout in Seconds",
                         "description": "The timeout (in seconds) for the status endpoint to wait when trying to connect to a backend."
                     },
                     "status_endpoint_backend_verify": {
@@ -27417,6 +28379,7 @@
                     "max_stream_duration": {
                         "type": "integer",
                         "default": 3600,
+                        "title": "Maximum Stream Duration",
                         "description": "Maximum total duration in seconds for streaming connections (e.g., AAP Lightspeed chatbot). Stream is closed after this time regardless of activity."
                     },
                     "trusted_header_timeout": {
@@ -27431,7 +28394,7 @@
                         "maximum": 100,
                         "minimum": 0,
                         "default": 0,
-                        "title": "Password minimum length",
+                        "title": "Minimum number of characters in local password",
                         "description": "How long does a local password have to be."
                     },
                     "password_min_digits": {
@@ -27439,7 +28402,7 @@
                         "maximum": 100,
                         "minimum": 0,
                         "default": 0,
-                        "title": "Password minimum numerical digits",
+                        "title": "Minimum number of numerical digits in local password",
                         "description": "How many numerical characters need to be in a local password."
                     },
                     "password_min_upper": {
@@ -27447,7 +28410,7 @@
                         "maximum": 100,
                         "minimum": 0,
                         "default": 0,
-                        "title": "Password minimum uppercase letters",
+                        "title": "Minimum number of uppercase characters in local password",
                         "description": "How many upper case characters need to be in a local password."
                     },
                     "password_min_special": {
@@ -27455,24 +28418,26 @@
                         "maximum": 100,
                         "minimum": 0,
                         "default": 0,
-                        "title": "Password minimum special characters",
+                        "title": "Minimum number of special characters in local password",
                         "description": "How many special characters need to be in a local password."
                     },
                     "allow_admins_to_set_insecure": {
                         "type": "boolean",
                         "default": false,
-                        "title": "Allow system administrators to set insecure user passwords",
+                        "title": "Allow Platform Admins to Set Insecure User Passwords",
                         "description": "Can a superuser account save an insecure password."
                     },
                     "LOGIN_REDIRECT_OVERRIDE": {
                         "type": "string",
                         "format": "uri",
                         "default": "",
+                        "title": "Login redirect override URL",
                         "description": "The URL or absolute path to which unauthorized users will be redirected to log in. If blank, users will be sent to the login page."
                     },
                     "custom_login_info": {
                         "type": "string",
                         "default": "",
+                        "title": "Custom Login Information",
                         "description": "Provide specific information (such as a legal notice or a disclaimer) to a text box in the login modal."
                     },
                     "custom_logo": {
@@ -27483,6 +28448,7 @@
                     "SOCIAL_AUTH_USERNAME_IS_FULL_EMAIL": {
                         "type": "boolean",
                         "default": false,
+                        "title": "Use Email address for usernames",
                         "description": "Enabling this setting will tell social auth to use the full email as username instead of the full name."
                     },
                     "SESSION_COOKIE_AGE": {
@@ -27501,6 +28467,7 @@
                     "MAX_PAGE_SIZE": {
                         "type": "integer",
                         "default": 200,
+                        "title": "Maximum Page Size",
                         "description": "The maximum number of items allowed on a list page."
                     },
                     "CSRF_TRUSTED_ORIGINS": {
@@ -27509,6 +28476,7 @@
                             "type": "string"
                         },
                         "default": [],
+                        "title": "CSRF Trusted Origins List",
                         "description": "List of CSRF trusted origin URLs. Note, if there are values in Djangos CSRF_TRUSTED_ORIGIN, they will always appear in this list."
                     },
                     "AAP_DEPLOYMENT_TYPE": {
@@ -27520,38 +28488,44 @@
                     "MANAGE_ORGANIZATION_AUTH": {
                         "type": "boolean",
                         "default": true,
+                        "title": "Organization Admins Can Manage Users and Teams",
                         "description": "Controls whether any Organization Admin has the privileges to create and manage users and teams. You may want to disable this ability if you are using an LDAP or SAML integration."
                     },
                     "ORG_ADMINS_CAN_SEE_ALL_USERS": {
                         "type": "boolean",
                         "default": true,
+                        "title": "All Users Visible to Organization Admins",
                         "description": "Controls whether any Organization Admin can view all users and teams, even those not associated with their Organization. When enabled, organization admins can view all users, even users not associated with their organizations. When disabled, organization admins can only see users from their own organizations, "
                     },
                     "ALLOW_OAUTH2_FOR_EXTERNAL_USERS": {
                         "type": "boolean",
                         "default": false,
-                        "title": "Allow external users to create OAuth2 tokens",
+                        "title": "Allow External Users to Create OAuth2 Tokens",
                         "description": "Enabling this feature allows users who log in via an external provider (e.g., LDAP, SAML) to create OAuth 2.0 tokens for use with the AAP API. An AAP token’s lifecycle is managed independently from the external authentication session. Refer to the 'Manage OAuth2 token creation for external users' section in the Red Hat Ansible documentation for details."
                     },
                     "INSIGHTS_TRACKING_STATE": {
                         "type": "boolean",
                         "default": true,
+                        "title": "Gather Insights data for Automation Analytics",
                         "description": "Enables the service to gather data on automation and send it to Automation Analytics."
                     },
                     "RED_HAT_CONSOLE_URL": {
                         "type": "string",
                         "format": "uri",
                         "default": "https://console.redhat.com",
+                        "title": "Automation Analytics upload URL",
                         "description": "This setting is used to to configure the upload URL for data collection for Automation Analytics."
                     },
                     "REDHAT_USERNAME": {
                         "type": "string",
                         "default": "",
+                        "title": "Red Hat Hybrid Cloud Console Username",
                         "description": "This username is used to send data to Automation Analytics/"
                     },
                     "REDHAT_PASSWORD": {
                         "type": "string",
                         "default": "",
+                        "title": "Red Hat Hybrid Cloud Console Password",
                         "description": "This password is used to send data to Automation Analytics.'"
                     },
                     "SUBSCRIPTIONS_USERNAME": {
@@ -27603,7 +28577,13 @@
                 "type": "object",
                 "properties": {
                     "status": {
-                        "$ref": "#/components/schemas/StatusEnum"
+                        "enum": [
+                            "good",
+                            "degraded",
+                            "failed"
+                        ],
+                        "type": "string",
+                        "description": "* `good` - good\n* `degraded` - degraded\n* `failed` - failed"
                     },
                     "time": {
                         "type": "string",
@@ -27621,20 +28601,17 @@
                     "time"
                 ]
             },
-            "StatusEnum": {
-                "enum": [
-                    "good",
-                    "degraded",
-                    "failed"
-                ],
-                "type": "string",
-                "description": "* `good` - good\n* `degraded` - degraded\n* `failed` - failed"
-            },
             "StatusNode": {
                 "type": "object",
                 "properties": {
                     "status": {
-                        "$ref": "#/components/schemas/StatusEnum"
+                        "enum": [
+                            "good",
+                            "degraded",
+                            "failed"
+                        ],
+                        "type": "string",
+                        "description": "* `good` - good\n* `degraded` - degraded\n* `failed` - failed"
                     },
                     "url": {
                         "type": "string"
@@ -27706,7 +28683,13 @@
                 "type": "object",
                 "properties": {
                     "status": {
-                        "$ref": "#/components/schemas/StatusEnum"
+                        "enum": [
+                            "good",
+                            "degraded",
+                            "failed"
+                        ],
+                        "type": "string",
+                        "description": "* `good` - good\n* `degraded` - degraded\n* `failed` - failed"
                     },
                     "service_name": {
                         "type": "string"
@@ -27903,27 +28886,6 @@
                     "name",
                     "organization"
                 ]
-            },
-            "TypeEnum": {
-                "enum": [
-                    "ansible_base.authentication.authenticator_plugins.azuread",
-                    "ansible_base.authentication.authenticator_plugins.github",
-                    "ansible_base.authentication.authenticator_plugins.github_enterprise",
-                    "ansible_base.authentication.authenticator_plugins.github_enterprise_org",
-                    "ansible_base.authentication.authenticator_plugins.github_enterprise_team",
-                    "ansible_base.authentication.authenticator_plugins.github_org",
-                    "ansible_base.authentication.authenticator_plugins.github_team",
-                    "ansible_base.authentication.authenticator_plugins.google_oauth2",
-                    "ansible_base.authentication.authenticator_plugins.keycloak",
-                    "ansible_base.authentication.authenticator_plugins.ldap",
-                    "ansible_base.authentication.authenticator_plugins.local",
-                    "ansible_base.authentication.authenticator_plugins.oidc",
-                    "ansible_base.authentication.authenticator_plugins.radius",
-                    "ansible_base.authentication.authenticator_plugins.saml",
-                    "ansible_base.authentication.authenticator_plugins.tacacs"
-                ],
-                "type": "string",
-                "description": "* `ansible_base.authentication.authenticator_plugins.azuread` - ansible_base.authentication.authenticator_plugins.azuread\n* `ansible_base.authentication.authenticator_plugins.github` - ansible_base.authentication.authenticator_plugins.github\n* `ansible_base.authentication.authenticator_plugins.github_enterprise` - ansible_base.authentication.authenticator_plugins.github_enterprise\n* `ansible_base.authentication.authenticator_plugins.github_enterprise_org` - ansible_base.authentication.authenticator_plugins.github_enterprise_org\n* `ansible_base.authentication.authenticator_plugins.github_enterprise_team` - ansible_base.authentication.authenticator_plugins.github_enterprise_team\n* `ansible_base.authentication.authenticator_plugins.github_org` - ansible_base.authentication.authenticator_plugins.github_org\n* `ansible_base.authentication.authenticator_plugins.github_team` - ansible_base.authentication.authenticator_plugins.github_team\n* `ansible_base.authentication.authenticator_plugins.google_oauth2` - ansible_base.authentication.authenticator_plugins.google_oauth2\n* `ansible_base.authentication.authenticator_plugins.keycloak` - ansible_base.authentication.authenticator_plugins.keycloak\n* `ansible_base.authentication.authenticator_plugins.ldap` - ansible_base.authentication.authenticator_plugins.ldap\n* `ansible_base.authentication.authenticator_plugins.local` - ansible_base.authentication.authenticator_plugins.local\n* `ansible_base.authentication.authenticator_plugins.oidc` - ansible_base.authentication.authenticator_plugins.oidc\n* `ansible_base.authentication.authenticator_plugins.radius` - ansible_base.authentication.authenticator_plugins.radius\n* `ansible_base.authentication.authenticator_plugins.saml` - ansible_base.authentication.authenticator_plugins.saml\n* `ansible_base.authentication.authenticator_plugins.tacacs` - ansible_base.authentication.authenticator_plugins.tacacs"
             },
             "UIAuthResponse": {
                 "type": "object",
@@ -28172,26 +29134,24 @@
                     "authenticators": {
                         "type": "array",
                         "items": {
-                            "oneOf": [
-                                {
-                                    "$ref": "#/components/schemas/AuthenticatorsEnum"
-                                },
-                                {
-                                    "$ref": "#/components/schemas/BlankEnum"
-                                },
-                                {
-                                    "$ref": "#/components/schemas/NullEnum"
-                                }
-                            ]
+                            "enum": [
+                                1,
+                                "",
+                                null
+                            ],
+                            "type": "integer",
+                            "description": "* `1` - Local Database Authenticator"
                         },
                         "writeOnly": true,
                         "nullable": true,
-                        "description": "DEPRECATED: This field is deprecated and will be removed in a future version. Please use 'associated_authenticators' instead."
+                        "description": "DEPRECATED: This field is deprecated and will be removed in a future version. Please use 'associated_authenticators' instead.",
+                        "deprecated": true
                     },
                     "authenticator_uid": {
                         "type": "string",
                         "writeOnly": true,
-                        "description": "DEPRECATED: This field is deprecated and will be removed in a future version. Please use 'associated_authenticators' instead."
+                        "description": "DEPRECATED: This field is deprecated and will be removed in a future version. Please use 'associated_authenticators' instead.",
+                        "deprecated": true
                     },
                     "associated_authenticators": {
                         "type": "object",
@@ -28461,7 +29421,7 @@
             "SessionAuthentication": {
                 "type": "apiKey",
                 "in": "cookie",
-                "name": "gateway_sessionid44926"
+                "name": "gateway_sessionid"
             }
         }
     }
