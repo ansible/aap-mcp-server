@@ -467,167 +467,167 @@ const createMcpServer = (): Server => {
     };
   });
 
-server.setRequestHandler(CallToolRequestSchema, async (request, extra) => {
-  const { name, arguments: args = {} } = request.params;
-  const _startTime = Date.now();
+  server.setRequestHandler(CallToolRequestSchema, async (request, extra) => {
+    const { name, arguments: args = {} } = request.params;
+    const _startTime = Date.now();
 
-  // Generate correlation ID for this request
-  const correlationId = randomUUID().substring(0, 8);
+    // Generate correlation ID for this request
+    const correlationId = randomUUID().substring(0, 8);
 
-  // Find the matching tool
-  const tool = allTools.find((t) => t.name === name);
-  if (!tool) {
-    throw new Error(`Unknown tool: ${name}`);
-  }
-
-  // Get category for this tool
-  const toolCategory = getCategoryForTool(tool.name);
-
-  // Get the session ID from the transport context
-  const sessionId = extra?.sessionId;
-
-  // Get user-agent from transport (if available)
-  let userAgent = "unknown";
-  if (sessionId && transports[sessionId]) {
-    const transport = transports[sessionId] as any;
-    userAgent = transport.userAgent || "unknown";
-  }
-
-  // Get the Bearer token for this session
-  const bearerToken = getBearerTokenForSession(sessionId);
-
-  // Execute the tool by making HTTP request
-  let result: any;
-  let response: Response | undefined;
-  let fullUrl: string = `${CONFIG.BASE_URL}${tool.pathTemplate}`;
-  let requestOptions: RequestInit | undefined;
-
-  try {
-    // Build URL from path template and parameters
-    let url = tool.pathTemplate;
-    const headers: Record<string, string> = {
-      Authorization: `Bearer ${bearerToken}`,
-      Accept: "application/json",
-    };
-
-    for (const param of tool.parameters || []) {
-      if (param.in === "path" && args[param.name]) {
-        url = url.replace(`{${param.name}}`, String(args[param.name]));
-      }
+    // Find the matching tool
+    const tool = allTools.find((t) => t.name === name);
+    if (!tool) {
+      throw new Error(`Unknown tool: ${name}`);
     }
 
-    // Add query parameters
-    const queryParams = new URLSearchParams();
-    for (const param of tool.parameters || []) {
-      if (param.in === "query" && args[param.name] !== undefined) {
-        queryParams.append(param.name, String(args[param.name]));
-      }
-    }
-    if (queryParams.toString()) {
-      url += "?" + queryParams.toString();
-    }
+    // Get category for this tool
+    const toolCategory = getCategoryForTool(tool.name);
 
-    // Prepare request options
-    requestOptions = {
-      method: tool.method.toUpperCase(),
-      headers,
-    };
+    // Get the session ID from the transport context
+    const sessionId = extra?.sessionId;
 
-    // Add request body for POST, PUT, PATCH
-    if (
-      ["POST", "PUT", "PATCH"].includes(tool.method.toUpperCase()) &&
-      args.requestBody
-    ) {
-      headers["Content-Type"] = "application/json";
-      requestOptions.body = JSON.stringify(args.requestBody);
+    // Get user-agent from transport (if available)
+    let userAgent = "unknown";
+    if (sessionId && transports[sessionId]) {
+      const transport = transports[sessionId] as any;
+      userAgent = transport.userAgent || "unknown";
     }
 
-    // Make HTTP request
-    fullUrl = `${CONFIG.BASE_URL}${url}`;
-    console.log(
-      `${getTimestamp()} [req:${correlationId}|category:${toolCategory}] ${tool.name} → ${tool.method.toUpperCase()} ${fullUrl}`,
-    );
-    response = await fetch(fullUrl, requestOptions);
+    // Get the Bearer token for this session
+    const bearerToken = getBearerTokenForSession(sessionId);
 
-    const contentType = response.headers.get("content-type");
-    if (contentType && contentType.includes("application/json")) {
-      result = await response.json();
-    } else {
-      result = await response.text();
-    }
+    // Execute the tool by making HTTP request
+    let result: any;
+    let response: Response | undefined;
+    let fullUrl: string = `${CONFIG.BASE_URL}${tool.pathTemplate}`;
+    let requestOptions: RequestInit | undefined;
 
-    // Log response with timing
-    const duration = ((Date.now() - _startTime) / 1000).toFixed(2);
-    console.log(
-      `${getTimestamp()} [req:${correlationId}|category:${toolCategory}] ${tool.name} → ${response.status} ${response.statusText} (${duration}s)`,
-    );
-
-    // Log the tool access (only if recording is enabled)
-    if (recordApiQueries && toolLogger) {
-      // Add category information to the tool for metrics
-      const toolWithCategory = {
-        ...tool,
-        category: toolCategory,
+    try {
+      // Build URL from path template and parameters
+      let url = tool.pathTemplate;
+      const headers: Record<string, string> = {
+        Authorization: `Bearer ${bearerToken}`,
+        Accept: "application/json",
       };
-      await toolLogger.logToolAccess(
-        toolWithCategory,
-        fullUrl,
-        {
-          method: tool.method.toUpperCase(),
-          userAgent: userAgent,
-        },
-        result,
-        response.status,
-        _startTime,
+
+      for (const param of tool.parameters || []) {
+        if (param.in === "path" && args[param.name]) {
+          url = url.replace(`{${param.name}}`, String(args[param.name]));
+        }
+      }
+
+      // Add query parameters
+      const queryParams = new URLSearchParams();
+      for (const param of tool.parameters || []) {
+        if (param.in === "query" && args[param.name] !== undefined) {
+          queryParams.append(param.name, String(args[param.name]));
+        }
+      }
+      if (queryParams.toString()) {
+        url += "?" + queryParams.toString();
+      }
+
+      // Prepare request options
+      requestOptions = {
+        method: tool.method.toUpperCase(),
+        headers,
+      };
+
+      // Add request body for POST, PUT, PATCH
+      if (
+        ["POST", "PUT", "PATCH"].includes(tool.method.toUpperCase()) &&
+        args.requestBody
+      ) {
+        headers["Content-Type"] = "application/json";
+        requestOptions.body = JSON.stringify(args.requestBody);
+      }
+
+      // Make HTTP request
+      fullUrl = `${CONFIG.BASE_URL}${url}`;
+      console.log(
+        `${getTimestamp()} [req:${correlationId}|category:${toolCategory}] ${tool.name} → ${tool.method.toUpperCase()} ${fullUrl}`,
+      );
+      response = await fetch(fullUrl, requestOptions);
+
+      const contentType = response.headers.get("content-type");
+      if (contentType && contentType.includes("application/json")) {
+        result = await response.json();
+      } else {
+        result = await response.text();
+      }
+
+      // Log response with timing
+      const duration = ((Date.now() - _startTime) / 1000).toFixed(2);
+      console.log(
+        `${getTimestamp()} [req:${correlationId}|category:${toolCategory}] ${tool.name} → ${response.status} ${response.statusText} (${duration}s)`,
+      );
+
+      // Log the tool access (only if recording is enabled)
+      if (recordApiQueries && toolLogger) {
+        // Add category information to the tool for metrics
+        const toolWithCategory = {
+          ...tool,
+          category: toolCategory,
+        };
+        await toolLogger.logToolAccess(
+          toolWithCategory,
+          fullUrl,
+          {
+            method: tool.method.toUpperCase(),
+            userAgent: userAgent,
+          },
+          result,
+          response.status,
+          _startTime,
+        );
+      }
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${JSON.stringify(result)}`);
+      }
+
+      return {
+        content: [
+          {
+            type: "text",
+            text: JSON.stringify(result, null, 2),
+          },
+        ],
+      };
+    } catch (error) {
+      // Log the error with timing
+      const duration = ((Date.now() - _startTime) / 1000).toFixed(2);
+      const statusInfo = response
+        ? `${response.status} ${response.statusText}`
+        : "No Response";
+      console.error(
+        `${getTimestamp()} [req:${correlationId}|category:${toolCategory}] ${tool.name} → ${statusInfo} (${duration}s) - ERROR: ${error instanceof Error ? error.message : String(error)}`,
+      );
+
+      // Log the failed tool access (only if recording is enabled)
+      if (recordApiQueries && toolLogger) {
+        // Add category information to the tool for metrics
+        const toolWithCategory = {
+          ...tool,
+          category: toolCategory,
+        };
+        await toolLogger.logToolAccess(
+          toolWithCategory,
+          fullUrl,
+          {
+            method: tool.method.toUpperCase(),
+            userAgent: userAgent,
+          },
+          { error: error instanceof Error ? error.message : String(error) },
+          response?.status || 0,
+          _startTime,
+        );
+      }
+
+      throw new Error(
+        `Tool execution failed: ${error instanceof Error ? error.message : String(error)}`,
       );
     }
-
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}: ${JSON.stringify(result)}`);
-    }
-
-    return {
-      content: [
-        {
-          type: "text",
-          text: JSON.stringify(result, null, 2),
-        },
-      ],
-    };
-  } catch (error) {
-    // Log the error with timing
-    const duration = ((Date.now() - _startTime) / 1000).toFixed(2);
-    const statusInfo = response
-      ? `${response.status} ${response.statusText}`
-      : "No Response";
-    console.error(
-      `${getTimestamp()} [req:${correlationId}|category:${toolCategory}] ${tool.name} → ${statusInfo} (${duration}s) - ERROR: ${error instanceof Error ? error.message : String(error)}`,
-    );
-
-    // Log the failed tool access (only if recording is enabled)
-    if (recordApiQueries && toolLogger) {
-      // Add category information to the tool for metrics
-      const toolWithCategory = {
-        ...tool,
-        category: toolCategory,
-      };
-      await toolLogger.logToolAccess(
-        toolWithCategory,
-        fullUrl,
-        {
-          method: tool.method.toUpperCase(),
-          userAgent: userAgent,
-        },
-        { error: error instanceof Error ? error.message : String(error) },
-        response?.status || 0,
-        _startTime,
-      );
-    }
-
-    throw new Error(
-      `Tool execution failed: ${error instanceof Error ? error.message : String(error)}`,
-    );
-  }
   });
 
   return server;
@@ -681,7 +681,8 @@ const mcpPostHandler = async (
 
             // Store category override and user-agent in transport for later access
             (transport as any).categoryOverride = categoryOverride;
-            (transport as any).userAgent = req.headers["user-agent"] || "unknown";
+            (transport as any).userAgent =
+              req.headers["user-agent"] || "unknown";
 
             // Extract and validate the bearer token
             const token = extractBearerToken(authHeader);
@@ -773,10 +774,7 @@ const mcpPostHandler = async (
     // Handle the request with existing transport
     await transport.handleRequest(req, res, req.body);
   } catch (error) {
-    console.error(
-      `${getTimestamp()} Error handling MCP request:`,
-      error,
-    );
+    console.error(`${getTimestamp()} Error handling MCP request:`, error);
     if (!res.headersSent) {
       res.status(500).json({
         jsonrpc: "2.0",
