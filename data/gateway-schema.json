@@ -3418,17 +3418,17 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/Authenticator"
+                                "$ref": "#/components/schemas/AuthenticatorUpdate"
                             }
                         },
                         "application/x-www-form-urlencoded": {
                             "schema": {
-                                "$ref": "#/components/schemas/Authenticator"
+                                "$ref": "#/components/schemas/AuthenticatorUpdate"
                             }
                         },
                         "multipart/form-data": {
                             "schema": {
-                                "$ref": "#/components/schemas/Authenticator"
+                                "$ref": "#/components/schemas/AuthenticatorUpdate"
                             }
                         }
                     },
@@ -25701,7 +25701,8 @@
                             "ansible_base.authentication.authenticator_plugins.github_org"
                         ],
                         "type": "string",
-                        "description": "* `ansible_base.authentication.authenticator_plugins.oidc` - ansible_base.authentication.authenticator_plugins.oidc\n* `ansible_base.authentication.authenticator_plugins.ldap` - ansible_base.authentication.authenticator_plugins.ldap\n* `ansible_base.authentication.authenticator_plugins.local` - ansible_base.authentication.authenticator_plugins.local\n* `ansible_base.authentication.authenticator_plugins.github_team` - ansible_base.authentication.authenticator_plugins.github_team\n* `ansible_base.authentication.authenticator_plugins.saml` - ansible_base.authentication.authenticator_plugins.saml\n* `ansible_base.authentication.authenticator_plugins.github_enterprise_org` - ansible_base.authentication.authenticator_plugins.github_enterprise_org\n* `ansible_base.authentication.authenticator_plugins.google_oauth2` - ansible_base.authentication.authenticator_plugins.google_oauth2\n* `ansible_base.authentication.authenticator_plugins.keycloak` - ansible_base.authentication.authenticator_plugins.keycloak\n* `ansible_base.authentication.authenticator_plugins.radius` - ansible_base.authentication.authenticator_plugins.radius\n* `ansible_base.authentication.authenticator_plugins.github_enterprise_team` - ansible_base.authentication.authenticator_plugins.github_enterprise_team\n* `ansible_base.authentication.authenticator_plugins.github` - ansible_base.authentication.authenticator_plugins.github\n* `ansible_base.authentication.authenticator_plugins.azuread` - ansible_base.authentication.authenticator_plugins.azuread\n* `ansible_base.authentication.authenticator_plugins.tacacs` - ansible_base.authentication.authenticator_plugins.tacacs\n* `ansible_base.authentication.authenticator_plugins.github_enterprise` - ansible_base.authentication.authenticator_plugins.github_enterprise\n* `ansible_base.authentication.authenticator_plugins.github_org` - ansible_base.authentication.authenticator_plugins.github_org"
+                        "description": "* `ansible_base.authentication.authenticator_plugins.oidc` - ansible_base.authentication.authenticator_plugins.oidc\n* `ansible_base.authentication.authenticator_plugins.ldap` - ansible_base.authentication.authenticator_plugins.ldap\n* `ansible_base.authentication.authenticator_plugins.local` - ansible_base.authentication.authenticator_plugins.local\n* `ansible_base.authentication.authenticator_plugins.github_team` - ansible_base.authentication.authenticator_plugins.github_team\n* `ansible_base.authentication.authenticator_plugins.saml` - ansible_base.authentication.authenticator_plugins.saml\n* `ansible_base.authentication.authenticator_plugins.github_enterprise_org` - ansible_base.authentication.authenticator_plugins.github_enterprise_org\n* `ansible_base.authentication.authenticator_plugins.google_oauth2` - ansible_base.authentication.authenticator_plugins.google_oauth2\n* `ansible_base.authentication.authenticator_plugins.keycloak` - ansible_base.authentication.authenticator_plugins.keycloak\n* `ansible_base.authentication.authenticator_plugins.radius` - ansible_base.authentication.authenticator_plugins.radius\n* `ansible_base.authentication.authenticator_plugins.github_enterprise_team` - ansible_base.authentication.authenticator_plugins.github_enterprise_team\n* `ansible_base.authentication.authenticator_plugins.github` - ansible_base.authentication.authenticator_plugins.github\n* `ansible_base.authentication.authenticator_plugins.azuread` - ansible_base.authentication.authenticator_plugins.azuread\n* `ansible_base.authentication.authenticator_plugins.tacacs` - ansible_base.authentication.authenticator_plugins.tacacs\n* `ansible_base.authentication.authenticator_plugins.github_enterprise` - ansible_base.authentication.authenticator_plugins.github_enterprise\n* `ansible_base.authentication.authenticator_plugins.github_org` - ansible_base.authentication.authenticator_plugins.github_org",
+                        "readOnly": true
                     },
                     "order": {
                         "type": "integer",
@@ -29404,6 +29405,122 @@
                 },
                 "required": [
                     "message"
+                ]
+            },
+            "AuthenticatorUpdate": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "readOnly": true
+                    },
+                    "url": {
+                        "type": "string",
+                        "readOnly": true
+                    },
+                    "related": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "type": "string"
+                        },
+                        "readOnly": true
+                    },
+                    "summary_fields": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "type": "object",
+                            "additionalProperties": {}
+                        },
+                        "readOnly": true
+                    },
+                    "created": {
+                        "type": "string",
+                        "format": "date-time",
+                        "readOnly": true,
+                        "description": "The date/time this resource was created."
+                    },
+                    "created_by": {
+                        "type": "integer",
+                        "readOnly": true,
+                        "nullable": true,
+                        "description": "The user who created this resource."
+                    },
+                    "modified": {
+                        "type": "string",
+                        "format": "date-time",
+                        "readOnly": true,
+                        "description": "The date/time this resource was created."
+                    },
+                    "modified_by": {
+                        "type": "integer",
+                        "readOnly": true,
+                        "nullable": true,
+                        "description": "The user who last modified this resource."
+                    },
+                    "name": {
+                        "type": "string",
+                        "description": "The name of this resource.",
+                        "maxLength": 512
+                    },
+                    "enabled": {
+                        "type": "boolean",
+                        "description": "Should this authenticator be enabled."
+                    },
+                    "create_objects": {
+                        "type": "boolean",
+                        "description": "Allow authenticator to create objects (users, teams, organizations)."
+                    },
+                    "remove_users": {
+                        "type": "boolean",
+                        "description": "When a user authenticates from this source should they be removed from any other groups they were previously added to."
+                    },
+                    "configuration": {
+                        "type": "object",
+                        "additionalProperties": {},
+                        "description": "The required configuration for this source."
+                    },
+                    "type": {
+                        "enum": [
+                            "ansible_base.authentication.authenticator_plugins.oidc",
+                            "ansible_base.authentication.authenticator_plugins.ldap",
+                            "ansible_base.authentication.authenticator_plugins.local",
+                            "ansible_base.authentication.authenticator_plugins.github_team",
+                            "ansible_base.authentication.authenticator_plugins.saml",
+                            "ansible_base.authentication.authenticator_plugins.github_enterprise_org",
+                            "ansible_base.authentication.authenticator_plugins.google_oauth2",
+                            "ansible_base.authentication.authenticator_plugins.keycloak",
+                            "ansible_base.authentication.authenticator_plugins.radius",
+                            "ansible_base.authentication.authenticator_plugins.github_enterprise_team",
+                            "ansible_base.authentication.authenticator_plugins.github",
+                            "ansible_base.authentication.authenticator_plugins.azuread",
+                            "ansible_base.authentication.authenticator_plugins.tacacs",
+                            "ansible_base.authentication.authenticator_plugins.github_enterprise",
+                            "ansible_base.authentication.authenticator_plugins.github_org"
+                        ],
+                        "type": "string",
+                        "description": "* `ansible_base.authentication.authenticator_plugins.oidc` - ansible_base.authentication.authenticator_plugins.oidc\n* `ansible_base.authentication.authenticator_plugins.ldap` - ansible_base.authentication.authenticator_plugins.ldap\n* `ansible_base.authentication.authenticator_plugins.local` - ansible_base.authentication.authenticator_plugins.local\n* `ansible_base.authentication.authenticator_plugins.github_team` - ansible_base.authentication.authenticator_plugins.github_team\n* `ansible_base.authentication.authenticator_plugins.saml` - ansible_base.authentication.authenticator_plugins.saml\n* `ansible_base.authentication.authenticator_plugins.github_enterprise_org` - ansible_base.authentication.authenticator_plugins.github_enterprise_org\n* `ansible_base.authentication.authenticator_plugins.google_oauth2` - ansible_base.authentication.authenticator_plugins.google_oauth2\n* `ansible_base.authentication.authenticator_plugins.keycloak` - ansible_base.authentication.authenticator_plugins.keycloak\n* `ansible_base.authentication.authenticator_plugins.radius` - ansible_base.authentication.authenticator_plugins.radius\n* `ansible_base.authentication.authenticator_plugins.github_enterprise_team` - ansible_base.authentication.authenticator_plugins.github_enterprise_team\n* `ansible_base.authentication.authenticator_plugins.github` - ansible_base.authentication.authenticator_plugins.github\n* `ansible_base.authentication.authenticator_plugins.azuread` - ansible_base.authentication.authenticator_plugins.azuread\n* `ansible_base.authentication.authenticator_plugins.tacacs` - ansible_base.authentication.authenticator_plugins.tacacs\n* `ansible_base.authentication.authenticator_plugins.github_enterprise` - ansible_base.authentication.authenticator_plugins.github_enterprise\n* `ansible_base.authentication.authenticator_plugins.github_org` - ansible_base.authentication.authenticator_plugins.github_org",
+                        "readOnly": true
+                    },
+                    "order": {
+                        "type": "integer",
+                        "maximum": 2147483647,
+                        "minimum": -2147483648,
+                        "description": "The order in which an authenticator will be tried. This only pertains to username/password authenticators."
+                    },
+                    "slug": {
+                        "type": "string",
+                        "description": "An immutable identifier for the authenticator; used to generate the sso uri for sso authenticator types",
+                        "pattern": "^[-a-zA-Z0-9_]+$"
+                    },
+                    "auto_migrate_users_to": {
+                        "type": "integer",
+                        "nullable": true,
+                        "description": "Automatically move users from this authenticator to the target authenticator when a matching user logs in via the target authenticator. For this to work, the field used for the user ID on both authenticators needs to have the same value. This should only be used when migrating users between two authentication mechanisms that share the same user database (such as when both IDPs share the same LDAP user directory)."
+                    }
+                },
+                "required": [
+                    "configuration",
+                    "name"
                 ]
             }
         },
