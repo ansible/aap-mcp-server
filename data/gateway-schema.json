@@ -23550,7 +23550,8 @@
                 },
                 "required": [
                     "authenticator",
-                    "name"
+                    "name",
+                    "triggers"
                 ]
             },
             "AuthenticatorUser": {
