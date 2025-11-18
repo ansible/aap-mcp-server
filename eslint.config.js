@@ -36,8 +36,8 @@ export default [
           caughtErrorsIgnorePattern: "^_",
         },
       ],
-      "@typescript-eslint/no-explicit-any": "off", // Allow any for now in existing codebase
-      "@typescript-eslint/explicit-function-return-type": "off",
+      "@typescript-eslint/explicit-function-return-type": "error", // Require explicit return types
+      "@typescript-eslint/no-explicit-any": "error", // Disallow explicit any types
       "@typescript-eslint/explicit-module-boundary-types": "off",
 
       // General JavaScript/TypeScript rules - most important ones

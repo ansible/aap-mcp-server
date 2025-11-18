@@ -5,8 +5,8 @@ import { metricsService } from "./metrics.js";
 export interface LogEntry {
   timestamp: string;
   endpoint: string;
-  payload: any;
-  response: any;
+  payload: Record<string, unknown>;
+  response: Record<string, unknown>;
   return_code: number;
 }
 
@@ -14,7 +14,7 @@ export interface Tool {
   name: string;
   service?: string;
   category?: string;
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 export class ToolLogger {
@@ -36,8 +36,8 @@ export class ToolLogger {
   async logToolAccess(
     tool: Tool,
     endpoint: string,
-    payload: any,
-    response: any,
+    payload: Record<string, unknown>,
+    response: Record<string, unknown>,
     returnCode: number,
     startTime?: number,
     _sessionId?: string,

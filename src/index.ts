@@ -139,6 +139,19 @@ if (ignoreCertificateErrors) {
 }
 
 // TypeScript interfaces
+interface UserInfo {
+  is_superuser: boolean;
+  is_platform_auditor: boolean;
+}
+
+interface UserApiResponse {
+  results: UserInfo[];
+}
+
+interface ExtendedTransport extends StreamableHTTPServerTransport {
+  categoryOverride?: string;
+  userAgent?: string;
+}
 
 interface SessionData {
   [sessionId: string]: {
@@ -197,7 +210,7 @@ const validateTokenAndGetPermissions = async (
       );
     }
 
-    const data = (await response.json()) as any;
+    const data = (await response.json()) as UserApiResponse;
 
     if (
       !data.results ||
@@ -207,7 +220,7 @@ const validateTokenAndGetPermissions = async (
       throw new Error("Invalid response format from /api/gateway/v1/me/");
     }
 
-    const userInfo = data.results[0] as any;
+    const userInfo = data.results[0];
     return {
       is_superuser: userInfo.is_superuser || false,
       is_platform_auditor: userInfo.is_platform_auditor || false,
@@ -307,7 +320,7 @@ const generateTools = async (): Promise<AAPMcpToolDefinition[]> => {
 
     try {
       const tools = extractToolsFromApi(
-        bundledSpec as any,
+        bundledSpec as OpenAPIV3.Document,
       ) as AAPMcpToolDefinition[];
       const filteredTools = tools.filter((tool) => {
         tool.service = spec.service; // Add service information to each tool
@@ -446,9 +459,7 @@ server.setRequestHandler(ListToolsRequestSchema, async (request, extra) => {
 
   // Get category override from transport if available
   const transport = sessionId ? transports[sessionId] : null;
-  const categoryOverride = transport
-    ? (transport as any).categoryOverride
-    : undefined;
+  const categoryOverride = transport?.categoryOverride;
 
   // Determine user category based on category override
   const category = getUserCategory(categoryOverride);
@@ -503,7 +514,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request, extra) => {
   // Get user-agent from transport (if available)
   let userAgent = "unknown";
   if (sessionId && transports[sessionId]) {
-    const transport = transports[sessionId] as any;
+    const transport = transports[sessionId];
     userAgent = transport.userAgent || "unknown";
   }
 
@@ -511,7 +522,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request, extra) => {
   const bearerToken = getBearerTokenForSession(sessionId);
 
   // Execute the tool by making HTTP request
-  let result: any;
+  let result: unknown;
   let response: Response | undefined;
   let fullUrl: string = `${CONFIG.BASE_URL}${tool.pathTemplate}`;
   let requestOptions: RequestInit | undefined;
@@ -645,7 +656,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request, extra) => {
 });
 
 // Global state management
-const transports: Record<string, StreamableHTTPServerTransport> = {};
+const transports: Record<string, ExtendedTransport> = {};
 const sessionData: SessionData = {};
 
 const app = express();
@@ -664,7 +675,7 @@ const mcpPostHandler = async (
   req: express.Request,
   res: express.Response,
   categoryOverride?: string,
-) => {
+): Promise<void> => {
   const sessionId = req.headers["mcp-session-id"] as string;
   const authHeader = req.headers["authorization"] as string;
 
@@ -683,16 +694,18 @@ const mcpPostHandler = async (
     } else if (!sessionId && isInitializeRequest(req.body)) {
       // New initialization request
       transport = new StreamableHTTPServerTransport({
-        sessionIdGenerator: () => randomUUID(),
-        onsessioninitialized: async (sessionId: string) => {
+        sessionIdGenerator: (): string => randomUUID(),
+        onsessioninitialized: async (sessionId: string): Promise<void> => {
           console.log(
             `${getTimestamp()} Session initialized${categoryOverride ? ` with category override: ${categoryOverride}` : ""}`,
           );
-          transports[sessionId] = transport;
 
           // Store category override and user-agent in transport for later access
-          (transport as any).categoryOverride = categoryOverride;
-          (transport as any).userAgent = req.headers["user-agent"] || "unknown";
+          const extendedTransport = transport as ExtendedTransport;
+          extendedTransport.categoryOverride = categoryOverride;
+          extendedTransport.userAgent = req.headers["user-agent"] || "unknown";
+
+          transports[sessionId] = extendedTransport;
 
           // Extract and validate the bearer token
           const token = extractBearerToken(authHeader);
@@ -718,7 +731,7 @@ const mcpPostHandler = async (
       });
 
       // Set up onclose handler to clean up transport when closed
-      transport.onclose = () => {
+      transport.onclose = (): void => {
         const sid = transport.sessionId;
         if (sid && transports[sid]) {
           console.log(
@@ -772,7 +785,7 @@ const mcpGetHandler = async (
   req: express.Request,
   res: express.Response,
   _categoryOverride?: string,
-) => {
+): Promise<void> => {
   const sessionId = req.headers["mcp-session-id"] as string;
   const _authHeader = req.headers["authorization"] as string;
 
@@ -801,7 +814,7 @@ const mcpDeleteHandler = async (
   req: express.Request,
   res: express.Response,
   _categoryOverride?: string,
-) => {
+): Promise<void> => {
   const sessionId = req.headers["mcp-session-id"] as string;
 
   if (!sessionId || !transports[sessionId]) {

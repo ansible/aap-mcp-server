@@ -5,7 +5,7 @@ interface LogsEntry {
   toolName: string;
   return_code: number;
   endpoint: string;
-  payload?: any;
+  payload?: Record<string, unknown>;
   userAgent?: string;
 }
 
@@ -35,12 +35,12 @@ export const renderLogs = (data: LogsData): string => {
   } = data;
 
   // Helper function to format timestamp for display
-  const formatTimestamp = (timestamp: string) => {
+  const formatTimestamp = (timestamp: string): string => {
     return new Date(timestamp).toLocaleString();
   };
 
   // Helper function to get status color
-  const getStatusColor = (code: number) => {
+  const getStatusColor = (code: number): string => {
     if (code >= 200 && code < 300) return "#28a745"; // green
     if (code >= 300 && code < 400) return "#ffc107"; // yellow
     if (code >= 400 && code < 500) return "#fd7e14"; // orange

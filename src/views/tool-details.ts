@@ -6,7 +6,7 @@ interface LogEntry {
   timestamp: string;
   return_code: number;
   endpoint: string;
-  response?: any;
+  response?: Record<string, unknown>;
 }
 
 interface CategoryWithAccess {
@@ -35,12 +35,12 @@ export const renderToolDetails = (data: ToolDetailsData): string => {
   } = data;
 
   // Helper function to format timestamp for display
-  const formatTimestamp = (timestamp: string) => {
+  const formatTimestamp = (timestamp: string): string => {
     return new Date(timestamp).toLocaleString();
   };
 
   // Helper function to get status color
-  const getStatusColor = (code: number) => {
+  const getStatusColor = (code: number): string => {
     if (code >= 200 && code < 300) return "#28a745"; // green
     if (code >= 300 && code < 400) return "#ffc107"; // yellow
     if (code >= 400 && code < 500) return "#fd7e14"; // orange
@@ -49,7 +49,7 @@ export const renderToolDetails = (data: ToolDetailsData): string => {
   };
 
   // Helper function to get status text
-  const getStatusText = (code: number) => {
+  const getStatusText = (code: number): string => {
     if (code >= 200 && code < 300) return "Success";
     if (code >= 300 && code < 400) return "Redirect";
     if (code >= 400 && code < 500) return "Client Error";
@@ -58,17 +58,17 @@ export const renderToolDetails = (data: ToolDetailsData): string => {
   };
 
   // Format the input schema for display
-  const formatSchema = (schema: any, level = 0): string => {
+  const formatSchema = (schema: unknown, level = 0): string => {
     if (!schema) return "No schema defined";
 
     const indent = "  ".repeat(level);
     let result = "";
 
-    if (schema.type === "object" && schema.properties) {
+    if ((schema as Record<string, unknown>).type === "object" && (schema as Record<string, unknown>).properties) {
       result += "{\n";
-      for (const [key, value] of Object.entries(schema.properties)) {
-        const prop = value as any;
-        const required = schema.required?.includes(key) ? " (required)" : "";
+      for (const [key, value] of Object.entries((schema as Record<string, unknown>).properties as Record<string, unknown>)) {
+        const prop = value as Record<string, unknown>;
+        const required = ((schema as Record<string, unknown>).required as string[])?.includes(key) ? " (required)" : "";
         result += `${indent}  "${key}"${required}: `;
         if (prop.type === "object") {
           result += formatSchema(prop, level + 1);

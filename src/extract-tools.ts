@@ -30,7 +30,7 @@ export class AAPOperationObject implements OpenAPIV3.OperationObject {
   public parameters?: OpenAPIV3.ParameterObject[];
   public responses: OpenAPIV3.ResponsesObject;
 
-  constructor(rawOperation: any) {
+  constructor(rawOperation: Partial<OpenAPIV3.OperationObject>) {
     Object.assign(this, rawOperation);
     this.deprecated = rawOperation.deprecated || false;
     this.responses = rawOperation.responses || {};
@@ -41,7 +41,7 @@ export class AAPOperationObject implements OpenAPIV3.OperationObject {
 /**
  * Normalize a value to boolean if it looks like a boolean; otherwise undefined.
  */
-export function normalizeBoolean(value: any): boolean | undefined {
+export function normalizeBoolean(value: unknown): boolean | undefined {
   if (typeof value === "boolean") return value;
   if (typeof value === "string") {
     const normalized = value.trim().toLowerCase();
@@ -62,7 +62,7 @@ export function shouldIncludeOperationForMcp(
   operation: AAPOperationObject,
   defaultInclude = true,
 ): boolean {
-  const opRaw = (operation as any)["x-mcp"];
+  const opRaw = (operation as Record<string, unknown>)["x-mcp"];
   const opVal = normalizeBoolean(opRaw);
   if (typeof opVal !== "undefined") return opVal;
   if (typeof opRaw !== "undefined") {
@@ -72,7 +72,7 @@ export function shouldIncludeOperationForMcp(
       `-> expected boolean or 'true'/'false'. Falling back to path/root/default.`,
     );
   }
-  const pathRaw = (pathItem as any)["x-mcp"];
+  const pathRaw = (pathItem as Record<string, unknown>)["x-mcp"];
   const pathVal = normalizeBoolean(pathRaw);
   if (typeof pathVal !== "undefined") return pathVal;
   if (typeof pathRaw !== "undefined") {
@@ -82,7 +82,7 @@ export function shouldIncludeOperationForMcp(
       `-> expected boolean or 'true'/'false'. Falling back to root/default.`,
     );
   }
-  const rootRaw = (api as any)["x-mcp"];
+  const rootRaw = (api as Record<string, unknown>)["x-mcp"];
   const rootVal = normalizeBoolean(rootRaw);
   if (typeof rootVal !== "undefined") return rootVal;
   if (typeof rootRaw !== "undefined") {
@@ -148,14 +148,14 @@ export function mapOpenApiSchemaToJsonSchema(
   // Detect cycles
   if (seen.has(schema)) {
     console.warn(
-      `Cycle detected in schema${(schema as any).title ? ` "${(schema as any).title}"` : ""}, returning generic object to break recursion.`,
+      `Cycle detected in schema${(schema as Record<string, unknown>).title ? ` "${(schema as Record<string, unknown>).title}"` : ""}, returning generic object to break recursion.`,
     );
     return { type: "object" };
   }
   seen.add(schema);
   try {
     // Create a copy of the schema to modify
-    const jsonSchema: any = { ...schema };
+    const jsonSchema: Record<string, unknown> = { ...schema };
     // Convert integer type to number (JSON Schema compatible)
     if (schema.type === "integer") jsonSchema.type = "number";
     // Remove OpenAPI-specific properties that aren't in JSON Schema
@@ -167,7 +167,7 @@ export function mapOpenApiSchemaToJsonSchema(
     delete jsonSchema.readOnly;
     delete jsonSchema.writeOnly;
     // Handle nullable properties by adding null to the type
-    if ((schema as any).nullable) {
+    if ((schema as Record<string, unknown>).nullable) {
       if (Array.isArray(jsonSchema.type)) {
         if (!jsonSchema.type.includes("null")) jsonSchema.type.push("null");
       } else if (typeof jsonSchema.type === "string") {
@@ -178,11 +178,11 @@ export function mapOpenApiSchemaToJsonSchema(
     }
     // Recursively process object properties
     if (jsonSchema.type === "object" && jsonSchema.properties) {
-      const mappedProps: any = {};
+      const mappedProps: Record<string, JSONSchema7 | boolean> = {};
       for (const [key, propSchema] of Object.entries(jsonSchema.properties)) {
         if (typeof propSchema === "object" && propSchema !== null) {
           mappedProps[key] = mapOpenApiSchemaToJsonSchema(
-            propSchema as any,
+            propSchema as OpenAPIV3.SchemaObject | OpenAPIV3.ReferenceObject,
             seen,
           );
         } else if (typeof propSchema === "boolean") {
@@ -198,7 +198,7 @@ export function mapOpenApiSchemaToJsonSchema(
       jsonSchema.items !== null
     ) {
       jsonSchema.items = mapOpenApiSchemaToJsonSchema(
-        jsonSchema.items as any,
+        jsonSchema.items as OpenAPIV3.SchemaObject | OpenAPIV3.ReferenceObject,
         seen,
       );
     }
@@ -358,9 +358,9 @@ export function extractToolsFromApi(
       } catch (error) {
         const loc = operation.operationId || `${method} ${path}`;
         const extVal =
-          (operation as any)["x-mcp"] ??
-          (pathItem as any)["x-mcp"] ??
-          (api as any)["x-mcp"];
+          (operation as Record<string, unknown>)["x-mcp"] ??
+          (pathItem as Record<string, unknown>)["x-mcp"] ??
+          (api as Record<string, unknown>)["x-mcp"];
         let extPreview: string;
         try {
           extPreview = JSON.stringify(extVal);
@@ -438,7 +438,7 @@ export function extractToolsFromApi(
           (value) => value[1],
         );
         const missingDescriptions = propertiesEntries.filter(
-          (p: any) => p && typeof p === "object" && !p.description,
+          (p: JSONSchema7 | boolean) => p && typeof p === "object" && !(p as JSONSchema7).description,
         );
         if (missingDescriptions.length) {
           logs.push({
