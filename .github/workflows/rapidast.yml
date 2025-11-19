@@ -1,0 +1,36 @@
+name: RapiDAST Security Scan
+
+# Manual trigger only
+on:
+  workflow_dispatch:
+    inputs:
+      scan_policy:
+        description: "ZAP scan policy to use"
+        required: false
+        default: "API-scan-minimal"
+        type: choice
+        options:
+          - API-scan-minimal
+          - Default-Policy
+
+# Restrict GITHUB_TOKEN permissions to minimal required access
+permissions:
+  contents: read
+
+jobs:
+  rapidast:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Placeholder for RapiDAST scan
+        run: |
+          echo "RapiDAST workflow registered successfully!"
+          echo "Selected scan policy: ${{ github.event.inputs.scan_policy || 'API-scan-minimal' }}"
+          echo "This workflow will be expanded in a future PR with:"
+          echo "  - Mock AAP server setup"
+          echo "  - MCP server configuration"
+          echo "  - Full RapiDAST security scanning"
