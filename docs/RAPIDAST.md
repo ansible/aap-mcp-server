@@ -13,12 +13,14 @@ RapiDAST runs in an official Red Hat container and uses ZAP (OWASP Zed Attack Pr
 ### 1. Mock AAP Server (`scripts/mock-aap-server.cjs`)
 
 A minimal HTTP server that mocks essential AAP authentication endpoints:
+
 - `GET /api/gateway/v1/me/` - Returns mock user data for authentication
 - `GET /health` - Health check endpoint
 
 ### 2. RapiDAST Configuration (`rapidast-config.yml`)
 
 Defines the scan configuration including:
+
 - Target URL (MCP server)
 - Authentication method (Bearer token)
 - Scanner settings (ZAP)
@@ -28,6 +30,7 @@ Defines the scan configuration including:
 ### 3. GitHub Workflow (`.github/workflows/rapidast.yml`)
 
 Automated security scanning workflow that:
+
 1. Runs in the official Red Hat RapiDAST container (`quay.io/redhatproductsecurity/rapidast:latest`)
 2. Starts the mock AAP server
 3. Starts the MCP server configured to use the mock AAP
@@ -45,11 +48,13 @@ Automated security scanning workflow that:
 ### Using Docker (Recommended)
 
 1. Start the mock AAP and MCP servers using the helper script:
+
 ```bash
 ./scripts/run-with-mock-aap.sh
 ```
 
 2. In another terminal, run RapiDAST in the official container:
+
 ```bash
 docker run --rm \
   --network host \
@@ -59,6 +64,7 @@ docker run --rm \
 ```
 
 3. View the results:
+
 ```bash
 # Results will be in results/*/*/zap/
 open results/*/*/zap/zap-report.html
@@ -69,6 +75,7 @@ open results/*/*/zap/zap-report.html
 If you prefer to run the servers separately:
 
 1. Start the mock AAP server:
+
 ```bash
 node scripts/mock-aap-server.cjs
 # Or specify a custom port:
@@ -76,6 +83,7 @@ MOCK_AAP_PORT=9000 node scripts/mock-aap-server.cjs
 ```
 
 2. In another terminal, start the MCP server:
+
 ```bash
 BASE_URL=http://localhost:8080 \
 BEARER_TOKEN_OAUTH2_AUTHENTICATION=test-token \
@@ -83,6 +91,7 @@ npm start
 ```
 
 3. Run RapiDAST in Docker:
+
 ```bash
 docker run --rm \
   --network host \
@@ -102,6 +111,7 @@ The RapiDAST scan is configured as a manually-triggered workflow:
    - **Scan Policy**: Choose between `API-scan-minimal` (default) or `Default-Policy`
 
 The workflow will:
+
 - Build and start the servers in the GitHub Actions environment
 - Run the security scan using the official Red Hat RapiDAST container
 - Upload results as artifacts
@@ -112,12 +122,14 @@ The workflow will:
 ### GitHub Actions
 
 After a workflow run completes:
+
 1. Go to the workflow run page
 2. Scroll to the "Artifacts" section
 3. Download the "rapidast-results" artifact
 4. Extract and view the reports
 
 The artifact contains:
+
 - `results/*/*/zap/zap-report.json` - Detailed JSON report
 - `results/*/*/zap/zap-report.html` - Human-readable HTML report
 - `results/*/*/zap/zap-report.xml` - XML report for CI/CD integration
@@ -125,6 +137,7 @@ The artifact contains:
 ### Local Scans
 
 Results are stored in the `results/` directory with the structure:
+
 ```
 results/
   └── <timestamp>/
@@ -140,6 +153,7 @@ results/
 ### Scan Policies
 
 The workflow supports two ZAP scan policies:
+
 - **API-scan-minimal** (default): Fast, minimal scanning suitable for APIs
 - **Default-Policy**: Full OWASP ZAP scanning policy (more comprehensive but slower)
 
@@ -149,7 +163,7 @@ The `rapidast-config.yml` file uses Red Hat's official configuration schema (v6)
 
 ```yaml
 config:
-  configVersion: 6  # Schema version
+  configVersion: 6 # Schema version
 
 application:
   shortName: "aap-mcp-server"
@@ -173,6 +187,7 @@ scanners:
 ### Customizing the Configuration
 
 Edit `rapidast-config.yml` to:
+
 - Modify spider duration and seed URLs
 - Enable/disable specific ZAP scanning rules
 - Change authentication settings
@@ -185,11 +200,13 @@ See the [RapiDAST configuration documentation](https://github.com/RedHatProductS
 ### Mock AAP Server Won't Start
 
 Check if port 8080 is already in use:
+
 ```bash
 lsof -i :8080
 ```
 
 Use a different port:
+
 ```bash
 MOCK_AAP_PORT=9000 node scripts/mock-aap-server.cjs
 ```
@@ -197,6 +214,7 @@ MOCK_AAP_PORT=9000 node scripts/mock-aap-server.cjs
 ### MCP Server Authentication Fails
 
 Ensure:
+
 1. Mock AAP server is running and accessible
 2. `BASE_URL` environment variable points to the mock AAP server
 3. A bearer token is provided (any value works with the mock)
@@ -212,6 +230,7 @@ If running RapiDAST in Docker and it can't reach the MCP server:
 ### Container Permission Issues
 
 If you get permission errors with Docker:
+
 ```bash
 # Add :Z flag for SELinux contexts (Linux)
 docker run --rm -v $(pwd):/opt/rapidast/work:Z ...
@@ -227,6 +246,7 @@ docker rm rapidast-scan
 ⚠️ **Important**: The mock AAP server is for testing only and should never be used in production. It accepts any bearer token and returns fixed user data.
 
 The mock server:
+
 - Does not validate tokens
 - Always returns the same user data
 - Should only be used in controlled test environments
