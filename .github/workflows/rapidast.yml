@@ -22,15 +22,158 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
 
+    # Run RapiDAST in official container
+    container:
+      image: quay.io/redhatproductsecurity/rapidast:latest
+      options: --user root # Required for GitHub runners
+
+    # Services that RapiDAST will scan
+    services:
+      # Mock AAP server
+      mock-aap:
+        image: node:20
+        ports:
+          - 8080:8080
+        options: >-
+          --health-cmd "curl -f http://localhost:8080/health || exit 1"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      # MCP server
+      mcp-server:
+        image: node:20
+        ports:
+          - 3000:3000
+        env:
+          BASE_URL: http://mock-aap:8080
+          BEARER_TOKEN_OAUTH2_AUTHENTICATION: test-token
+          PORT: 3000
+        options: >-
+          --health-cmd "curl -f http://localhost:3000/api/v1/health || exit 1"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Placeholder for RapiDAST scan
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20.x"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci --include=dev
+
+      - name: Build project
+        run: npm run build --if-present
+
+      - name: Start mock AAP server
         run: |
-          echo "RapiDAST workflow registered successfully!"
-          echo "Selected scan policy: ${{ github.event.inputs.scan_policy || 'API-scan-minimal' }}"
-          echo "This workflow will be expanded in a future PR with:"
-          echo "  - Mock AAP server setup"
-          echo "  - MCP server configuration"
-          echo "  - Full RapiDAST security scanning"
+          node scripts/mock-aap-server.cjs &
+          echo "MOCK_AAP_PID=$!" >> $GITHUB_ENV
+        working-directory: ${{ github.workspace }}
+
+      - name: Wait for mock AAP server
+        run: |
+          for i in {1..10}; do
+            if curl -s http://localhost:8080/health > /dev/null 2>&1; then
+              echo "Mock AAP server is ready"
+              break
+            fi
+            if [ $i -eq 10 ]; then
+              echo "Mock AAP server failed to start"
+              exit 1
+            fi
+            sleep 1
+          done
+      - name: Start MCP server
+        env:
+          BASE_URL: http://localhost:8080
+          BEARER_TOKEN_OAUTH2_AUTHENTICATION: test-token
+          PORT: 3000
+        run: |
+          npm start &
+          echo "MCP_PID=$!" >> $GITHUB_ENV
+        working-directory: ${{ github.workspace }}
+
+      - name: Wait for MCP server
+        run: |
+          for i in {1..30}; do
+            if curl -s http://localhost:3000/api/v1/health > /dev/null 2>&1; then
+              echo "MCP server is ready"
+              break
+            fi
+            if [ $i -eq 30 ]; then
+              echo "MCP server failed to start"
+              exit 1
+            fi
+            sleep 1
+          done
+      - name: Verify servers are running
+        run: |
+          echo "Testing Mock AAP server..."
+          curl -v http://localhost:8080/health
+          echo ""
+          echo "Testing MCP server..."
+          curl -v http://localhost:3000/api/v1/health
+          echo ""
+          echo "Testing MCP tools endpoint..."
+          curl -s -H "Authorization: Bearer test-token" http://localhost:3000/tools | head -50
+      - name: Update RapiDAST config with workflow inputs
+        run: |
+          # Update config file with workflow inputs if they differ from defaults
+          if [ "${{ github.event.inputs.scan_policy }}" != "" ]; then
+            sed -i "s/policy: .*/policy: \"${{ github.event.inputs.scan_policy }}\"/" rapidast-config.yml
+          fi
+          echo "Final RapiDAST configuration:"
+          cat rapidast-config.yml
+      - name: Run RapiDAST scan
+        id: rapidast
+        continue-on-error: true
+        run: |
+          rapidast.py --config rapidast-config.yml
+          # Display ZAP scan results in logs
+          if [ -f results/*/*/zap/zap-report.json ]; then
+            cat results/*/*/zap/zap-report.json
+          else
+            echo "No ZAP report found"
+            ls -R results/ || echo "No results directory"
+          fi
+      - name: Upload RapiDAST results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: rapidast-results
+          path: "results/*/*/*"
+          retention-days: 30
+
+      - name: Display scan summary
+        if: always()
+        run: |
+          echo "## RapiDAST Scan Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if [ -f results/*/*/zap/zap-report.json ]; then
+            echo "Scan completed. Results available in artifacts." >> $GITHUB_STEP_SUMMARY
+            # Extract and display high-level stats if possible
+            if command -v jq &> /dev/null; then
+              echo "" >> $GITHUB_STEP_SUMMARY
+              echo "### Findings by Severity" >> $GITHUB_STEP_SUMMARY
+              echo "" >> $GITHUB_STEP_SUMMARY
+              jq -r '.site[0].alerts[] | "\(.risk): \(.name)"' results/*/*/zap/zap-report.json | sort | uniq -c >> $GITHUB_STEP_SUMMARY || true
+            fi
+          else
+            echo "⚠️ No scan results found" >> $GITHUB_STEP_SUMMARY
+          fi
+      - name: Check scan results
+        if: steps.rapidast.outcome == 'failure'
+        run: |
+          echo "::error::RapiDAST scan failed or found issues"
+          exit 1
+      - name: Cleanup
+        if: always()
+        run: |
+          echo "Stopping servers..."
+          kill $MCP_PID || true
+          kill $MOCK_AAP_PID || true
