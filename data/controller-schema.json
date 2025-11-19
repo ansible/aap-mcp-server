@@ -89,7 +89,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "List audit log entries showing user actions and system events in the automation controller"
             }
         },
         "/api/v2/activity_stream/{id}/": {
@@ -120,7 +121,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "Retrieve details of a specific audit log entry by ID"
             }
         },
         "/api/v2/ad_hoc_command_events/{id}/": {
@@ -631,7 +633,8 @@
                     "200": {
                         "description": "No response body"
                     }
-                }
+                },
+                "x-ai-description": "List available analytics-related endpoints for reports, explorers, and templates"
             }
         },
         "/api/v2/analytics/adoption_rate/": {
@@ -1251,7 +1254,8 @@
                     "200": {
                         "description": "No response body"
                     }
-                }
+                },
+                "x-ai-description": "Return various sitewide configuration settings"
             },
             "post": {
                 "operationId": "config_create",
@@ -1262,7 +1266,8 @@
                     "200": {
                         "description": "No response body"
                     }
-                }
+                },
+                "x-ai-description": "Apply or update sitewide configuration settings including license and analytics settings"
             },
             "delete": {
                 "operationId": "config_destroy",
@@ -1762,7 +1767,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "List credential types that define authentication schemas for external systems"
             },
             "post": {
                 "operationId": "credential_types_create",
@@ -1790,7 +1796,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "Create a new credential type to define custom authentication schemas"
             }
         },
         "/api/v2/credential_types/{id}/": {
@@ -1821,7 +1828,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "Retrieve details of a specific credential type by ID"
             },
             "put": {
                 "operationId": "credential_types_update",
@@ -1860,7 +1868,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "Update a credential type's definition and schema"
             },
             "patch": {
                 "operationId": "credential_types_partial_update",
@@ -1920,7 +1929,8 @@
                     "204": {
                         "description": "No response body"
                     }
-                }
+                },
+                "x-ai-description": "Delete a credential type"
             }
         },
         "/api/v2/credential_types/{id}/activity_stream/": {
@@ -2172,7 +2182,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "List stored credentials for authenticating with external systems (cloud providers, source control, etc.)"
             },
             "post": {
                 "operationId": "credentials_create",
@@ -2232,7 +2243,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "Retrieve details of a specific credential by ID (sensitive fields are masked)"
             },
             "put": {
                 "operationId": "credentials_update",
@@ -2836,7 +2848,8 @@
                     "200": {
                         "description": "No response body"
                     }
-                }
+                },
+                "x-ai-description": "Test updates to the input values and metadata of an external credential before saving them."
             }
         },
         "/api/v2/dashboard/": {
@@ -2912,7 +2925,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "List container images that provide the runtime environment for automation jobs"
             },
             "post": {
                 "operationId": "execution_environments_create",
@@ -2940,7 +2954,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "Register a new execution environment container image for running jobs"
             }
         },
         "/api/v2/execution_environments/{id}/": {
@@ -2971,7 +2986,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "Retrieve details of a specific execution environment by ID"
             },
             "put": {
                 "operationId": "execution_environments_update",
@@ -3010,7 +3026,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "Update an execution environment's configuration"
             },
             "patch": {
                 "operationId": "execution_environments_partial_update",
@@ -3070,7 +3087,8 @@
                     "204": {
                         "description": "No response body"
                     }
-                }
+                },
+                "x-ai-description": "Delete an execution environment"
             }
         },
         "/api/v2/execution_environments/{id}/activity_stream/": {
@@ -3305,7 +3323,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "List inventory groups used to organize and manage hosts"
             },
             "post": {
                 "operationId": "groups_create",
@@ -3333,7 +3352,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "Create a new inventory group to organize hosts"
             }
         },
         "/api/v2/groups/{id}/": {
@@ -4471,7 +4491,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "List managed hosts in the inventory"
             },
             "post": {
                 "operationId": "hosts_create",
@@ -4530,7 +4551,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "Retrieve details of a specific host by ID"
             },
             "put": {
                 "operationId": "hosts_update",
@@ -5309,7 +5331,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "Retrieve Ansible variables defined for a specific host"
             },
             "put": {
                 "operationId": "hosts_variable_data_update",
@@ -5476,7 +5499,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "List instance groups that define which automation controller nodes can execute jobs"
             },
             "post": {
                 "operationId": "instance_groups_create",
@@ -5504,7 +5528,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "Create a new instance group to control job execution placement across controller nodes"
             }
         },
         "/api/v2/instance_groups/{id}/": {
@@ -5535,7 +5560,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "Retrieve details of a specific instance group by ID"
             },
             "put": {
                 "operationId": "instance_groups_update",
@@ -5984,7 +6010,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "Register a new automation controller node instance to the cluster"
             }
         },
         "/api/v2/instances/{id}/": {
@@ -6015,7 +6042,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "Retrieve details of a specific controller node instance by ID"
             },
             "put": {
                 "operationId": "instances_update",
@@ -6505,7 +6533,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "List inventories containing collections of hosts and groups"
             },
             "post": {
                 "operationId": "inventories_create",
@@ -9060,7 +9089,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "Trigger a sync to refresh inventory data from an external source (cloud provider, SCM, etc.)"
             }
         },
         "/api/v2/inventory_updates/": {
@@ -9623,7 +9653,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "List job templates that define playbook execution configurations"
             },
             "post": {
                 "operationId": "job_templates_create",
@@ -9682,7 +9713,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "Retrieve details of a specific job template by ID"
             },
             "put": {
                 "operationId": "job_templates_update",
@@ -10516,7 +10548,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "Launch a job from a job template to execute an Ansible playbook"
             }
         },
         "/api/v2/job_templates/{id}/notification_templates_error/": {
@@ -11222,7 +11255,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "List job executions and their current status"
             }
         },
         "/api/v2/jobs/{id}/": {
@@ -11254,7 +11288,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "Retrieve the details of a job"
             },
             "delete": {
                 "operationId": "jobs_destroy",
@@ -11395,7 +11430,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "Cancel a running job execution"
             }
         },
         "/api/v2/jobs/{id}/create_schedule/": {
@@ -11571,7 +11607,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "List individual task events that occurred during a job execution"
             }
         },
         "/api/v2/jobs/{id}/job_events/children_summary/": {
@@ -11653,7 +11690,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "List per-host summary statistics for a job execution (ok, changed, failed counts)"
             }
         },
         "/api/v2/jobs/{id}/labels/": {
@@ -11839,7 +11877,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "Relaunch a job with the same parameters as a previous execution"
             }
         },
         "/api/v2/jobs/{id}/stdout/": {
@@ -11895,7 +11934,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "Retrieve the console output (stdout) from a job execution"
             }
         },
         "/api/v2/labels/": {
@@ -12142,7 +12182,8 @@
                     "200": {
                         "description": "No response body"
                     }
-                }
+                },
+                "x-ai-description": "Retrieve topology visualization data for the automation mesh network of controller nodes"
             }
         },
         "/api/v2/metrics/": {
@@ -12169,7 +12210,8 @@
                     "200": {
                         "description": "No response body"
                     }
-                }
+                },
+                "x-ai-description": "Show Metrics Details"
             }
         },
         "/api/v2/notification_templates/": {
@@ -12218,7 +12260,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "List notification templates for sending alerts via email, Slack, webhooks, etc."
             },
             "post": {
                 "operationId": "notification_templates_create",
@@ -12246,7 +12289,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "Create a new notification template for job status alerts"
             }
         },
         "/api/v2/notification_templates/{id}/": {
@@ -12277,7 +12321,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "Retrieve details of a specific notification template by ID"
             },
             "put": {
                 "operationId": "notification_templates_update",
@@ -12316,7 +12361,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "Update a notification template's configuration"
             },
             "patch": {
                 "operationId": "notification_templates_partial_update",
@@ -12376,7 +12422,8 @@
                     "204": {
                         "description": "No response body"
                     }
-                }
+                },
+                "x-ai-description": "Delete a notification template"
             }
         },
         "/api/v2/notification_templates/{id}/copy/": {
@@ -14914,7 +14961,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "List projects containing Ansible playbooks from source control repositories"
             },
             "post": {
                 "operationId": "projects_create",
@@ -17003,7 +17051,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "List available settings categories for controller configuration"
             }
         },
         "/api/v2/settings/{category_slug}/": {
@@ -17034,7 +17083,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "Retrieve configuration settings for a specific category (authentication, jobs, logging, etc.). Use GET /api/v2/settings/ (tool name: controller.settings_list) to get available category slugs"
             },
             "put": {
                 "operationId": "settings_update",
@@ -17110,7 +17160,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "Update specific configuration settings within a category. Use GET /api/v2/settings/ (tool name: controller.settings_list) to get available category slugs"
             },
             "delete": {
                 "operationId": "settings_destroy",
@@ -21279,7 +21330,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "List workflow job templates that define multi-step automation workflows"
             },
             "post": {
                 "operationId": "workflow_job_templates_create",
@@ -21338,7 +21390,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "Retrieve details of a specific workflow job template by ID"
             },
             "put": {
                 "operationId": "workflow_job_templates_update",
@@ -21872,7 +21925,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "Launch a workflow job to execute a multi-step automation workflow"
             }
         },
         "/api/v2/workflow_job_templates/{id}/notification_templates_approvals/": {
@@ -22733,7 +22787,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "List workflow job executions and their current status"
             }
         },
         "/api/v2/workflow_jobs/{id}/": {
@@ -22765,7 +22820,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "Retrieve the details of a workflow job"
             },
             "delete": {
                 "operationId": "workflow_jobs_destroy",
@@ -22906,7 +22962,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "Cancel a running workflow job execution"
             }
         },
         "/api/v2/workflow_jobs/{id}/labels/": {
@@ -23068,7 +23125,8 @@
                     "200": {
                         "description": "No response body"
                     }
-                }
+                },
+                "x-ai-description": "Relaunch a workflow job with the same parameters as a previous execution"
             }
         },
         "/api/v2/workflow_jobs/{id}/workflow_nodes/": {
@@ -23126,7 +23184,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "List workflow jobs executed by each workflow node (step) within a workflow job"
             }
         },
         "/api/debug/": {
