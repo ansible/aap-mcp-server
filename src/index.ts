@@ -49,7 +49,7 @@ import {
 // Load environment variables
 config();
 
-type Category = string[];
+type ToolList = string[];
 
 interface AapMcpConfig {
   record_api_queries?: boolean;
@@ -77,7 +77,7 @@ const loadConfig = (): AapMcpConfig => {
 
 // Load configuration
 const localConfig = loadConfig();
-const allCategories: Record<string, Category> = localConfig.categories;
+const allCategories: Record<string, ToolList> = localConfig.categories;
 
 // Configuration constants (with priority: env var > config file > default)
 const CONFIG = {
@@ -145,6 +145,9 @@ interface SessionData {
     token: string;
     is_superuser: boolean;
     is_platform_auditor: boolean;
+    category: string;
+    userAgent: string;
+    transport: StreamableHTTPServerTransport;
   };
 }
 
@@ -189,6 +192,7 @@ const validateTokenAndGetPermissions = async (
         Authorization: `Bearer ${bearerToken}`,
         Accept: "application/json",
       },
+      signal: AbortSignal.timeout(5000),
     });
 
     if (!response.ok) {
@@ -224,40 +228,37 @@ const storeSessionData = (
   sessionId: string,
   token: string,
   permissions: { is_superuser: boolean; is_platform_auditor: boolean },
+  transport: StreamableHTTPServerTransport,
+  userAgent: string,
+  category?: string,
 ): void => {
   sessionData[sessionId] = {
     token,
     is_superuser: permissions.is_superuser,
     is_platform_auditor: permissions.is_platform_auditor,
+    category: category || "all",
+    userAgent,
+    transport,
   };
   console.log(
-    `${getTimestamp()} Stored session data for ${sessionId}: superuser=${permissions.is_superuser}, auditor=${permissions.is_platform_auditor}`,
+    `${getTimestamp()} Stored session data for ${sessionId}: category=${category}`,
   );
 };
 
-// Determine user category based on category name
-const getUserCategory = (category?: string): Category => {
-  // category is the only way to set the category
-  if (category) {
-    const categoryName = category.toLowerCase();
-    if (allCategories[categoryName]) {
-      return allCategories[categoryName];
-    } else {
-      console.warn(
-        `${getTimestamp()} Unknown category: ${category}, returning empty category`,
-      );
-      return [];
-    }
+// Get tools by category name
+const getToolsByCategory = (category: string): AAPMcpToolDefinition[] => {
+  // Special case: "all" returns all tools
+  if (category === "all") {
+    return allTools;
   }
 
-  // If no category is provided, return empty category (no tools available)
-  return [];
+  return allTools.filter((tool) => allCategories[category].includes(tool.name));
 };
 
 // Filter tools based on category
 const filterToolsByCategory = (
   tools: AAPMcpToolDefinition[],
-  category: Category,
+  category: ToolList,
 ): AAPMcpToolDefinition[] => {
   return tools.filter((tool) => category.includes(tool.name));
 };
@@ -440,36 +441,21 @@ const server = new Server(
 );
 
 server.setRequestHandler(ListToolsRequestSchema, async (request, extra) => {
-  // Get the session ID from the transport context
-  const sessionId = extra?.sessionId;
+  const sessionId: string  = (extra.requestInfo?.headers["mcp-session-id"] as string) || "";
+
+  if (!sessionId || !sessionData[sessionId]) {
+    throw new Error("session not initialized");
+  }
   const _startTime = Date.now();
 
-  // Get category override from transport if available
-  const transport = sessionId ? transports[sessionId] : null;
-  const categoryOverride = transport
-    ? (transport as any).categoryOverride
-    : undefined;
+  // Get category from session data (defaults to "all" if no session)
+  const category = sessionData[sessionId].category;
 
-  // Determine user category based on category override
-  const category = getUserCategory(categoryOverride);
+  // Get tools by category name
+  const filteredTools = getToolsByCategory(category);
 
-  // Filter tools based on category
-  const filteredTools = filterToolsByCategory(allTools, category);
-
-  // Determine category type by comparing with known categories
-  let categoryType = "unknown";
-  for (const [name, tools] of Object.entries(allCategories)) {
-    if (category === tools) {
-      categoryType = name;
-      break;
-    }
-  }
-
-  const overrideInfo = categoryOverride
-    ? ` (override: ${categoryOverride})`
-    : "";
   console.log(
-    `${getTimestamp()} Returning ${filteredTools.length} tools for ${categoryType} category${overrideInfo}`,
+    `${getTimestamp()} Returning ${filteredTools.length} tools for ${category}`,
   );
 
   return {
@@ -482,6 +468,11 @@ server.setRequestHandler(ListToolsRequestSchema, async (request, extra) => {
 });
 
 server.setRequestHandler(CallToolRequestSchema, async (request, extra) => {
+  const sessionId: string  = (extra.requestInfo?.headers["mcp-session-id"] as string) || "";
+
+  if (!sessionId || !sessionData[sessionId]) {
+    throw new Error("session not initialized");
+  }
   const { name, arguments: args = {} } = request.params;
   const _startTime = Date.now();
 
@@ -497,15 +488,8 @@ server.setRequestHandler(CallToolRequestSchema, async (request, extra) => {
   // Get category for this tool
   const toolCategory = getCategoryForTool(tool.name);
 
-  // Get the session ID from the transport context
-  const sessionId = extra?.sessionId;
-
-  // Get user-agent from transport (if available)
-  let userAgent = "unknown";
-  if (sessionId && transports[sessionId]) {
-    const transport = transports[sessionId] as any;
-    userAgent = transport.userAgent || "unknown";
-  }
+  // Get user-agent from session data
+  const userAgent = sessionData[sessionId].userAgent;
 
   // Get the Bearer token for this session
   const bearerToken = getBearerTokenForSession(sessionId);
@@ -645,7 +629,6 @@ server.setRequestHandler(CallToolRequestSchema, async (request, extra) => {
 });
 
 // Global state management
-const transports: Record<string, StreamableHTTPServerTransport> = {};
 const sessionData: SessionData = {};
 
 const app = express();
@@ -660,39 +643,36 @@ app.use(
 );
 
 // MCP POST endpoint handler
-const mcpPostHandler = async (
-  req: express.Request,
-  res: express.Response,
-  categoryOverride?: string,
-) => {
+const mcpPostHandler = async (req: express.Request, res: express.Response) => {
   const sessionId = req.headers["mcp-session-id"] as string;
   const authHeader = req.headers["authorization"] as string;
 
+  // Get category from session data or URL parameter for new sessions
+  const category =
+    (sessionData[sessionId] && sessionData[sessionId].category) ||
+    req.params.category ||
+    "all";
+
   if (sessionId) {
-    console.log(`${getTimestamp()} Received MCP request`);
+    console.log(`${getTimestamp()} Received MCP request ${category}`);
   } else {
-    console.log(`${getTimestamp()} Request body:`, req.body);
+    console.log(`${getTimestamp()} Request body ${category}:`, req.body);
   }
 
   try {
-    let transport: StreamableHTTPServerTransport;
-
-    if (sessionId && transports[sessionId]) {
+    if (sessionId && sessionData[sessionId]) {
       // Reuse existing transport
-      transport = transports[sessionId];
+      const transport = sessionData[sessionId].transport;
+      await transport.handleRequest(req, res, req.body);
+      return;
     } else if (!sessionId && isInitializeRequest(req.body)) {
       // New initialization request
-      transport = new StreamableHTTPServerTransport({
+      const transport = new StreamableHTTPServerTransport({
         sessionIdGenerator: () => randomUUID(),
         onsessioninitialized: async (sessionId: string) => {
           console.log(
-            `${getTimestamp()} Session initialized${categoryOverride ? ` with category override: ${categoryOverride}` : ""}`,
+            `${getTimestamp()} Session initialized ${category} ${sessionId}`,
           );
-          transports[sessionId] = transport;
-
-          // Store category override and user-agent in transport for later access
-          (transport as any).categoryOverride = categoryOverride;
-          (transport as any).userAgent = req.headers["user-agent"] || "unknown";
 
           // Extract and validate the bearer token
           const token = extractBearerToken(authHeader);
@@ -701,8 +681,9 @@ const mcpPostHandler = async (
               // Validate token and get user permissions
               const permissions = await validateTokenAndGetPermissions(token);
 
-              // Store both token and permissions in session data
-              storeSessionData(sessionId, token, permissions);
+              // Store session data including user-agent
+              const userAgent = req.headers["user-agent"] || "unknown";
+              storeSessionData(sessionId, token, permissions, transport, userAgent, category);
             } catch (error) {
               console.error(
                 `${getTimestamp()} Failed to validate token:`,
@@ -720,20 +701,14 @@ const mcpPostHandler = async (
       // Set up onclose handler to clean up transport when closed
       transport.onclose = () => {
         const sid = transport.sessionId;
-        if (sid && transports[sid]) {
+        if (sid && sessionData[sid]) {
           console.log(
-            `${getTimestamp()} Transport closed, removing from transports map`,
+            `${getTimestamp()} Transport closed, removing session data`,
           );
-          delete transports[sid];
-          // Clean up session data
-          if (sessionData[sid]) {
-            delete sessionData[sid];
-            console.log(`${getTimestamp()} Removed session data`);
-          }
+          delete sessionData[sid];
+          console.log(`${getTimestamp()} Removed session data`);
         }
       };
-
-      // Connect the transport to the MCP server BEFORE handling the request
       await server.connect(transport);
       await transport.handleRequest(req, res, req.body);
       return;
@@ -749,9 +724,6 @@ const mcpPostHandler = async (
       });
       return;
     }
-
-    // Handle the request with existing transport
-    await transport.handleRequest(req, res, req.body);
   } catch (error) {
     console.error(`${getTimestamp()} Error handling MCP request:`, error);
     if (!res.headersSent) {
@@ -768,15 +740,11 @@ const mcpPostHandler = async (
 };
 
 // MCP GET endpoint for streaming data
-const mcpGetHandler = async (
-  req: express.Request,
-  res: express.Response,
-  _categoryOverride?: string,
-) => {
+const mcpGetHandler = async (req: express.Request, res: express.Response) => {
   const sessionId = req.headers["mcp-session-id"] as string;
   const _authHeader = req.headers["authorization"] as string;
 
-  if (!sessionId || !transports[sessionId]) {
+  if (!sessionId || !sessionData[sessionId]) {
     res.status(400).send("Invalid or missing session ID");
     return;
   }
@@ -792,7 +760,7 @@ const mcpGetHandler = async (
     console.log(`${getTimestamp()} Establishing new SSE stream`);
   }
 
-  const transport = transports[sessionId];
+  const transport = sessionData[sessionId].transport;
   await transport.handleRequest(req, res);
 };
 
@@ -800,11 +768,10 @@ const mcpGetHandler = async (
 const mcpDeleteHandler = async (
   req: express.Request,
   res: express.Response,
-  _categoryOverride?: string,
 ) => {
   const sessionId = req.headers["mcp-session-id"] as string;
 
-  if (!sessionId || !transports[sessionId]) {
+  if (!sessionId || !sessionData[sessionId]) {
     res.status(400).send("Invalid or missing session ID");
     return;
   }
@@ -812,7 +779,7 @@ const mcpDeleteHandler = async (
   console.log(`${getTimestamp()} Received session termination request`);
 
   try {
-    const transport = transports[sessionId];
+    const transport = sessionData[sessionId].transport;
     await transport.handleRequest(req, res);
 
     // Clean up session data when session is terminated
@@ -1042,9 +1009,8 @@ if (enableUI) {
     try {
       const categoryName = req.params.name.toLowerCase();
 
-      // Get the category based on the name
-      const category = allCategories[categoryName];
-      if (!category) {
+      // Check if category exists
+      if (!allCategories[categoryName]) {
         const availableCategories = Object.keys(allCategories).join(", ");
         return res.status(404).json({
           error: "Category not found",
@@ -1055,8 +1021,8 @@ if (enableUI) {
       const displayName =
         categoryName.charAt(0).toUpperCase() + categoryName.slice(1);
 
-      // Filter tools based on category
-      const filteredTools = filterToolsByCategory(allTools, category);
+      // Get tools by category name
+      const filteredTools = getToolsByCategory(req.params.name);
 
       // Calculate total size
       const totalSize = filteredTools.reduce(
@@ -1313,10 +1279,7 @@ if (enableUI) {
       // Filter tools by category if specified
       let toolsToDisplay = allTools;
       if (categoryFilter && allCategories[categoryFilter]) {
-        toolsToDisplay = filterToolsByCategory(
-          allTools,
-          allCategories[categoryFilter],
-        );
+        toolsToDisplay = getToolsByCategory(categoryFilter);
       }
 
       // Helper function to find categories for a tool
@@ -1425,7 +1388,7 @@ app.post("/:category/mcp", (req, res) => {
   console.log(
     `${getTimestamp()} Category-specific POST request for category: ${category}`,
   );
-  return mcpPostHandler(req, res, category);
+  return mcpPostHandler(req, res);
 });
 
 app.get("/:category/mcp", (req, res) => {
@@ -1433,7 +1396,7 @@ app.get("/:category/mcp", (req, res) => {
   console.log(
     `${getTimestamp()} Category-specific GET request for category: ${category}`,
   );
-  return mcpGetHandler(req, res, category);
+  return mcpGetHandler(req, res);
 });
 
 app.delete("/:category/mcp", (req, res) => {
@@ -1441,7 +1404,7 @@ app.delete("/:category/mcp", (req, res) => {
   console.log(
     `${getTimestamp()} Category-specific DELETE request for category: ${category}`,
   );
-  return mcpDeleteHandler(req, res, category);
+  return mcpDeleteHandler(req, res);
 });
 
 app.post("/mcp/:category", (req, res) => {
@@ -1449,7 +1412,7 @@ app.post("/mcp/:category", (req, res) => {
   console.log(
     `${getTimestamp()} Category-specific POST request for category: ${category}`,
   );
-  return mcpPostHandler(req, res, category);
+  return mcpPostHandler(req, res);
 });
 
 app.get("/mcp/:category", (req, res) => {
@@ -1457,7 +1420,7 @@ app.get("/mcp/:category", (req, res) => {
   console.log(
     `${getTimestamp()} Category-specific GET request for category: ${category}`,
   );
-  return mcpGetHandler(req, res, category);
+  return mcpGetHandler(req, res);
 });
 
 app.delete("/mcp/:category", (req, res) => {
@@ -1465,7 +1428,7 @@ app.delete("/mcp/:category", (req, res) => {
   console.log(
     `${getTimestamp()} Category-specific DELETE request for category: ${category}`,
   );
-  return mcpDeleteHandler(req, res, category);
+  return mcpDeleteHandler(req, res);
 });
 
 // Health check endpoint (always enabled)
@@ -1569,15 +1532,14 @@ process.on("SIGINT", async () => {
   console.log(`${getTimestamp()} Shutting down server...`);
 
   // Close all active transports
-  for (const sessionId in transports) {
+  for (const sessionId in sessionData) {
     try {
-      console.log(`${getTimestamp()} Closing transport during shutdown`);
-      await transports[sessionId].close();
-      delete transports[sessionId];
-      // Clean up session data
-      if (sessionData[sessionId]) {
-        delete sessionData[sessionId];
+      if (sessionData[sessionId].transport) {
+        console.log(`${getTimestamp()} Closing transport during shutdown`);
+        await sessionData[sessionId].transport.close();
       }
+      // Clean up session data
+      delete sessionData[sessionId];
     } catch (error) {
       console.error(`${getTimestamp()} Error closing transport:`, error);
     }
