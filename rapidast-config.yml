@@ -9,7 +9,7 @@ config:
 # Application being scanned
 application:
   shortName: "aap-mcp-server"
-  url: "http://host.docker.internal:3000" # Use host.docker.internal to access host from container
+  url: "http://localhost:3000"
 
 # General scanning configuration
 general:
@@ -35,12 +35,12 @@ scanners:
 
     # Spider configuration
     spider:
-      url: "http://host.docker.internal:3000"
+      url: "http://localhost:3000"
       maxDuration: 10 # minutes
 
     # AJAX spider for dynamic content
     spiderAjax:
-      url: "http://host.docker.internal:3000"
+      url: "http://localhost:3000"
       maxDuration: 5 # minutes
 
     # Miscellaneous options

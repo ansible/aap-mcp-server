@@ -22,37 +22,6 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
 
-    # Run RapiDAST in official container
-    container:
-      image: quay.io/redhatproductsecurity/rapidast:latest
-      options: --user root # Required for GitHub runners
-
-    # Services that RapiDAST will scan
-    services:
-      # Mock AAP server
-      mock-aap:
-        image: node:20
-        ports:
-          - 8080:8080
-        options: >-
-          --health-cmd "curl -f http://localhost:8080/health || exit 1"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-      # MCP server
-      mcp-server:
-        image: node:20
-        ports:
-          - 3000:3000
-        env:
-          BASE_URL: http://mock-aap:8080
-          BEARER_TOKEN_OAUTH2_AUTHENTICATION: test-token
-          PORT: 3000
-        options: >-
-          --health-cmd "curl -f http://localhost:3000/api/v1/health || exit 1"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 10
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -133,7 +102,12 @@ jobs:
         id: rapidast
         continue-on-error: true
         run: |
-          rapidast.py --config rapidast-config.yml
+          docker run --rm \
+            --network host \
+            -v $(pwd):/opt/rapidast/work \
+            quay.io/redhatproductsecurity/rapidast:latest \
+            --config /opt/rapidast/work/rapidast-config.yml
+
           # Display ZAP scan results in logs
           if [ -f results/*/*/zap/zap-report.json ]; then
             cat results/*/*/zap/zap-report.json
