@@ -13,12 +13,22 @@ application:
 
 # General scanning configuration
 general:
-  # Authentication configuration
+  # Authentication configuration for MCP protocol
   authentication:
-    type: "http_header"
+    type: "script_based"
     parameters:
-      name: "Authorization"
-      value: "Bearer test-token"
+      script_name: "mcp-authentication.js"
+      script_engine: "ECMAScript : Graal.js"
+      script_file: "/opt/rapidast/work/scripts/zap/mcp-authentication.js"
+      Login URL: "http://localhost:3000/mcp"
+    credentials:
+      token: "test-token"
+
+  # Session management for MCP
+  session_management:
+    script_name: "mcp-session-management.js"
+    script_engine: "ECMAScript : Graal.js"
+    script_file: "/opt/rapidast/work/scripts/zap/mcp-session-management.js"
 
 # Scanner configurations
 scanners:
