@@ -1,6 +1,6 @@
 ---
 # ZAP Automation Framework Configuration for MCP Protocol
-# Uses HTTP Sender script to inject Mcp-Session-Id header into all requests
+# Uses custom requester script to send proper JSON-RPC requests
 
 env:
   contexts:
@@ -17,7 +17,7 @@ env:
     progressToStdout: true
 
 jobs:
-  # Store the MCP session ID as a global variable for the HTTP Sender script
+  # Store the MCP session ID as a global variable
   - type: script
     parameters:
       action: add
@@ -33,17 +33,23 @@ jobs:
       type: standalone
       name: set-mcp-session-id
 
-  # Load and enable the HTTP Sender script to add headers to all requests
+  # Load the MCP requester script that makes proper JSON-RPC requests
   - type: script
     parameters:
       action: add
-      type: httpsender
+      type: standalone
       engine: "Oracle Nashorn"
-      name: add-mcp-session-header
-      file: /opt/rapidast/work/scripts/zap/add-mcp-session-header.js
+      name: mcp-requester
+      file: /opt/rapidast/work/scripts/zap/mcp-requester.js
 
+  # Run the MCP requester to send requests through ZAP
   - type: script
     parameters:
-      action: enable
-      type: httpsender
-      name: add-mcp-session-header
+      action: run
+      type: standalone
+      name: mcp-requester
+
+  # Passive scan the requests sent by mcp-requester
+  - type: passiveScan-wait
+    parameters:
+      maxDuration: 60
