@@ -146,7 +146,9 @@ jobs:
               echo "" >> $GITHUB_STEP_SUMMARY
               echo "### Findings by Severity" >> $GITHUB_STEP_SUMMARY
               echo "" >> $GITHUB_STEP_SUMMARY
-              jq -r '.site[0].alerts[] | "\(.risk): \(.name)"' results/*/*/zap/zap-report.json | sort | uniq -c >> $GITHUB_STEP_SUMMARY || true
+              echo "| Severity | Count | Finding |" >> $GITHUB_STEP_SUMMARY
+              echo "|----------|-------|---------|" >> $GITHUB_STEP_SUMMARY
+              jq -r '.site[0].alerts[] | "| \((.riskdesc // "Unknown") | split(" ")[0]) | 1 | \(.name) |"' results/*/*/zap/zap-report.json >> $GITHUB_STEP_SUMMARY || true
             fi
           else
             echo "⚠️ No scan results found" >> $GITHUB_STEP_SUMMARY
