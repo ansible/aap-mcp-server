@@ -103,7 +103,9 @@ jobs:
           echo "Final RapiDAST configuration:"
           cat rapidast-config.yml
       - name: Create results directory
-        run: mkdir -p results
+        run: |
+          mkdir -p results
+          chmod 777 results
 
       - name: Run RapiDAST scan
         id: rapidast
