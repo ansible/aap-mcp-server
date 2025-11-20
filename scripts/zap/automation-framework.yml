@@ -1,7 +1,6 @@
 ---
 # ZAP Automation Framework Configuration for MCP Protocol
-# This configures custom authentication and session management scripts
-# for the MCP (Model Context Protocol) used by AAP MCP Server
+# Uses the Replacer add-on to inject Mcp-Session-Id header into all requests
 
 env:
   contexts:
@@ -11,25 +10,6 @@ env:
       includePaths:
         - "http://localhost:3000/.*"
       excludePaths: []
-      authentication:
-        method: "script"
-        parameters:
-          script: "MCP Authentication"
-          scriptEngine: "ECMAScript : Graal.js"
-          Login URL: "http://localhost:3000/mcp"
-        verification:
-          method: "response"
-          loggedInRegex: "\\Q{\"result\":\\E"
-          loggedOutRegex: "\\Qerror\\E"
-      sessionManagement:
-        method: "script"
-        parameters:
-          script: "MCP Session Management"
-          scriptEngine: "ECMAScript : Graal.js"
-      users:
-        - name: "test-user"
-          credentials:
-            token: "test-token"
 
   parameters:
     failOnError: true
@@ -37,18 +17,13 @@ env:
     progressToStdout: true
 
 jobs:
-  - type: script
+  # Add the Mcp-Session-Id header to all requests using Replacer
+  - type: replacer
     parameters:
-      action: add
-      name: "MCP Authentication"
-      type: authentication
-      engine: "ECMAScript : Graal.js"
-      file: "/opt/rapidast/work/scripts/zap/mcp-authentication.js"
-
-  - type: script
-    parameters:
-      action: add
-      name: "MCP Session Management"
-      type: session
-      engine: "ECMAScript : Graal.js"
-      file: "/opt/rapidast/work/scripts/zap/mcp-session-management.js"
+      rules:
+        - description: "Add MCP Session ID header"
+          enabled: true
+          matchType: REQ_HEADER
+          matchString: "Mcp-Session-Id"
+          replacement: "Mcp-Session-Id: MCP_SESSION_ID_PLACEHOLDER"
+          initiators: []

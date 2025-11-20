@@ -120,6 +120,18 @@ jobs:
           mkdir -p results
           chmod 777 results
 
+      - name: Initialize MCP session for ZAP
+        run: |
+          echo "Initializing MCP session..."
+          MCP_SESSION_ID=$(node scripts/init-mcp-session.cjs http://localhost:3000/mcp test-token)
+          echo "MCP_SESSION_ID=$MCP_SESSION_ID" >> $GITHUB_ENV
+          echo "Session ID: $MCP_SESSION_ID"
+
+          # Update the automation framework with the actual session ID
+          sed -i "s/MCP_SESSION_ID_PLACEHOLDER/$MCP_SESSION_ID/" scripts/zap/automation-framework.yml
+
+          echo "Updated ZAP automation framework with session ID"
+
       - name: Run RapiDAST scan
         id: rapidast
         continue-on-error: true
