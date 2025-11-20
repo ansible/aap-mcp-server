@@ -33,21 +33,20 @@ jobs:
       type: standalone
       name: set-mcp-session-id
 
-  # Load the MCP requester script that makes proper JSON-RPC requests
+  # Add HttpSender script to inject Mcp-Session-Id header into all requests
   - type: script
     parameters:
       action: add
-      type: standalone
+      type: httpsender
       engine: "ECMAScript : Graal.js"
-      name: mcp-requester
-      file: /opt/rapidast/work/scripts/zap/mcp-requester.js
+      name: add-mcp-session-header
+      file: /opt/rapidast/work/scripts/zap/add-mcp-session-header.js
 
-  # Run the MCP requester to send requests through ZAP
   - type: script
     parameters:
       action: run
-      type: standalone
-      name: mcp-requester
+      type: httpsender
+      name: add-mcp-session-header
 
   # Import URLs for additional scanning
   - type: import
