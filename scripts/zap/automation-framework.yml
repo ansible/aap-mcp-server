@@ -1,6 +1,6 @@
 ---
 # ZAP Automation Framework Configuration for MCP Protocol
-# Uses the Replacer add-on to inject Mcp-Session-Id header into all requests
+# Uses HTTP Sender script to inject Mcp-Session-Id header into all requests
 
 env:
   contexts:
@@ -17,13 +17,33 @@ env:
     progressToStdout: true
 
 jobs:
-  # Add the Mcp-Session-Id header to all requests using Replacer
-  - type: replacer
+  # Store the MCP session ID as a global variable for the HTTP Sender script
+  - type: script
     parameters:
-      rules:
-        - description: "Add MCP Session ID header"
-          enabled: true
-          matchType: REQ_HEADER
-          matchString: "Mcp-Session-Id"
-          replacement: "Mcp-Session-Id: MCP_SESSION_ID_PLACEHOLDER"
-          initiators: []
+      action: add
+      type: standalone
+      engine: "ECMAScript : Graal.js"
+      name: set-mcp-session-id
+      inline: |
+        org.zaproxy.zap.extension.script.ScriptVars.setGlobalVar('mcpSessionId', 'MCP_SESSION_ID_PLACEHOLDER')
+
+  - type: script
+    parameters:
+      action: run
+      type: standalone
+      name: set-mcp-session-id
+
+  # Load and enable the HTTP Sender script to add headers to all requests
+  - type: script
+    parameters:
+      action: add
+      type: httpsender
+      engine: "Oracle Nashorn"
+      name: add-mcp-session-header
+      file: /opt/rapidast/work/scripts/zap/add-mcp-session-header.js
+
+  - type: script
+    parameters:
+      action: enable
+      type: httpsender
+      name: add-mcp-session-header
