@@ -23,6 +23,10 @@ general:
 # Scanner configurations
 scanners:
   zap:
+    # Import URLs from file for comprehensive API scanning
+    importUrlsFromFile:
+      fileName: "rapidast-urls.txt"
+
     # Passive scanner configuration
     passiveScan:
       # Disable rules that may cause false positives for our use case
@@ -32,16 +36,6 @@ scanners:
     activeScan:
       # Use minimal policy suitable for APIs
       policy: "API-scan-minimal"
-
-    # Spider configuration
-    spider:
-      url: "http://localhost:3000"
-      maxDuration: 10 # minutes
-
-    # AJAX spider for dynamic content
-    spiderAjax:
-      url: "http://localhost:3000"
-      maxDuration: 5 # minutes
 
     # Miscellaneous options
     miscOptions:

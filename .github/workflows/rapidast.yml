@@ -102,6 +102,19 @@ jobs:
           fi
           echo "Final RapiDAST configuration:"
           cat rapidast-config.yml
+      - name: Generate seed URLs for scanning
+        run: node scripts/generate-rapidast-urls.cjs
+        env:
+          CONFIG_FILE: aap-mcp.yaml
+          OUTPUT_FILE: rapidast-urls.txt
+          BASE_URL: http://localhost:3000
+
+      - name: Display generated URLs
+        run: |
+          echo "Generated URLs for scanning:"
+          head -20 rapidast-urls.txt
+          echo "Total URLs: $(wc -l < rapidast-urls.txt)"
+
       - name: Create results directory
         run: |
           mkdir -p results
