@@ -102,6 +102,9 @@ jobs:
           fi
           echo "Final RapiDAST configuration:"
           cat rapidast-config.yml
+      - name: Create results directory
+        run: mkdir -p results
+
       - name: Run RapiDAST scan
         id: rapidast
         continue-on-error: true
