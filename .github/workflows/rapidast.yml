@@ -108,6 +108,7 @@ jobs:
         run: |
           docker run --rm \
             --network host \
+            -w /opt/rapidast/work \
             -v $(pwd):/opt/rapidast/work \
             quay.io/redhatproductsecurity/rapidast:latest \
             --config /opt/rapidast/work/rapidast-config.yml
