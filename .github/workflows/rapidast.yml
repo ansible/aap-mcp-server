@@ -57,6 +57,10 @@ jobs:
             fi
             sleep 1
           done
+
+      - name: Create MCP configuration
+        run: cp aap-mcp.sample.yaml aap-mcp.yaml
+
       - name: Start MCP server
         env:
           BASE_URL: http://localhost:8080
