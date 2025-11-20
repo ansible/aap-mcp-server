@@ -49,7 +49,18 @@ jobs:
       type: standalone
       name: mcp-requester
 
-  # Passive scan the requests sent by mcp-requester
+  # Import URLs for additional scanning
+  - type: import
+    parameters:
+      type: url
+      fileName: rapidast-urls.txt
+
+  # Run active scan
+  - type: activeScan
+    parameters:
+      context: aap-mcp-context
+
+  # Passive scan the requests
   - type: passiveScan-wait
     parameters:
       maxDuration: 60
