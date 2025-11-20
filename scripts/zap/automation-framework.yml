@@ -38,7 +38,7 @@ jobs:
     parameters:
       action: add
       type: standalone
-      engine: "Oracle Nashorn"
+      engine: "ECMAScript : Graal.js"
       name: mcp-requester
       file: /opt/rapidast/work/scripts/zap/mcp-requester.js
 
