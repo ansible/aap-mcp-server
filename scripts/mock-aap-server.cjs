@@ -223,7 +223,8 @@ const server = http.createServer((req, res) => {
   if (pathname === "/api/gateway/v1/me/") {
     console.log(`${logPrefix} - Returning mock user data`);
     res.writeHead(200, { "Content-Type": "application/json" });
-    res.end(JSON.stringify(mockUserData));
+    // MCP server expects results array format
+    res.end(JSON.stringify({ results: [mockUserData] }));
     return;
   }
 
