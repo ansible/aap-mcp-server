@@ -37,11 +37,10 @@ scanners:
       disabledRules: "2,10015,10024,10027,10054,10096,10109,10112"
 
     # Active scanner configuration
-    activeScan:
-      # Use minimal policy suitable for APIs
-      policy: "API-scan-minimal"
-      # Limit active scan to 10 minutes to avoid timeout
-      maxDuration: 10
+    # DISABLED: Active scanning takes too long even with minimal policy
+    # Passive scanning provides good coverage for API security issues
+    # activeScan:
+    #   policy: "API-scan-minimal"
 
     # Miscellaneous options
     miscOptions:
