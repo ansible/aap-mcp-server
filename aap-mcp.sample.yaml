@@ -55,6 +55,7 @@ categories:
     - controller.jobs_job_events_list
     - controller.jobs_cancel_create
     - controller.workflow_jobs_cancel_create
+    - controller.jobs_relaunch_retrieve
     - controller.jobs_relaunch_create
     - controller.workflow_jobs_relaunch_create
     - controller.jobs_list

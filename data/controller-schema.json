@@ -11878,7 +11878,7 @@
                         "description": ""
                     }
                 },
-                "x-ai-description": "Relaunch a job with the same parameters as a previous execution"
+                "x-ai-description": "Relaunch a job with the same parameters as a previous execution.  Perform a GET request on /jobs/{id}/relaunch/ (operationId: jobs_relaunch_retrieve) before launching to get the parameters the API expects when relaunching a job."
             }
         },
         "/api/v2/jobs/{id}/stdout/": {
@@ -30578,7 +30578,7 @@
                         ]
                     },
                     "credential_passwords": {
-                        "type": "string",
+                        "type": "object",
                         "writeOnly": true
                     }
                 },
