@@ -1,0 +1,65 @@
+---
+# ZAP Automation Framework Configuration for MCP Protocol
+# Uses custom requester script to send proper JSON-RPC requests
+
+env:
+  contexts:
+    - name: "aap-mcp-context"
+      urls:
+        - "http://localhost:3000"
+      includePaths:
+        - "http://localhost:3000/.*"
+      excludePaths: []
+
+  parameters:
+    failOnError: true
+    failOnWarning: false
+    progressToStdout: true
+
+jobs:
+  # Store the MCP session ID as a global variable
+  - type: script
+    parameters:
+      action: add
+      type: standalone
+      engine: "ECMAScript : Graal.js"
+      name: set-mcp-session-id
+      inline: |
+        org.zaproxy.zap.extension.script.ScriptVars.setGlobalVar('mcpSessionId', 'MCP_SESSION_ID_PLACEHOLDER')
+
+  - type: script
+    parameters:
+      action: run
+      type: standalone
+      name: set-mcp-session-id
+
+  # Add HttpSender script to inject Mcp-Session-Id header into all requests
+  - type: script
+    parameters:
+      action: add
+      type: httpsender
+      engine: "ECMAScript : Graal.js"
+      name: add-mcp-session-header
+      file: /opt/rapidast/work/scripts/zap/add-mcp-session-header.js
+
+  - type: script
+    parameters:
+      action: run
+      type: httpsender
+      name: add-mcp-session-header
+
+  # Import URLs for additional scanning
+  - type: import
+    parameters:
+      type: url
+      fileName: rapidast-urls.txt
+
+  # Run active scan
+  - type: activeScan
+    parameters:
+      context: aap-mcp-context
+
+  # Passive scan the requests
+  - type: passiveScan-wait
+    parameters:
+      maxDuration: 60
