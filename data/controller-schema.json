@@ -10549,7 +10549,7 @@
                         "description": ""
                     }
                 },
-                "x-ai-description": "Launch a job from a job template to execute an Ansible playbook"
+                "x-ai-description": "Launch a job from a job template to execute an Ansible playbook.  Perform a GET request on /job_templates/{id}/launch/ (operationId: job_templates_launch_retrieve) before launching to get the parameters the API expects when launching a job template."
             }
         },
         "/api/v2/job_templates/{id}/notification_templates_error/": {

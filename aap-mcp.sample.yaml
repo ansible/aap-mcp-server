@@ -47,6 +47,7 @@ services:
 categories:
   # Phase 1
   job_management:
+    - controller.job_templates_launch_retrieve
     - controller.job_templates_launch_create
     - controller.workflow_job_templates_launch_create
     - controller.jobs_retrieve
