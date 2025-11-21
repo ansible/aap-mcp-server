@@ -16,7 +16,7 @@ import { extractToolsFromApi } from "./extract-tools.js";
 import { readFileSync, writeFileSync, promises as fs } from "fs";
 import { join } from "path";
 import * as yaml from "js-yaml";
-import { ToolLogger, type LogEntry } from "./logger.js";
+import { ToolLogger } from "./logger.js";
 import { metricsService } from "./metrics.js";
 // View imports are now handled by the routes module
 import { configureWebUIRoutes } from "./views/routes.js";
@@ -29,7 +29,8 @@ import {
 // Load environment variables
 config();
 
-type Category = string[];
+type Category = string;
+type ToolName = string;
 
 interface AapMcpConfig {
   record_api_queries?: boolean;
@@ -57,7 +58,7 @@ const loadConfig = (): AapMcpConfig => {
 
 // Load configuration
 const localConfig = loadConfig();
-const allCategories: Record<string, Category> = localConfig.categories;
+const allCategories: Record<Category, ToolName[]> = localConfig.categories;
 
 // Configuration constants (with priority: env var > config file > default)
 const CONFIG = {
@@ -180,48 +181,16 @@ const storeSessionData = (
   );
 };
 
-// Determine user category based on category name
-const getUserCategory = (category?: string): Category => {
-  // If category is provided, try to find it
-  if (category) {
-    const categoryName = category.toLowerCase();
-    if (allCategories[categoryName]) {
-      return allCategories[categoryName];
-    } else {
-      console.warn(
-        `${getTimestamp()} Unknown category: ${category}, defaulting to 'all' category`,
-      );
-    }
-  }
-
-  // Default to "all" category if no category provided or category not found
-  if (allCategories["all"]) {
-    return allCategories["all"];
-  }
-
-  // If "all" category doesn't exist, return all available tools
-  console.warn(
-    `${getTimestamp()} No 'all' category found, returning all tools`,
-  );
-  return allTools.map((tool) => tool.name);
-};
-
 // Filter tools based on category
 const filterToolsByCategory = (
   tools: AAPMcpToolDefinition[],
   category: Category,
 ): AAPMcpToolDefinition[] => {
-  return tools.filter((tool) => category.includes(tool.name));
-};
-
-// Find which category a tool belongs to (returns first match or "uncategorized")
-const getCategoryForTool = (toolName: string): string => {
-  for (const [categoryName, categoryTools] of Object.entries(allCategories)) {
-    if (categoryTools.includes(toolName)) {
-      return categoryName;
-    }
-  }
-  return "uncategorized";
+  const toolsSelection =
+    category === "all"
+      ? Object.values(allCategories).flat()
+      : allCategories[category];
+  return tools.filter((tool) => toolsSelection.includes(tool.name));
 };
 
 // Generate tools from OpenAPI specs
@@ -326,13 +295,11 @@ const createMcpServer = (): Server => {
     const sessionId = extra?.sessionId;
 
     // Get category from session data
-    let categoryOverride: string | undefined;
-    if (sessionId && sessionData[sessionId]) {
-      categoryOverride = sessionData[sessionId].category;
+    if (!sessionId || !sessionData[sessionId]) {
+      throw new Error("Invalid or missing session ID");
     }
 
-    // Determine user category based on category from session
-    const category = getUserCategory(categoryOverride);
+    const category = sessionData[sessionId].category;
 
     // Filter tools based on category
     const filteredTools = filterToolsByCategory(allTools, category);
@@ -355,8 +322,10 @@ const createMcpServer = (): Server => {
       throw new Error("Invalid or missing session ID");
     }
 
-    // Generate correlation ID for this request
-    const correlationId = randomUUID().substring(0, 8);
+    // Get category from session data
+    if (!sessionId || !sessionData[sessionId]) {
+      throw new Error("Invalid or missing session ID");
+    }
 
     // Find the matching tool
     const tool = allTools.find((t) => t.name === name);
@@ -364,16 +333,11 @@ const createMcpServer = (): Server => {
       throw new Error(`Unknown tool: ${name}`);
     }
 
-    // Get category for this tool
-    const toolCategory = getCategoryForTool(tool.name);
+    // Generate correlation ID for this request
+    const correlationId = randomUUID().substring(0, 8);
 
-    // Get user-agent from session data (if available)
-    let userAgent = "unknown";
-    if (sessionId && sessionData[sessionId]) {
-      userAgent = sessionData[sessionId].userAgent;
-    }
-
-    // Get the Bearer token for this session
+    const category = sessionData[sessionId].category;
+    const userAgent = sessionData[sessionId].userAgent;
     const bearerToken = sessionData[sessionId].token;
 
     // Execute the tool by making HTTP request
@@ -425,7 +389,7 @@ const createMcpServer = (): Server => {
       // Make HTTP request
       fullUrl = `${CONFIG.BASE_URL}${url}`;
       console.log(
-        `${getTimestamp()} [req:${correlationId}|category:${toolCategory}] ${tool.name} → ${tool.method.toUpperCase()} ${fullUrl}`,
+        `${getTimestamp()} [req:${correlationId}|category:${category}] ${tool.name} → ${tool.method.toUpperCase()} ${fullUrl}`,
       );
       response = await fetch(fullUrl, requestOptions);
 
@@ -439,7 +403,7 @@ const createMcpServer = (): Server => {
       // Log response with timing
       const duration = ((Date.now() - _startTime) / 1000).toFixed(2);
       console.log(
-        `${getTimestamp()} [req:${correlationId}|category:${toolCategory}] ${tool.name} → ${response.status} ${response.statusText} (${duration}s)`,
+        `${getTimestamp()} [req:${correlationId}|category:${category}] ${tool.name} → ${response.status} ${response.statusText} (${duration}s)`,
       );
 
       // Log the tool access (only if recording is enabled)
@@ -447,7 +411,7 @@ const createMcpServer = (): Server => {
         // Add category information to the tool for metrics
         const toolWithCategory = {
           ...tool,
-          category: toolCategory,
+          category,
         };
         await toolLogger.logToolAccess(
           toolWithCategory,
@@ -481,7 +445,7 @@ const createMcpServer = (): Server => {
         ? `${response.status} ${response.statusText}`
         : "No Response";
       console.error(
-        `${getTimestamp()} [req:${correlationId}|category:${toolCategory}] ${tool.name} → ${statusInfo} (${duration}s) - ERROR: ${error instanceof Error ? error.message : String(error)}`,
+        `${getTimestamp()} [req:${correlationId}|category:${category}] ${tool.name} → ${statusInfo} (${duration}s) - ERROR: ${error instanceof Error ? error.message : String(error)}`,
       );
 
       // Log the failed tool access (only if recording is enabled)
@@ -489,7 +453,7 @@ const createMcpServer = (): Server => {
         // Add category information to the tool for metrics
         const toolWithCategory = {
           ...tool,
-          category: toolCategory,
+          category,
         };
         await toolLogger.logToolAccess(
           toolWithCategory,
@@ -530,13 +494,12 @@ app.use(
 );
 
 // MCP POST endpoint handler
-const mcpPostHandler = async (
-  req: express.Request,
-  res: express.Response,
-  categoryOverride?: string,
-) => {
+const mcpPostHandler = async (req: express.Request, res: express.Response) => {
   const sessionId = req.headers["mcp-session-id"] as string;
   const authHeader = req.headers["authorization"] as string;
+  const category = Object.keys(allCategories).includes(req.params.category)
+    ? req.params.category
+    : "all";
 
   if (sessionId) {
     console.log(`${getTimestamp()} Received MCP request`);
@@ -565,7 +528,6 @@ const mcpPostHandler = async (
 
                 // Store session data with userAgent, category, and transport
                 const userAgent = req.headers["user-agent"] || "unknown";
-                const category = categoryOverride || "all";
                 storeSessionData(
                   sessionId,
                   token,
@@ -667,13 +629,8 @@ const mcpPostHandler = async (
 };
 
 // MCP GET endpoint for streaming data
-const mcpGetHandler = async (
-  req: express.Request,
-  res: express.Response,
-  _categoryOverride?: string,
-) => {
+const mcpGetHandler = async (req: express.Request, res: express.Response) => {
   const sessionId = req.headers["mcp-session-id"] as string;
-  const _authHeader = req.headers["authorization"] as string;
 
   if (!sessionId || !sessionData[sessionId]) {
     res.status(400).send("Invalid or missing session ID");
@@ -699,7 +656,6 @@ const mcpGetHandler = async (
 const mcpDeleteHandler = async (
   req: express.Request,
   res: express.Response,
-  _categoryOverride?: string,
 ) => {
   const sessionId = req.headers["mcp-session-id"] as string;
 
@@ -757,7 +713,7 @@ app.post("/:category/mcp", (req, res) => {
   console.log(
     `${getTimestamp()} Category-specific POST request for category: ${category}`,
   );
-  return mcpPostHandler(req, res, category);
+  return mcpPostHandler(req, res);
 });
 
 app.get("/:category/mcp", (req, res) => {
@@ -765,7 +721,7 @@ app.get("/:category/mcp", (req, res) => {
   console.log(
     `${getTimestamp()} Category-specific GET request for category: ${category}`,
   );
-  return mcpGetHandler(req, res, category);
+  return mcpGetHandler(req, res);
 });
 
 app.delete("/:category/mcp", (req, res) => {
@@ -773,7 +729,7 @@ app.delete("/:category/mcp", (req, res) => {
   console.log(
     `${getTimestamp()} Category-specific DELETE request for category: ${category}`,
   );
-  return mcpDeleteHandler(req, res, category);
+  return mcpDeleteHandler(req, res);
 });
 
 app.post("/mcp/:category", (req, res) => {
@@ -781,7 +737,7 @@ app.post("/mcp/:category", (req, res) => {
   console.log(
     `${getTimestamp()} Category-specific POST request for category: ${category}`,
   );
-  return mcpPostHandler(req, res, category);
+  return mcpPostHandler(req, res);
 });
 
 app.get("/mcp/:category", (req, res) => {
@@ -789,7 +745,7 @@ app.get("/mcp/:category", (req, res) => {
   console.log(
     `${getTimestamp()} Category-specific GET request for category: ${category}`,
   );
-  return mcpGetHandler(req, res, category);
+  return mcpGetHandler(req, res);
 });
 
 app.delete("/mcp/:category", (req, res) => {
@@ -797,7 +753,7 @@ app.delete("/mcp/:category", (req, res) => {
   console.log(
     `${getTimestamp()} Category-specific DELETE request for category: ${category}`,
   );
-  return mcpDeleteHandler(req, res, category);
+  return mcpDeleteHandler(req, res);
 });
 
 // Health check endpoint (always enabled)
