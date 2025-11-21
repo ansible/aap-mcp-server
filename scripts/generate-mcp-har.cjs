@@ -170,6 +170,9 @@ async function generateMcpRequests() {
     for (const category of categories) {
       const endpoint = `/mcp/${category.name}`;
 
+      // Reset session ID for each endpoint category to test independent sessions
+      mcpSessionId = null;
+
       console.log(`[${category.name}] Testing endpoint: ${endpoint}`);
 
       // 1. Initialize session for this endpoint
