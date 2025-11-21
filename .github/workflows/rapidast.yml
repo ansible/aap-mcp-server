@@ -132,6 +132,19 @@ jobs:
 
           echo "Updated ZAP automation framework with session ID"
 
+      - name: Generate HAR file with MCP requests
+        env:
+          BASE_URL: http://localhost:3000
+          BEARER_TOKEN_OAUTH2_AUTHENTICATION: test-token
+        run: |
+          echo "Generating HAR file with all MCP endpoint requests..."
+          node scripts/generate-mcp-har.cjs
+          echo ""
+          echo "HAR file generated:"
+          ls -lh mcp-requests.har
+          echo ""
+          echo "HAR file contains $(jq '.log.entries | length' mcp-requests.har) HTTP request/response pairs"
+
       - name: Run RapiDAST scan
         id: rapidast
         continue-on-error: true
