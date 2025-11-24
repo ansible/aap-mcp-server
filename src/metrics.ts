@@ -13,7 +13,8 @@ export class MetricsService {
   public readonly mcpToolExecutionDuration: Histogram<string>;
   public readonly mcpToolErrors: Counter<string>;
   public readonly mcpActiveTools: Gauge<string>;
-  public readonly mcpActiveSessions: Gauge<string>;
+  public readonly mcpSessionsActiveTotal: Gauge<string>;
+  public readonly mcpSessionsTimeoutTotal: Counter<string>;
   public readonly mcpApiCallsTotal: Counter<string>;
 
   constructor() {
@@ -66,9 +67,15 @@ export class MetricsService {
       registers: [register],
     });
 
-    this.mcpActiveSessions = new Gauge({
-      name: "mcp_active_sessions",
+    this.mcpSessionsActiveTotal = new Gauge({
+      name: "mcp_sessions_active_total",
       help: "Number of currently active MCP sessions",
+      registers: [register],
+    });
+
+    this.mcpSessionsTimeoutTotal = new Counter({
+      name: "mcp_sessions_timeout_total",
+      help: "Total number of MCP sessions that have timed out",
       registers: [register],
     });
 
@@ -121,11 +128,15 @@ export class MetricsService {
   }
 
   incrementActiveSessions(): void {
-    this.mcpActiveSessions.inc();
+    this.mcpSessionsActiveTotal.inc();
   }
 
   decrementActiveSessions(): void {
-    this.mcpActiveSessions.dec();
+    this.mcpSessionsActiveTotal.dec();
+  }
+
+  incrementSessionTimeouts(): void {
+    this.mcpSessionsTimeoutTotal.inc();
   }
 
   recordApiCall(
