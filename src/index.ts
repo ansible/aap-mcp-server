@@ -13,7 +13,7 @@ import {
   isInitializeRequest,
 } from "@modelcontextprotocol/sdk/types.js";
 import { extractToolsFromApi } from "./extract-tools.js";
-import { readFileSync, writeFileSync, promises as fs } from "fs";
+import { readFileSync, writeFileSync } from "fs";
 import { join } from "path";
 import * as yaml from "js-yaml";
 import { ToolLogger } from "./logger.js";

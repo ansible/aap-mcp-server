@@ -3,15 +3,6 @@ name: RapiDAST Security Scan
 # Manual trigger only
 on:
   workflow_dispatch:
-    inputs:
-      scan_policy:
-        description: "ZAP scan policy to use"
-        required: false
-        default: "API-scan-minimal"
-        type: choice
-        options:
-          - API-scan-minimal
-          - Default-Policy
 
 # Restrict GITHUB_TOKEN permissions to minimal required access
 permissions:
@@ -26,11 +17,150 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Placeholder for RapiDAST scan
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20.x"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci --include=dev
+
+      - name: Build project
+        run: npm run build --if-present
+
+      - name: Start mock AAP server
         run: |
-          echo "RapiDAST workflow registered successfully!"
-          echo "Selected scan policy: ${{ github.event.inputs.scan_policy || 'API-scan-minimal' }}"
-          echo "This workflow will be expanded in a future PR with:"
-          echo "  - Mock AAP server setup"
-          echo "  - MCP server configuration"
-          echo "  - Full RapiDAST security scanning"
+          npx tsx scripts/mock-aap-server.ts &
+          echo "MOCK_AAP_PID=$!" >> $GITHUB_ENV
+        working-directory: ${{ github.workspace }}
+
+      - name: Wait for mock AAP server
+        run: |
+          for i in {1..10}; do
+            if curl -s http://localhost:8080/health > /dev/null 2>&1; then
+              echo "Mock AAP server is ready"
+              break
+            fi
+            if [ $i -eq 10 ]; then
+              echo "Mock AAP server failed to start"
+              exit 1
+            fi
+            sleep 1
+          done
+
+      - name: Create MCP configuration
+        run: cp aap-mcp.sample.yaml aap-mcp.yaml
+
+      - name: Display RapiDAST configuration
+        run: cat rapidast-config.yml
+
+      - name: Start MCP server
+        env:
+          BASE_URL: http://localhost:8080
+          BEARER_TOKEN_OAUTH2_AUTHENTICATION: test-token
+          PORT: 3000
+        run: |
+          npm start &
+          echo "MCP_PID=$!" >> $GITHUB_ENV
+        working-directory: ${{ github.workspace }}
+
+      - name: Wait for MCP server
+        run: |
+          for i in {1..30}; do
+            if curl -s http://localhost:3000/api/v1/health > /dev/null 2>&1; then
+              echo "MCP server is ready"
+              break
+            fi
+            if [ $i -eq 30 ]; then
+              echo "MCP server failed to start"
+              exit 1
+            fi
+            sleep 1
+          done
+      - name: Verify servers are running
+        run: |
+          echo "Testing Mock AAP server..."
+          curl -v http://localhost:8080/health
+          echo ""
+          echo "Testing MCP server..."
+          curl -v http://localhost:3000/api/v1/health
+          echo ""
+          echo "Testing MCP tools endpoint..."
+          curl -s -H "Authorization: Bearer test-token" http://localhost:3000/tools | head -50
+
+      - name: Create results directory
+        run: |
+          mkdir -p results
+          chmod 777 results
+
+      - name: Generate HAR file with MCP requests
+        env:
+          BASE_URL: http://localhost:3000
+          BEARER_TOKEN_OAUTH2_AUTHENTICATION: test-token
+        run: |
+          echo "Generating HAR file with all MCP endpoint requests..."
+          npx tsx scripts/generate-mcp-har.ts
+          echo ""
+          echo "HAR file generated:"
+          ls -lh mcp-requests.har
+          echo ""
+          echo "HAR file contains $(jq '.log.entries | length' mcp-requests.har) HTTP request/response pairs"
+
+      - name: Run RapiDAST scan
+        id: rapidast
+        continue-on-error: true
+        run: |
+          docker run --rm \
+            --network host \
+            -w /opt/rapidast/work \
+            -v $(pwd):/opt/rapidast/work \
+            --entrypoint /opt/rapidast/rapidast.py \
+            quay.io/redhatproductsecurity/rapidast:latest \
+            --config /opt/rapidast/work/rapidast-config.yml
+
+          # Display ZAP scan results in logs
+          if [ -f results/*/*/zap/zap-report.json ]; then
+            cat results/*/*/zap/zap-report.json
+          else
+            echo "No ZAP report found"
+            ls -R results/ || echo "No results directory"
+          fi
+      - name: Upload RapiDAST results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: rapidast-results
+          path: "results/*/*/*"
+          retention-days: 30
+
+      - name: Display scan summary
+        if: always()
+        run: |
+          echo "## RapiDAST Scan Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if [ -f results/*/*/zap/zap-report.json ]; then
+            echo "Scan completed. Results available in artifacts." >> $GITHUB_STEP_SUMMARY
+            # Extract and display high-level stats if possible
+            if command -v jq &> /dev/null; then
+              echo "" >> $GITHUB_STEP_SUMMARY
+              echo "### Findings by Severity" >> $GITHUB_STEP_SUMMARY
+              echo "" >> $GITHUB_STEP_SUMMARY
+              echo "| Severity | Count | Finding |" >> $GITHUB_STEP_SUMMARY
+              echo "|----------|-------|---------|" >> $GITHUB_STEP_SUMMARY
+              jq -r '.site[0].alerts[] | "| \((.riskdesc // "Unknown") | split(" ")[0]) | 1 | \(.name) |"' results/*/*/zap/zap-report.json >> $GITHUB_STEP_SUMMARY || true
+            fi
+          else
+            echo "⚠️ No scan results found" >> $GITHUB_STEP_SUMMARY
+          fi
+      - name: Check scan results
+        if: steps.rapidast.outcome == 'failure'
+        run: |
+          echo "::error::RapiDAST scan failed or found issues"
+          exit 1
+      - name: Cleanup
+        if: always()
+        run: |
+          echo "Stopping servers..."
+          kill $MCP_PID || true
+          kill $MOCK_AAP_PID || true
