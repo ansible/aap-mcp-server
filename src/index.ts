@@ -25,12 +25,12 @@ import {
   type AAPMcpToolDefinition,
   type ServiceConfig,
 } from "./openapi-loader.js";
+import { SessionManager } from "./session.js";
 
 // Load environment variables
 config();
 
-type Category = string;
-type ToolName = string;
+type Category = string[];
 
 interface AapMcpConfig {
   record_api_queries?: boolean;
@@ -39,6 +39,7 @@ interface AapMcpConfig {
   enable_metrics?: boolean;
   allow_write_operations?: boolean;
   base_url?: string;
+  session_timeout?: number;
   services?: ServiceConfig[];
   categories: Record<string, string[]>;
 }
@@ -58,12 +59,15 @@ const loadConfig = (): AapMcpConfig => {
 
 // Load configuration
 const localConfig = loadConfig();
-const allCategories: Record<Category, ToolName[]> = localConfig.categories;
+const allCategories: Record<string, Category> = localConfig.categories;
 
 // Configuration constants (with priority: env var > config file > default)
 const CONFIG = {
   BASE_URL: process.env.BASE_URL || localConfig.base_url || "https://localhost",
   MCP_PORT: process.env.MCP_PORT ? parseInt(process.env.MCP_PORT, 10) : 3000,
+  SESSION_TIMEOUT: process.env.SESSION_TIMEOUT
+    ? parseInt(process.env.SESSION_TIMEOUT, 10)
+    : localConfig.session_timeout || 120, // Default to 120 seconds (2 minutes)
 } as const;
 
 // Log entries size limit for /logs endpoint
@@ -120,15 +124,6 @@ if (ignoreCertificateErrors) {
 
 // TypeScript interfaces
 
-interface SessionData {
-  [sessionId: string]: {
-    token: string;
-    userAgent: string;
-    category: string;
-    transport: StreamableHTTPServerTransport;
-  };
-}
-
 // Helper functions
 const extractBearerToken = (
   authHeader: string | undefined,
@@ -170,15 +165,37 @@ const storeSessionData = (
   category: string,
   transport: StreamableHTTPServerTransport,
 ): void => {
-  sessionData[sessionId] = {
-    token,
-    userAgent,
-    category,
-    transport,
-  };
-  console.log(
-    `${getTimestamp()} Stored session data for ${sessionId}: userAgent=${userAgent}, category=${category}`,
+  sessionManager.store(sessionId, token, userAgent, category, transport);
+};
+
+const deleteSessionData = (sessionId: string): void => {
+  sessionManager.delete(sessionId);
+};
+
+// Determine user category based on category name
+const getUserCategory = (category?: string): Category => {
+  // If category is provided, try to find it
+  if (category) {
+    const categoryName = category.toLowerCase();
+    if (allCategories[categoryName]) {
+      return allCategories[categoryName];
+    } else {
+      console.warn(
+        `${getTimestamp()} Unknown category: ${category}, defaulting to 'all' category`,
+      );
+    }
+  }
+
+  // Default to "all" category if no category provided or category not found
+  if (allCategories["all"]) {
+    return allCategories["all"];
+  }
+
+  // If "all" category doesn't exist, return all available tools
+  console.warn(
+    `${getTimestamp()} No 'all' category found, returning all tools`,
   );
+  return allTools.map((tool) => tool.name);
 };
 
 // Filter tools based on category
@@ -186,11 +203,17 @@ const filterToolsByCategory = (
   tools: AAPMcpToolDefinition[],
   category: Category,
 ): AAPMcpToolDefinition[] => {
-  const toolsSelection =
-    category === "all"
-      ? Object.values(allCategories).flat()
-      : allCategories[category];
-  return tools.filter((tool) => toolsSelection.includes(tool.name));
+  return tools.filter((tool) => category.includes(tool.name));
+};
+
+// Find which category a tool belongs to (returns first match or "uncategorized")
+const getCategoryForTool = (toolName: string): string => {
+  for (const [categoryName, categoryTools] of Object.entries(allCategories)) {
+    if (categoryTools.includes(toolName)) {
+      return categoryName;
+    }
+  }
+  return "uncategorized";
 };
 
 // Generate tools from OpenAPI specs
@@ -295,11 +318,13 @@ const createMcpServer = (): Server => {
     const sessionId = extra?.sessionId;
 
     // Get category from session data
-    if (!sessionId || !sessionData[sessionId]) {
-      throw new Error("Invalid or missing session ID");
+    let categoryOverride: string | undefined;
+    if (sessionId && sessionManager.has(sessionId)) {
+      categoryOverride = sessionManager.getCategory(sessionId);
     }
 
-    const category = sessionData[sessionId].category;
+    // Determine user category based on category from session
+    const category = getUserCategory(categoryOverride);
 
     // Filter tools based on category
     const filteredTools = filterToolsByCategory(allTools, category);
@@ -318,14 +343,12 @@ const createMcpServer = (): Server => {
     const _startTime = Date.now();
     const sessionId = extra?.sessionId;
 
-    if (!sessionId || !sessionData[sessionId]) {
+    if (!sessionId || !sessionManager.has(sessionId)) {
       throw new Error("Invalid or missing session ID");
     }
 
-    // Get category from session data
-    if (!sessionId || !sessionData[sessionId]) {
-      throw new Error("Invalid or missing session ID");
-    }
+    // Generate correlation ID for this request
+    const correlationId = randomUUID().substring(0, 8);
 
     // Find the matching tool
     const tool = allTools.find((t) => t.name === name);
@@ -333,12 +356,17 @@ const createMcpServer = (): Server => {
       throw new Error(`Unknown tool: ${name}`);
     }
 
-    // Generate correlation ID for this request
-    const correlationId = randomUUID().substring(0, 8);
+    // Get category for this tool
+    const toolCategory = getCategoryForTool(tool.name);
 
-    const category = sessionData[sessionId].category;
-    const userAgent = sessionData[sessionId].userAgent;
-    const bearerToken = sessionData[sessionId].token;
+    // Get user-agent from session data (if available)
+    let userAgent = "unknown";
+    if (sessionId && sessionManager.has(sessionId)) {
+      userAgent = sessionManager.getUserAgent(sessionId) || "unknown";
+    }
+
+    // Get the Bearer token for this session
+    const bearerToken = sessionManager.getToken(sessionId)!;
 
     // Execute the tool by making HTTP request
     let result: any;
@@ -389,7 +417,7 @@ const createMcpServer = (): Server => {
       // Make HTTP request
       fullUrl = `${CONFIG.BASE_URL}${url}`;
       console.log(
-        `${getTimestamp()} [req:${correlationId}|category:${category}] ${tool.name} → ${tool.method.toUpperCase()} ${fullUrl}`,
+        `${getTimestamp()} [req:${correlationId}|category:${toolCategory}] ${tool.name} → ${tool.method.toUpperCase()} ${fullUrl}`,
       );
       response = await fetch(fullUrl, requestOptions);
 
@@ -403,7 +431,7 @@ const createMcpServer = (): Server => {
       // Log response with timing
       const duration = ((Date.now() - _startTime) / 1000).toFixed(2);
       console.log(
-        `${getTimestamp()} [req:${correlationId}|category:${category}] ${tool.name} → ${response.status} ${response.statusText} (${duration}s)`,
+        `${getTimestamp()} [req:${correlationId}|category:${toolCategory}] ${tool.name} → ${response.status} ${response.statusText} (${duration}s)`,
       );
 
       // Log the tool access (only if recording is enabled)
@@ -411,7 +439,7 @@ const createMcpServer = (): Server => {
         // Add category information to the tool for metrics
         const toolWithCategory = {
           ...tool,
-          category,
+          category: toolCategory,
         };
         await toolLogger.logToolAccess(
           toolWithCategory,
@@ -445,7 +473,7 @@ const createMcpServer = (): Server => {
         ? `${response.status} ${response.statusText}`
         : "No Response";
       console.error(
-        `${getTimestamp()} [req:${correlationId}|category:${category}] ${tool.name} → ${statusInfo} (${duration}s) - ERROR: ${error instanceof Error ? error.message : String(error)}`,
+        `${getTimestamp()} [req:${correlationId}|category:${toolCategory}] ${tool.name} → ${statusInfo} (${duration}s) - ERROR: ${error instanceof Error ? error.message : String(error)}`,
       );
 
       // Log the failed tool access (only if recording is enabled)
@@ -453,7 +481,7 @@ const createMcpServer = (): Server => {
         // Add category information to the tool for metrics
         const toolWithCategory = {
           ...tool,
-          category,
+          category: toolCategory,
         };
         await toolLogger.logToolAccess(
           toolWithCategory,
@@ -479,7 +507,7 @@ const createMcpServer = (): Server => {
 
 // Global state management
 const servers: Record<string, Server> = {};
-const sessionData: SessionData = {};
+const sessionManager = new SessionManager(CONFIG.SESSION_TIMEOUT);
 
 const app = express();
 
@@ -494,12 +522,13 @@ app.use(
 );
 
 // MCP POST endpoint handler
-const mcpPostHandler = async (req: express.Request, res: express.Response) => {
+const mcpPostHandler = async (
+  req: express.Request,
+  res: express.Response,
+  categoryOverride?: string,
+) => {
   const sessionId = req.headers["mcp-session-id"] as string;
   const authHeader = req.headers["authorization"] as string;
-  const category = Object.keys(allCategories).includes(req.params.category)
-    ? req.params.category
-    : "all";
 
   if (sessionId) {
     console.log(`${getTimestamp()} Received MCP request`);
@@ -510,9 +539,9 @@ const mcpPostHandler = async (req: express.Request, res: express.Response) => {
   try {
     let transport: StreamableHTTPServerTransport;
 
-    if (sessionId && sessionData[sessionId]) {
+    if (sessionId && sessionManager.has(sessionId)) {
       // Reuse existing transport
-      transport = sessionData[sessionId].transport;
+      transport = sessionManager.getTransport(sessionId)!;
     } else if (!sessionId && isInitializeRequest(req.body)) {
       // New initialization request
       transport = new StreamableHTTPServerTransport({
@@ -528,6 +557,7 @@ const mcpPostHandler = async (req: express.Request, res: express.Response) => {
 
                 // Store session data with userAgent, category, and transport
                 const userAgent = req.headers["user-agent"] || "unknown";
+                const category = categoryOverride || "all";
                 storeSessionData(
                   sessionId,
                   token,
@@ -559,7 +589,7 @@ const mcpPostHandler = async (req: express.Request, res: express.Response) => {
       // Set up onclose handler to clean up transport when closed
       transport.onclose = () => {
         const sid = transport.sessionId;
-        if (sid && sessionData[sid]) {
+        if (sid && sessionManager.has(sid)) {
           console.log(
             `${getTimestamp()} Transport closed, removing from session data and servers map`,
           );
@@ -569,7 +599,7 @@ const mcpPostHandler = async (req: express.Request, res: express.Response) => {
             console.log(`${getTimestamp()} Removed server instance`);
           }
           // Clean up session data (this includes the transport)
-          delete sessionData[sid];
+          sessionManager.delete(sid);
           console.log(`${getTimestamp()} Removed session data`);
         }
       };
@@ -629,10 +659,15 @@ const mcpPostHandler = async (req: express.Request, res: express.Response) => {
 };
 
 // MCP GET endpoint for streaming data
-const mcpGetHandler = async (req: express.Request, res: express.Response) => {
+const mcpGetHandler = async (
+  req: express.Request,
+  res: express.Response,
+  _categoryOverride?: string,
+) => {
   const sessionId = req.headers["mcp-session-id"] as string;
+  const _authHeader = req.headers["authorization"] as string;
 
-  if (!sessionId || !sessionData[sessionId]) {
+  if (!sessionId || !sessionManager.has(sessionId)) {
     res.status(400).send("Invalid or missing session ID");
     return;
   }
@@ -648,7 +683,7 @@ const mcpGetHandler = async (req: express.Request, res: express.Response) => {
     console.log(`${getTimestamp()} Establishing new SSE stream`);
   }
 
-  const transport = sessionData[sessionId].transport;
+  const transport = sessionManager.getTransport(sessionId)!;
   await transport.handleRequest(req, res);
 };
 
@@ -656,10 +691,11 @@ const mcpGetHandler = async (req: express.Request, res: express.Response) => {
 const mcpDeleteHandler = async (
   req: express.Request,
   res: express.Response,
+  _categoryOverride?: string,
 ) => {
   const sessionId = req.headers["mcp-session-id"] as string;
 
-  if (!sessionId || !sessionData[sessionId]) {
+  if (!sessionId || !sessionManager.has(sessionId)) {
     res.status(400).send("Invalid or missing session ID");
     return;
   }
@@ -667,16 +703,10 @@ const mcpDeleteHandler = async (
   console.log(`${getTimestamp()} Received session termination request`);
 
   try {
-    const transport = sessionData[sessionId].transport;
+    const transport = sessionManager.getTransport(sessionId)!;
     await transport.handleRequest(req, res);
 
-    // Clean up session data when session is terminated
-    if (sessionData[sessionId]) {
-      delete sessionData[sessionId];
-      console.log(
-        `${getTimestamp()} Removed session data for terminated session`,
-      );
-    }
+    deleteSessionData(sessionId);
   } catch (error) {
     console.error(
       `${getTimestamp()} Error handling session termination:`,
@@ -713,7 +743,7 @@ app.post("/:category/mcp", (req, res) => {
   console.log(
     `${getTimestamp()} Category-specific POST request for category: ${category}`,
   );
-  return mcpPostHandler(req, res);
+  return mcpPostHandler(req, res, category);
 });
 
 app.get("/:category/mcp", (req, res) => {
@@ -721,7 +751,7 @@ app.get("/:category/mcp", (req, res) => {
   console.log(
     `${getTimestamp()} Category-specific GET request for category: ${category}`,
   );
-  return mcpGetHandler(req, res);
+  return mcpGetHandler(req, res, category);
 });
 
 app.delete("/:category/mcp", (req, res) => {
@@ -729,7 +759,7 @@ app.delete("/:category/mcp", (req, res) => {
   console.log(
     `${getTimestamp()} Category-specific DELETE request for category: ${category}`,
   );
-  return mcpDeleteHandler(req, res);
+  return mcpDeleteHandler(req, res, category);
 });
 
 app.post("/mcp/:category", (req, res) => {
@@ -737,7 +767,7 @@ app.post("/mcp/:category", (req, res) => {
   console.log(
     `${getTimestamp()} Category-specific POST request for category: ${category}`,
   );
-  return mcpPostHandler(req, res);
+  return mcpPostHandler(req, res, category);
 });
 
 app.get("/mcp/:category", (req, res) => {
@@ -745,7 +775,7 @@ app.get("/mcp/:category", (req, res) => {
   console.log(
     `${getTimestamp()} Category-specific GET request for category: ${category}`,
   );
-  return mcpGetHandler(req, res);
+  return mcpGetHandler(req, res, category);
 });
 
 app.delete("/mcp/:category", (req, res) => {
@@ -753,7 +783,7 @@ app.delete("/mcp/:category", (req, res) => {
   console.log(
     `${getTimestamp()} Category-specific DELETE request for category: ${category}`,
   );
-  return mcpDeleteHandler(req, res);
+  return mcpDeleteHandler(req, res, category);
 });
 
 // Health check endpoint (always enabled)
@@ -856,21 +886,25 @@ process.on("SIGINT", async () => {
   console.log(`${getTimestamp()} Shutting down server...`);
 
   // Close all active sessions and transports
-  for (const sessionId in sessionData) {
+  for (const sessionId of sessionManager.getAllSessionIds()) {
     try {
       console.log(`${getTimestamp()} Closing transport during shutdown`);
-      await sessionData[sessionId].transport.close();
+      const transport = sessionManager.getTransport(sessionId);
+      if (transport) {
+        await transport.close();
+      }
       // Clean up server instance
       if (servers[sessionId]) {
         delete servers[sessionId];
       }
       // Clean up session data (includes transport)
-      delete sessionData[sessionId];
+      sessionManager.delete(sessionId);
     } catch (error) {
       console.error(`${getTimestamp()} Error closing transport:`, error);
     }
   }
 
+  await sessionManager.closeAllSessions();
   console.log(`${getTimestamp()} Server shutdown complete`);
   process.exit(0);
 });
