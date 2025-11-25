@@ -13,7 +13,7 @@ export interface LogEntry {
 export interface Tool {
   name: string;
   service?: string;
-  category?: string;
+  toolset?: string;
   [key: string]: any;
 }
 
@@ -61,14 +61,15 @@ export class ToolLogger {
     // Record metrics
     const duration = startTime ? (Date.now() - startTime) / 1000 : 0;
     const status = returnCode >= 200 && returnCode < 400 ? "success" : "error";
+    // TODO: service and toolset should always be defined
     const service = tool.service || "unknown";
-    const category = tool.category || "uncategorized";
+    const toolset = tool.toolset || "unknown";
 
     // Prometheus metrics
     metricsService.recordToolExecution(
       tool.name,
       service,
-      category,
+      toolset,
       status,
       duration,
     );
@@ -77,7 +78,7 @@ export class ToolLogger {
     if (status === "error") {
       const errorType =
         returnCode >= 400 && returnCode < 500 ? "client_error" : "server_error";
-      metricsService.recordToolError(tool.name, service, category, errorType);
+      metricsService.recordToolError(tool.name, service, toolset, errorType);
     }
   }
 }

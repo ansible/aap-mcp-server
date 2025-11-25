@@ -9,22 +9,21 @@ export interface EndpointData {
   name: string;
   description: string;
   toolName?: string;
-  categories: string[];
+  toolsets: string[];
   logs: McpToolLogEntry[];
 }
 
 export interface EndpointsOverviewData {
   allTools: AAPMcpToolDefinition[];
   endpointsByService: Record<string, EndpointData[]>;
-  allCategories?: Record<string, string[]>;
-  selectedCategory?: string;
+  allToolsets?: Record<string, string[]>;
+  selectedToolset?: string;
 }
 
 export const renderEndpointsOverview = (
   data: EndpointsOverviewData,
 ): string => {
-  const { allTools, endpointsByService, allCategories, selectedCategory } =
-    data;
+  const { allTools, endpointsByService, allToolsets, selectedToolset } = data;
 
   return `
 <!DOCTYPE html>
@@ -142,13 +141,13 @@ export const renderEndpointsOverview = (
         .sort-indicator.active {
             opacity: 1;
         }
-        .categories {
+        .toolsets {
             display: flex;
             flex-wrap: wrap;
             gap: 4px;
             overflow: hidden;
         }
-        .category-badge {
+        .toolset-badge {
             display: inline-block;
             padding: 4px 10px;
             border-radius: 16px;
@@ -161,71 +160,71 @@ export const renderEndpointsOverview = (
             border: 1px solid transparent;
             box-shadow: 0 1px 3px rgba(0,0,0,0.1);
         }
-        .category-admin {
+        .toolset-admin {
             background-color: #fee2e2;
             color: #dc2626;
             border-color: #fecaca;
         }
-        .category-user {
+        .toolset-user {
             background-color: #dcfce7;
             color: #16a34a;
             border-color: #bbf7d0;
         }
-        .category-anonymous {
+        .toolset-anonymous {
             background-color: #f1f5f9;
             color: #475569;
             border-color: #e2e8f0;
         }
-        .category-unknown {
+        .toolset-unknown {
             background-color: #fef3c7;
             color: #d97706;
             border-color: #fde68a;
         }
-        .category-system_monitoring {
+        .toolset-system_monitoring {
             background-color: #dbeafe;
             color: #2563eb;
             border-color: #bfdbfe;
         }
-        .category-job_management {
+        .toolset-job_management {
             background-color: #f3e8ff;
             color: #7c3aed;
             border-color: #e9d5ff;
         }
-        .category-credential_management {
+        .toolset-credential_management {
             background-color: #fdf4ff;
             color: #c026d3;
             border-color: #f5d0fe;
         }
-        .category-badge:hover {
+        .toolset-badge:hover {
             transform: translateY(-1px);
             box-shadow: 0 4px 8px rgba(0,0,0,0.15);
             text-decoration: none;
         }
-        .category-admin:hover {
+        .toolset-admin:hover {
             background-color: #fca5a5;
             border-color: #f87171;
         }
-        .category-user:hover {
+        .toolset-user:hover {
             background-color: #86efac;
             border-color: #4ade80;
         }
-        .category-anonymous:hover {
+        .toolset-anonymous:hover {
             background-color: #cbd5e1;
             border-color: #94a3b8;
         }
-        .category-unknown:hover {
+        .toolset-unknown:hover {
             background-color: #fcd34d;
             border-color: #fbbf24;
         }
-        .category-system_monitoring:hover {
+        .toolset-system_monitoring:hover {
             background-color: #93c5fd;
             border-color: #60a5fa;
         }
-        .category-job_management:hover {
+        .toolset-job_management:hover {
             background-color: #c4b5fd;
             border-color: #a78bfa;
         }
-        .category-credential_management:hover {
+        .toolset-credential_management:hover {
             background-color: #f0abfc;
             border-color: #e879f9;
         }
@@ -453,7 +452,7 @@ export const renderEndpointsOverview = (
                         aVal = a.children[3].textContent;
                         bVal = b.children[3].textContent;
                         break;
-                    case 'categories':
+                    case 'toolsets':
                         aVal = a.children[4].textContent;
                         bVal = b.children[4].textContent;
                         break;
@@ -492,19 +491,19 @@ export const renderEndpointsOverview = (
 
         document.addEventListener('DOMContentLoaded', setupSorting);
 
-        function filterByCategory(category) {
+        function filterByToolset(toolset) {
             const url = new URL(window.location);
-            if (category) {
-                url.searchParams.set('category', category);
+            if (toolset) {
+                url.searchParams.set('toolset', toolset);
             } else {
-                url.searchParams.delete('category');
+                url.searchParams.delete('toolset');
             }
             window.location.href = url.toString();
         }
 
         function clearFilter() {
             const url = new URL(window.location);
-            url.searchParams.delete('category');
+            url.searchParams.delete('toolset');
             window.location.href = url.toString();
         }
     </script>
@@ -516,17 +515,17 @@ export const renderEndpointsOverview = (
         ${renderHeader()}
 
         ${
-          allCategories
+          allToolsets
             ? `
         <div class="filter-section">
-            <label for="category-filter">Filter by Category:</label>
-            <select id="category-filter" onchange="filterByCategory(this.value)">
-                <option value="">All Categories</option>
-                ${Object.keys(allCategories)
+            <label for="toolset-filter">Filter by Toolset:</label>
+            <select id="toolset-filter" onchange="filterByToolset(this.value)">
+                <option value="">All Toolsets</option>
+                ${Object.keys(allToolsets)
                   .map(
-                    (category) => `
-                    <option value="${category}" ${selectedCategory === category ? "selected" : ""}>
-                        ${category
+                    (toolset) => `
+                    <option value="${toolset}" ${selectedToolset === toolset ? "selected" : ""}>
+                        ${toolset
                           .split("_")
                           .map(
                             (word) =>
@@ -538,7 +537,7 @@ export const renderEndpointsOverview = (
                   )
                   .join("")}
             </select>
-            ${selectedCategory ? '<button onclick="clearFilter()">Clear Filter</button>' : ""}
+            ${selectedToolset ? '<button onclick="clearFilter()">Clear Filter</button>' : ""}
         </div>
         `
             : ""
@@ -575,17 +574,17 @@ export const renderEndpointsOverview = (
                 <span class="sortable-header" data-column="path">Path <span class="sort-indicator">↕</span></span>
                 <span class="sortable-header" data-column="description">Description <span class="sort-indicator">↕</span></span>
                 <span class="sortable-header" data-column="tool">Tool Name <span class="sort-indicator">↕</span></span>
-                <span class="sortable-header" data-column="categories">Categories <span class="sort-indicator">↕</span></span>
+                <span class="sortable-header" data-column="toolsets">Toolsets <span class="sort-indicator">↕</span></span>
                 <span class="sortable-header" data-column="logs">Logs <span class="sort-indicator">↕</span></span>
             </div>
             ${endpoints
               .map((endpoint) => {
-                const categoriesHtml =
-                  endpoint.categories.length > 0
-                    ? endpoint.categories
+                const toolsetsHtml =
+                  endpoint.toolsets.length > 0
+                    ? endpoint.toolsets
                         .map(
                           (cat) =>
-                            `<a href="/category/${cat}" class="category-badge category-${cat}">${cat}</a>`,
+                            `<a href="/toolset/${cat}" class="toolset-badge toolset-${cat}">${cat}</a>`,
                         )
                         .join("")
                     : "";
@@ -620,7 +619,7 @@ export const renderEndpointsOverview = (
                 <span class="path">${endpoint.path}</span>
                 <span class="description">${endpoint.description || "No description available"}</span>
                 <span class="tool-name${!endpoint.toolName ? " empty" : ""}">${toolLink}</span>
-                <span class="categories">${categoriesHtml}</span>
+                <span class="toolsets">${toolsetsHtml}</span>
                 <span class="logs">${logsHtml}</span>
             </div>`;
               })

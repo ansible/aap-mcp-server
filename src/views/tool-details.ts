@@ -9,7 +9,7 @@ interface LogEntry {
   response?: any;
 }
 
-interface CategoryWithAccess {
+interface ToolsetWithAccess {
   name: string;
   displayName: string;
   color: string;
@@ -21,7 +21,7 @@ interface ToolDetailsData {
   last10Calls: LogEntry[];
   errorCodeSummary: Record<number, number>;
   chartData: { success: number; error: number };
-  categoriesWithAccess: CategoryWithAccess[];
+  toolsetsWithAccess: ToolsetWithAccess[];
 }
 
 export const renderToolDetails = (data: ToolDetailsData): string => {
@@ -31,7 +31,7 @@ export const renderToolDetails = (data: ToolDetailsData): string => {
     last10Calls,
     errorCodeSummary,
     chartData,
-    categoriesWithAccess,
+    toolsetsWithAccess,
   } = data;
 
   // Helper function to format timestamp for display
@@ -188,22 +188,22 @@ export const renderToolDetails = (data: ToolDetailsData): string => {
             white-space: pre;
             font-size: 0.9em;
         }
-        .categories-section {
+        .toolsets-section {
             background-color: #f0f9ff;
             padding: 20px;
             border-radius: 8px;
             margin-bottom: 30px;
         }
-        .categories-section h2 {
+        .toolsets-section h2 {
             margin-top: 0;
             color: #0369a1;
         }
-        .category-badges {
+        .toolset-badges {
             display: flex;
             gap: 10px;
             flex-wrap: wrap;
         }
-        .category-badge {
+        .toolset-badge {
             padding: 8px 16px;
             border-radius: 20px;
             color: white;
@@ -211,12 +211,12 @@ export const renderToolDetails = (data: ToolDetailsData): string => {
             font-weight: bold;
             transition: opacity 0.3s ease;
         }
-        .category-badge:hover {
+        .toolset-badge:hover {
             opacity: 0.8;
             text-decoration: none;
             color: white;
         }
-        .no-categories {
+        .no-toolsets {
             color: #6c757d;
             font-style: italic;
         }
@@ -586,24 +586,24 @@ export const renderToolDetails = (data: ToolDetailsData): string => {
             </div>
         </div>
 
-        <div class="categories-section">
-            <h2>Available to Categories</h2>
+        <div class="toolsets-section">
+            <h2>Available to Toolsets</h2>
             ${
-              categoriesWithAccess.length > 0
+              toolsetsWithAccess.length > 0
                 ? `
-            <div class="category-badges">
-                ${categoriesWithAccess
+            <div class="toolset-badges">
+                ${toolsetsWithAccess
                   .map(
-                    (category) => `
-                <a href="/category/${category.name}" class="category-badge" style="background-color: ${category.color};">
-                    ${category.displayName}
+                    (toolset) => `
+                <a href="/toolset/${toolset.name}" class="toolset-badge" style="background-color: ${toolset.color};">
+                    ${toolset.displayName}
                 </a>
                 `,
                   )
                   .join("")}
             </div>
             `
-                : '<p class="no-categories">This tool is not available to any category.</p>'
+                : '<p class="no-toolsets">This tool is not available to any toolset.</p>'
             }
         </div>
 
@@ -691,4 +691,4 @@ export const renderToolDetails = (data: ToolDetailsData): string => {
 </html>`;
 };
 
-export type { LogEntry, CategoryWithAccess, ToolDetailsData };
+export type { LogEntry, ToolsetWithAccess, ToolDetailsData };

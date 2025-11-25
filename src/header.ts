@@ -5,7 +5,7 @@ export const renderHeader = (): string => {
             <a href="/tools" class="nav-link">Tools</a>
             <a href="/services" class="nav-link">Services</a>
             <a href="/endpoints" class="nav-link">Endpoints</a>
-            <a href="/category" class="nav-link">Categories</a>
+            <a href="/toolset" class="nav-link">Toolsets</a>
             <a href="/logs" class="nav-link">Logs</a>
         </div>`;
 };

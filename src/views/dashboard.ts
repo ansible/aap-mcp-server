@@ -2,28 +2,28 @@ import { AAPMcpToolDefinition } from "../openapi-loader.js";
 import { renderHeader, getHeaderStyles } from "../header.js";
 import { getLogIcon } from "./utils.js";
 
-interface DashboardData {
+export interface DashboardData {
   allTools: AAPMcpToolDefinition[];
-  allCategories: Record<string, string[]>;
+  allToolsets: Record<string, string[]>;
   recordApiQueries: boolean;
   allowWriteOperations: boolean;
 }
 
 export const renderDashboard = (data: DashboardData): string => {
-  const { allTools, allCategories, recordApiQueries, allowWriteOperations } =
+  const { allTools, allToolsets, recordApiQueries, allowWriteOperations } =
     data;
 
   // Calculate summary statistics
   const totalSize = allTools.reduce((sum, tool) => sum + (tool.size || 0), 0);
 
-  // Calculate category statistics dynamically
-  const categoryStats: Record<
+  // Calculate toolset statistics dynamically
+  const toolsetStats: Record<
     string,
     { tools: AAPMcpToolDefinition[]; size: number }
   > = {};
-  for (const [categoryName, categoryTools] of Object.entries(allCategories)) {
-    const tools = allTools.filter((tool) => categoryTools.includes(tool.name));
-    categoryStats[categoryName] = {
+  for (const [toolsetName, toolsetTools] of Object.entries(allToolsets)) {
+    const tools = allTools.filter((tool) => toolsetTools.includes(tool.name));
+    toolsetStats[toolsetName] = {
       tools,
       size: tools.reduce((sum, tool) => sum + (tool.size || 0), 0),
     };
@@ -126,7 +126,7 @@ export const renderDashboard = (data: DashboardData): string => {
             margin-right: 20px;
         }
         .tools-icon { background: linear-gradient(45deg, #007acc, #0056b3); }
-        .categories-icon { background: linear-gradient(45deg, #28a745, #1e7e34); }
+        .toolsets-icon { background: linear-gradient(45deg, #28a745, #1e7e34); }
         .card-title {
             font-size: 1.8em;
             font-weight: bold;
@@ -179,10 +179,10 @@ export const renderDashboard = (data: DashboardData): string => {
             text-decoration: none;
             color: white;
         }
-        .btn-categories {
+        .btn-toolsets {
             background: linear-gradient(45deg, #28a745, #1e7e34);
         }
-        .btn-categories:hover {
+        .btn-toolsets:hover {
             background: linear-gradient(45deg, #1e7e34, #155724);
             box-shadow: 0 5px 15px rgba(40,167,69,0.4);
         }
@@ -426,26 +426,26 @@ export const renderDashboard = (data: DashboardData): string => {
 
             <div class="card">
                 <div class="card-header">
-                    <div class="card-icon categories-icon">👥</div>
-                    <h2 class="card-title">Categories</h2>
+                    <div class="card-icon toolsets-icon">👥</div>
+                    <h2 class="card-title">Toolsets</h2>
                 </div>
                 <p class="card-description">
-                    Understand the different user categories and their tool access levels. Categories control which tools are available based on user permissions and authentication status.
+                    Understand the different user toolsets and their tool access levels. Toolsets control which tools are available based on user permissions and authentication status.
                 </p>
                 <div class="card-stats">
-                    ${Object.entries(categoryStats)
+                    ${Object.entries(toolsetStats)
                       .map(
-                        ([categoryName, stats]) => `
+                        ([toolsetName, stats]) => `
                     <div class="stat">
                         <div class="stat-number">${stats.tools.length} tools</div>
-                        <div class="stat-label">${categoryName.charAt(0).toUpperCase() + categoryName.slice(1)}</div>
+                        <div class="stat-label">${toolsetName.charAt(0).toUpperCase() + toolsetName.slice(1)}</div>
                     </div>
                     `,
                       )
                       .join("")}
                 </div>
                 <br>
-                <a href="/category" class="btn btn-categories">Explore Categories</a>
+                <a href="/toolset" class="btn btn-toolsets">Explore Toolsets</a>
             </div>
 
             <div class="card">
@@ -510,5 +510,3 @@ export const renderDashboard = (data: DashboardData): string => {
 </body>
 </html>`;
 };
-
-export type { DashboardData };

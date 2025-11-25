@@ -48,21 +48,15 @@ describe("SessionManager", () => {
       const sessionId = "session-123";
       const token = "token-456";
       const userAgent = "TestAgent/1.0";
-      const category = "test-category";
+      const toolset = "test-toolset";
 
-      sessionManager.store(
-        sessionId,
-        token,
-        userAgent,
-        category,
-        mockTransport,
-      );
+      sessionManager.store(sessionId, token, userAgent, toolset, mockTransport);
 
       expect(sessionManager.has(sessionId)).toBe(true);
       expect(sessionManager.get(sessionId)).toEqual({
         token,
         userAgent,
-        category,
+        toolset,
         transport: mockTransport,
       });
     });
@@ -72,7 +66,7 @@ describe("SessionManager", () => {
         "session-1",
         "token-1",
         "Agent/1.0",
-        "category1",
+        "toolset1",
         mockTransport,
       );
 
@@ -91,12 +85,12 @@ describe("SessionManager", () => {
         "session-1",
         "token-1",
         "Agent/1.0",
-        "category1",
+        "toolset1",
         mockTransport,
       );
 
       expect(loggedMessage).toMatch(
-        /Stored session data for session-1: userAgent=Agent\/1\.0, category=category1, active_session\(s\)=1/,
+        /Stored session data for session-1: userAgent=Agent\/1\.0, toolset=toolset1, active_session\(s\)=1/,
       );
 
       console.log = originalLog;
@@ -107,7 +101,7 @@ describe("SessionManager", () => {
         "session-1",
         "token-1",
         "Agent/1.0",
-        "category1",
+        "toolset1",
         mockTransport,
       );
       expect(sessionManager.getActiveCount()).toBe(1);
@@ -116,7 +110,7 @@ describe("SessionManager", () => {
         "session-2",
         "token-2",
         "Agent/2.0",
-        "category2",
+        "toolset2",
         mockTransport2,
       );
       expect(sessionManager.getActiveCount()).toBe(2);
@@ -130,7 +124,7 @@ describe("SessionManager", () => {
         sessionId,
         "token-1",
         "Agent/1.0",
-        "category1",
+        "toolset1",
         mockTransport,
       );
       expect(sessionManager.getToken(sessionId)).toBe("token-1");
@@ -140,11 +134,11 @@ describe("SessionManager", () => {
         sessionId,
         "token-2",
         "Agent/2.0",
-        "category2",
+        "toolset2",
         mockTransport2,
       );
       expect(sessionManager.getToken(sessionId)).toBe("token-2");
-      expect(sessionManager.getCategory(sessionId)).toBe("category2");
+      expect(sessionManager.getToolset(sessionId)).toBe("toolset2");
     });
   });
 
@@ -154,7 +148,7 @@ describe("SessionManager", () => {
       const expectedData = {
         token: "token-1",
         userAgent: "Agent/1.0",
-        category: "category1",
+        toolset: "toolset1",
         transport: mockTransport,
       };
 
@@ -162,7 +156,7 @@ describe("SessionManager", () => {
         sessionId,
         expectedData.token,
         expectedData.userAgent,
-        expectedData.category,
+        expectedData.toolset,
         expectedData.transport,
       );
 
@@ -180,7 +174,7 @@ describe("SessionManager", () => {
         "session-1",
         "token-1",
         "Agent/1.0",
-        "category1",
+        "toolset1",
         mockTransport,
       );
       expect(sessionManager.has("session-1")).toBe(true);
@@ -202,7 +196,7 @@ describe("SessionManager", () => {
         sessionId,
         "token-1",
         "Agent/1.0",
-        "category1",
+        "toolset1",
         mockTransport,
       );
 
@@ -216,7 +210,7 @@ describe("SessionManager", () => {
         "session-1",
         "token-1",
         "Agent/1.0",
-        "category1",
+        "toolset1",
         mockTransport,
       );
       sessionManager.delete("session-1");
@@ -232,7 +226,7 @@ describe("SessionManager", () => {
         "session-1",
         "token-1",
         "Agent/1.0",
-        "category1",
+        "toolset1",
         mockTransport,
       );
 
@@ -260,14 +254,14 @@ describe("SessionManager", () => {
         "session-1",
         "token-1",
         "Agent/1.0",
-        "category1",
+        "toolset1",
         mockTransport,
       );
       sessionManager.store(
         "session-2",
         "token-2",
         "Agent/2.0",
-        "category2",
+        "toolset2",
         mockTransport2,
       );
       expect(sessionManager.getActiveCount()).toBe(2);
@@ -290,14 +284,14 @@ describe("SessionManager", () => {
         "session-1",
         "token-1",
         "Agent/1.0",
-        "category1",
+        "toolset1",
         mockTransport,
       );
       sessionManager.store(
         "session-2",
         "token-2",
         "Agent/2.0",
-        "category2",
+        "toolset2",
         mockTransport2,
       );
 
@@ -312,14 +306,14 @@ describe("SessionManager", () => {
         "session-1",
         "token-1",
         "Agent/1.0",
-        "category1",
+        "toolset1",
         mockTransport,
       );
       sessionManager.store(
         "session-2",
         "token-2",
         "Agent/2.0",
-        "category2",
+        "toolset2",
         mockTransport2,
       );
 
@@ -344,7 +338,7 @@ describe("SessionManager", () => {
         "session-1",
         "token-1",
         "Agent/1.0",
-        "category1",
+        "toolset1",
         mockTransport,
       );
       expect(sessionManager.getActiveCount()).toBe(1);
@@ -353,7 +347,7 @@ describe("SessionManager", () => {
         "session-2",
         "token-2",
         "Agent/2.0",
-        "category2",
+        "toolset2",
         mockTransport2,
       );
       expect(sessionManager.getActiveCount()).toBe(2);
@@ -372,7 +366,7 @@ describe("SessionManager", () => {
         "session-1",
         "token-123",
         "TestAgent/1.0",
-        "test-category",
+        "test-toolset",
         mockTransport,
       );
     });
@@ -387,13 +381,13 @@ describe("SessionManager", () => {
       });
     });
 
-    describe("getCategory()", () => {
-      it("should return category for existing session", () => {
-        expect(sessionManager.getCategory("session-1")).toBe("test-category");
+    describe("getToolset()", () => {
+      it("should return toolset for existing session", () => {
+        expect(sessionManager.getToolset("session-1")).toBe("test-toolset");
       });
 
       it("should return undefined for non-existent session", () => {
-        expect(sessionManager.getCategory("non-existent")).toBeUndefined();
+        expect(sessionManager.getToolset("non-existent")).toBeUndefined();
       });
     });
 
@@ -424,14 +418,14 @@ describe("SessionManager", () => {
         "session-1",
         "token-1",
         "Agent/1.0",
-        "category1",
+        "toolset1",
         mockTransport,
       );
       sessionManager.store(
         "session-2",
         "token-2",
         "Agent/2.0",
-        "category2",
+        "toolset2",
         mockTransport2,
       );
 
@@ -452,7 +446,7 @@ describe("SessionManager", () => {
         "session-1",
         "token-1",
         "Agent/1.0",
-        "category1",
+        "toolset1",
         mockTransport,
       );
 
@@ -482,14 +476,14 @@ describe("SessionManager", () => {
         "session-1",
         "token-1",
         "Agent/1.0",
-        "category1",
+        "toolset1",
         errorTransport,
       );
       sessionManager.store(
         "session-2",
         "token-2",
         "Agent/2.0",
-        "category2",
+        "toolset2",
         mockTransport,
       );
 
@@ -517,7 +511,7 @@ describe("SessionManager", () => {
       (sessionManager as any).sessions["session-1"] = {
         token: "token-1",
         userAgent: "Agent/1.0",
-        category: "category1",
+        toolset: "toolset1",
         transport: undefined,
       };
 
@@ -539,14 +533,14 @@ describe("SessionManager", () => {
         "session-1",
         "token-1",
         "Agent/1.0",
-        "category1",
+        "toolset1",
         mockTransport,
       );
       sessionManager.store(
         "session-2",
         "token-2",
         "Agent/2.0",
-        "category2",
+        "toolset2",
         mockTransport2,
       );
 
@@ -555,7 +549,7 @@ describe("SessionManager", () => {
 
       // Verify individual access
       expect(sessionManager.getToken("session-1")).toBe("token-1");
-      expect(sessionManager.getCategory("session-2")).toBe("category2");
+      expect(sessionManager.getToolset("session-2")).toBe("toolset2");
 
       // Delete one session
       sessionManager.delete("session-1");
@@ -574,7 +568,7 @@ describe("SessionManager", () => {
         id: "session-test",
         token: "token-test",
         userAgent: "TestSuite/1.0",
-        category: "integration-test",
+        toolset: "integration-test",
       };
 
       // Store session
@@ -582,7 +576,7 @@ describe("SessionManager", () => {
         sessionData.id,
         sessionData.token,
         sessionData.userAgent,
-        sessionData.category,
+        sessionData.toolset,
         mockTransport,
       );
 
@@ -590,7 +584,7 @@ describe("SessionManager", () => {
       expect(sessionManager.get(sessionData.id)).toEqual({
         token: sessionData.token,
         userAgent: sessionData.userAgent,
-        category: sessionData.category,
+        toolset: sessionData.toolset,
         transport: mockTransport,
       });
 
@@ -598,8 +592,8 @@ describe("SessionManager", () => {
       expect(sessionManager.getUserAgent(sessionData.id)).toBe(
         sessionData.userAgent,
       );
-      expect(sessionManager.getCategory(sessionData.id)).toBe(
-        sessionData.category,
+      expect(sessionManager.getToolset(sessionData.id)).toBe(
+        sessionData.toolset,
       );
       expect(sessionManager.getTransport(sessionData.id)).toBe(mockTransport);
     });
@@ -613,7 +607,7 @@ describe("SessionManager", () => {
         "session-1",
         "token-1",
         "Agent/1.0",
-        "category1",
+        "toolset1",
         mockTransport,
       );
 
@@ -635,7 +629,7 @@ describe("SessionManager", () => {
         "session-1",
         "token-1",
         "Agent/1.0",
-        "category1",
+        "toolset1",
         mockTransport,
       );
 
@@ -662,7 +656,7 @@ describe("SessionManager", () => {
         "session-1",
         "token-1",
         "Agent/1.0",
-        "category1",
+        "toolset1",
         mockTransport,
       );
 
@@ -687,7 +681,7 @@ describe("SessionManager", () => {
         "session-1",
         "token-1",
         "Agent/1.0",
-        "category1",
+        "toolset1",
         mockTransport,
       );
 
@@ -706,14 +700,14 @@ describe("SessionManager", () => {
         "session-1",
         "token-1",
         "Agent/1.0",
-        "category1",
+        "toolset1",
         mockTransport,
       );
       sessionManager.store(
         "session-2",
         "token-2",
         "Agent/2.0",
-        "category2",
+        "toolset2",
         mockTransport2,
       );
 
@@ -732,7 +726,7 @@ describe("SessionManager", () => {
         "session-1",
         "token-1",
         "Agent/1.0",
-        "category1",
+        "toolset1",
         mockTransport,
       );
 
@@ -761,7 +755,7 @@ describe("SessionManager", () => {
         "session-1",
         "token-1",
         "Agent/1.0",
-        "category1",
+        "toolset1",
         mockTransport,
       );
 
@@ -789,7 +783,7 @@ describe("SessionManager", () => {
         "session-1",
         "token-1",
         "Agent/1.0",
-        "category1",
+        "toolset1",
         mockTransport,
       );
 
@@ -802,8 +796,8 @@ describe("SessionManager", () => {
       // Wait another 5 seconds
       vi.advanceTimersByTime(5000);
 
-      // Access via getCategory() - should reset timeout again
-      expect(sessionManager.getCategory("session-1")).toBe("category1");
+      // Access via getToolset() - should reset timeout again
+      expect(sessionManager.getToolset("session-1")).toBe("toolset1");
 
       // Wait another 5 seconds
       vi.advanceTimersByTime(5000);
@@ -834,7 +828,7 @@ describe("SessionManager", () => {
         "session-1",
         "token-1",
         "Agent/1.0",
-        "category1",
+        "toolset1",
         mockTransport,
       );
 
@@ -860,7 +854,7 @@ describe("SessionManager", () => {
         "session-1",
         "token-1",
         "Agent/1.0",
-        "category1",
+        "toolset1",
         mockTransport,
       );
 
@@ -872,7 +866,7 @@ describe("SessionManager", () => {
         "session-1",
         "token-2",
         "Agent/2.0",
-        "category2",
+        "toolset2",
         mockTransport2,
       );
 
@@ -900,7 +894,7 @@ describe("SessionManager", () => {
         "session-1",
         "token-1",
         "Agent/1.0",
-        "category1",
+        "toolset1",
         mockTransport,
       );
 
@@ -909,7 +903,7 @@ describe("SessionManager", () => {
       expect(session).toEqual({
         token: "token-1",
         userAgent: "Agent/1.0",
-        category: "category1",
+        toolset: "toolset1",
         transport: mockTransport,
       });
 
@@ -922,14 +916,14 @@ describe("SessionManager", () => {
         "session-1",
         "token-1",
         "Agent/1.0",
-        "category1",
+        "toolset1",
         mockTransport,
       );
       sessionManager.store(
         "session-2",
         "token-2",
         "Agent/2.0",
-        "category2",
+        "toolset2",
         mockTransport2,
       );
 
@@ -948,7 +942,7 @@ describe("SessionManager", () => {
         "session-1",
         "token-1",
         "Agent/1.0",
-        "category1",
+        "toolset1",
         mockTransport,
       );
 
@@ -959,7 +953,7 @@ describe("SessionManager", () => {
       sessionManager.has("session-1");
       sessionManager.get("session-1");
       sessionManager.getToken("session-1");
-      sessionManager.getCategory("session-1");
+      sessionManager.getToolset("session-1");
 
       // Wait 7 seconds (total 10 from creation, but timeouts were reset)
       vi.advanceTimersByTime(7000);

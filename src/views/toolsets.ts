@@ -1,7 +1,7 @@
 import { AAPMcpToolDefinition } from "../openapi-loader.js";
 import { renderHeader, getHeaderStyles } from "../header.js";
 
-interface CategoryData {
+interface ToolsetData {
   name: string;
   displayName: string;
   description: string;
@@ -11,23 +11,21 @@ interface CategoryData {
   totalSize: number;
 }
 
-interface CategoriesOverviewData {
-  categories: CategoryData[];
+interface ToolsetsOverviewData {
+  toolsets: ToolsetData[];
   allTools: AAPMcpToolDefinition[];
 }
 
-interface CategoryToolsData {
-  categoryName: string;
+interface ToolsetToolsData {
+  toolsetName: string;
   displayName: string;
   filteredTools: AAPMcpToolDefinition[];
   totalSize: number;
-  allCategories: Record<string, string[]>;
+  allToolsets: Record<string, string[]>;
 }
 
-export const renderCategoriesOverview = (
-  data: CategoriesOverviewData,
-): string => {
-  const { categories } = data;
+export const renderToolsetsOverview = (data: ToolsetsOverviewData): string => {
+  const { toolsets } = data;
 
   return `
 <!DOCTYPE html>
@@ -35,7 +33,7 @@ export const renderCategoriesOverview = (
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Categories Overview - AAP MCP</title>
+    <title>Toolsets Overview - AAP MCP</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -56,13 +54,13 @@ export const renderCategoriesOverview = (
             padding-bottom: 10px;
         }
         ${getHeaderStyles()}
-        .category-grid {
+        .toolset-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
             gap: 20px;
             margin-bottom: 30px;
         }
-        .category-card {
+        .toolset-card {
             border: 2px solid #e9ecef;
             border-radius: 8px;
             padding: 20px;
@@ -71,19 +69,19 @@ export const renderCategoriesOverview = (
             transition: all 0.3s ease;
             cursor: pointer;
         }
-        .category-card:hover {
+        .toolset-card:hover {
             border-color: #007acc;
             box-shadow: 0 4px 8px rgba(0,0,0,0.1);
             transform: translateY(-2px);
             text-decoration: none;
             color: inherit;
         }
-        .category-header {
+        .toolset-header {
             display: flex;
             align-items: center;
             margin-bottom: 15px;
         }
-        .category-icon {
+        .toolset-icon {
             width: 40px;
             height: 40px;
             border-radius: 50%;
@@ -95,17 +93,17 @@ export const renderCategoriesOverview = (
             margin-right: 15px;
             font-size: 1.2em;
         }
-        .category-title {
+        .toolset-title {
             font-size: 1.3em;
             font-weight: bold;
             margin: 0;
         }
-        .category-description {
+        .toolset-description {
             color: #6c757d;
             margin-bottom: 15px;
             line-height: 1.4;
         }
-        .category-stats {
+        .toolset-stats {
             display: flex;
             justify-content: space-between;
             background-color: #f8f9fa;
@@ -128,34 +126,34 @@ export const renderCategoriesOverview = (
 </head>
 <body>
     <div class="container">
-        <h1>Categories Overview</h1>
+        <h1>Toolsets Overview</h1>
 
         ${renderHeader()}
 
         <div class="summary">
             <h2>System Summary</h2>
-            <p>The AAP MCP system uses categories to control tool access based on user permissions. Each category provides a different level of access to the available tools.</p>
+            <p>The AAP MCP system uses toolsets to control tool access based on user permissions. Each toolset provides a different level of access to the available tools.</p>
         </div>
 
-        <div class="category-grid">
-            ${categories
+        <div class="toolset-grid">
+            ${toolsets
               .map(
-                (category) => `
-            <a href="/category/${category.name}" class="category-card">
-                <div class="category-header">
-                    <div class="category-icon" style="background-color: ${category.color};">
-                        ${category.displayName.charAt(0)}
+                (toolset) => `
+            <a href="/toolset/${toolset.name}" class="toolset-card">
+                <div class="toolset-header">
+                    <div class="toolset-icon" style="background-color: ${toolset.color};">
+                        ${toolset.displayName.charAt(0)}
                     </div>
-                    <h3 class="category-title">${category.displayName}</h3>
+                    <h3 class="toolset-title">${toolset.displayName}</h3>
                 </div>
-                <p class="category-description">${category.description}</p>
-                <div class="category-stats">
+                <p class="toolset-description">${toolset.description}</p>
+                <div class="toolset-stats">
                     <div class="stat">
-                        <div class="stat-number">${category.toolCount}</div>
+                        <div class="stat-number">${toolset.toolCount}</div>
                         <div class="stat-label">Tools</div>
                     </div>
                     <div class="stat">
-                        <div class="stat-number">${category.totalSize.toLocaleString()}</div>
+                        <div class="stat-number">${toolset.totalSize.toLocaleString()}</div>
                         <div class="stat-label">Characters</div>
                     </div>
                 </div>
@@ -169,8 +167,8 @@ export const renderCategoriesOverview = (
 </html>`;
 };
 
-export const renderCategoryTools = (data: CategoryToolsData): string => {
-  const { categoryName, displayName, filteredTools, totalSize, allCategories } =
+export const renderToolsetTools = (data: ToolsetToolsData): string => {
+  const { toolsetName, displayName, filteredTools, totalSize, allToolsets } =
     data;
 
   const toolRows = filteredTools
@@ -191,7 +189,7 @@ export const renderCategoryTools = (data: CategoryToolsData): string => {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>${displayName} Category Tools - AAP MCP</title>
+    <title>${displayName} Toolset Tools - AAP MCP</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -211,7 +209,7 @@ export const renderCategoryTools = (data: CategoryToolsData): string => {
             border-bottom: 2px solid #007acc;
             padding-bottom: 10px;
         }
-        .category-badge {
+        .toolset-badge {
             display: inline-block;
             background-color: #007acc;
             color: white;
@@ -221,12 +219,12 @@ export const renderCategoryTools = (data: CategoryToolsData): string => {
             margin-left: 10px;
         }
         ${getHeaderStyles()}
-        .category-nav {
+        .toolset-nav {
             margin-bottom: 20px;
             padding: 15px 0;
             border-bottom: 1px solid #dee2e6;
         }
-        .category-nav-link {
+        .toolset-nav-link {
             background-color: #6c757d;
             color: white;
             padding: 6px 12px;
@@ -235,10 +233,10 @@ export const renderCategoryTools = (data: CategoryToolsData): string => {
             margin-right: 10px;
             font-size: 0.9em;
         }
-        .category-nav-link:hover {
+        .toolset-nav-link:hover {
             background-color: #5a6268;
         }
-        .category-nav-link.active {
+        .toolset-nav-link.active {
             background-color: #007acc;
         }
         table {
@@ -283,22 +281,22 @@ export const renderCategoryTools = (data: CategoryToolsData): string => {
 </head>
 <body>
     <div class="container">
-        <h1>${displayName} Category Tools<span class="category-badge">${filteredTools.length} tools</span></h1>
+        <h1>${displayName} Toolset Tools<span class="toolset-badge">${filteredTools.length} tools</span></h1>
 
         ${renderHeader()}
 
-        <div class="category-nav">
-            ${Object.keys(allCategories)
+        <div class="toolset-nav">
+            ${Object.keys(allToolsets)
               .map(
                 (name) => `
-            <a href="/category/${name}" class="category-nav-link ${categoryName === name ? "active" : ""}">${name.charAt(0).toUpperCase() + name.slice(1)}</a>
+            <a href="/toolset/${name}" class="toolset-nav-link ${toolsetName === name ? "active" : ""}">${name.charAt(0).toUpperCase() + name.slice(1)}</a>
             `,
               )
               .join("")}
         </div>
 
         <div class="stats">
-            <strong>Category:</strong> ${displayName}<br>
+            <strong>Toolset:</strong> ${displayName}<br>
             <strong>Available Tools:</strong> ${filteredTools.length}<br>
             <strong>Total Size:</strong> ${totalSize.toLocaleString()} characters
         </div>
@@ -307,7 +305,7 @@ export const renderCategoryTools = (data: CategoryToolsData): string => {
           filteredTools.length === 0
             ? `
         <div class="empty-state">
-            <p>No tools are available for the ${displayName} category.</p>
+            <p>No tools are available for the ${displayName} toolset.</p>
         </div>
         `
             : `
@@ -330,4 +328,4 @@ export const renderCategoryTools = (data: CategoryToolsData): string => {
 </html>`;
 };
 
-export type { CategoryData, CategoriesOverviewData, CategoryToolsData };
+export type { ToolsetData, ToolsetsOverviewData, ToolsetToolsData };

@@ -44,7 +44,7 @@ services:
     local_path: data/eda-openapi.json
     # enabled: true
 
-categories:
+toolsets:
   # Phase 1
   job_management:
     - controller.job_templates_launch_retrieve

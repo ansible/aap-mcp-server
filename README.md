@@ -89,12 +89,12 @@ services:
 - **local_path**: Path to local OpenAPI file (optional, if set, loads from file instead of URL)
 - **enabled**: Enable/disable the service (optional, defaults to true)
 
-#### Tool Categories
+#### Toolsets
 
-Define custom tool categories that group related functionality:
+Define custom toolsets that group related functionality:
 
 ```yaml
-categories:
+toolsets:
   job_management:
     - controller.job_templates_launch_create
     - controller.workflow_job_templates_launch_create
@@ -135,9 +135,9 @@ Configuration values are resolved in the following order (highest to lowest prio
 2. **Configuration File** (`aap-mcp.yaml`)
 3. **Default Values** (built-in defaults)
 
-### User Categories
+### User Toolsets
 
-The service supports role-based access control through user categories.
+The service supports role-based access control through user toolsets.
 
 ## Usage
 
@@ -166,7 +166,7 @@ When `enable_ui: true` is set in the configuration, the service provides a web i
 
 - **Dashboard**: `http://localhost:3000/` - Service overview and statistics
 - **Tools List**: `http://localhost:3000/tools` - Browse all available tools
-- **Categories**: `http://localhost:3000/category` - View tools by category
+- **Toolsets**: `http://localhost:3000/toolset` - View tools by toolset
 - **Services**: `http://localhost:3000/services` - Service-specific tool listings
 - **Logs**: `http://localhost:3000/logs` - API query logs (when logging is enabled)
 - **Health**: `http://localhost:3000/api/v1/health` - Service health check
@@ -176,7 +176,7 @@ When `enable_ui: true` is set in the configuration, the service provides a web i
 The service provides several MCP endpoints:
 
 - **Standard MCP**: `/mcp` (POST, GET, DELETE)
-- **Category-specific**: `/mcp/{category}` where category matches your configured categories
+- **Toolset-specific**: `/mcp/{toolset}` where toolset matches your configured toolsets
 
 ### Authentication
 
@@ -222,9 +222,9 @@ npm run dev
 claude mcp add aap-mcp -t http http://localhost:3000/mcp
 ```
 
-#### Option 3: Using Custom Categories
+#### Option 3: Using Custom Toolsets
 
-To use specific tool categories defined in your configuration:
+To use specific toolsets defined in your configuration:
 
 ```bash
 # Use job management tools only
@@ -246,7 +246,7 @@ The service generates tools from AAP OpenAPI specifications for:
 - **Gateway**: User and team management, organizations, role definitions
 - **Galaxy**: Collection management and versions
 
-Tool availability depends on your configured categories and user permissions. When the web UI is enabled, you can browse available tools at `http://localhost:3000/tools`.
+Tool availability depends on your configured toolsets and user permissions. When the web UI is enabled, you can browse available tools at `http://localhost:3000/tools`.
 
 ## Prometheus Metrics
 
@@ -286,7 +286,7 @@ http://localhost:3000/metrics
 - **Service Selection**: Enable/disable specific AAP services
 - **Local File Support**: Load OpenAPI specs from local files or remote URLs
 - **Web UI Dashboard**: Optional web interface for browsing tools and logs
-- **Role-based Access Control**: Custom categories and permission-based tool filtering
+- **Role-based Access Control**: Custom toolsets and permission-based tool filtering
 - **Session Management**: Token validation and user permission detection
 - **API Query Logging**: Optional logging of all tool usage
 - **Prometheus Metrics**: Comprehensive metrics for monitoring and observability
@@ -303,7 +303,7 @@ The configuration system follows a hierarchical approach:
 
 2. **YAML Configuration File** (`aap-mcp.yaml`)
    - Service definitions with custom URLs and local file paths
-   - Custom tool categories for role-based access
+   - Custom toolsets for role-based access
    - Feature toggles (UI, logging, certificate validation)
 
 3. **Built-in Defaults** (lowest priority)
@@ -371,7 +371,7 @@ The Kubernetes deployment includes:
 2. **No tools available**:
    - Check that your token provides the expected user permissions
    - Verify services are enabled in your configuration
-   - Check the category configuration matches your intended tool access
+   - Check the toolset configuration matches your intended tool access
 
 3. **Connection refused**:
    - Ensure AAP is running and accessible at the configured base URL
@@ -407,7 +407,7 @@ The service provides detailed console logging for:
 - OpenAPI specification loading (local files vs URLs)
 - Service enabling/disabling
 - Session initialization and cleanup
-- Tool filtering by category
+- Tool filtering by toolset
 - API request execution and responses
 
 Enable additional logging:

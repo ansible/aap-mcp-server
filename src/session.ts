@@ -11,7 +11,7 @@ export interface SessionData {
   [sessionId: string]: {
     token: string;
     userAgent: string;
-    category: string;
+    toolset: string;
     transport: StreamableHTTPServerTransport;
     timeout: NodeJS.Timeout;
   };
@@ -31,13 +31,12 @@ export class SessionManager {
     sessionId: string,
     token: string,
     userAgent: string,
-    category: string,
+    toolset: string,
     transport: StreamableHTTPServerTransport,
   ): void {
     if (this.has(sessionId)) {
       clearTimeout(this.sessions[sessionId].timeout);
-    }
-    {
+    } else {
       metricsService.incrementActiveSessions();
     }
 
@@ -53,12 +52,12 @@ export class SessionManager {
     this.sessions[sessionId] = {
       token,
       userAgent,
-      category,
+      toolset,
       transport,
       timeout,
     };
     console.log(
-      `${getTimestamp()} Stored session data for ${sessionId}: userAgent=${userAgent}, category=${category}, active_session(s)=${this.getActiveCount()}`,
+      `${getTimestamp()} Stored session data for ${sessionId}: userAgent=${userAgent}, toolset=${toolset}, active_session(s)=${this.getActiveCount()}`,
     );
   }
 
@@ -137,11 +136,11 @@ export class SessionManager {
     return undefined;
   }
 
-  getCategory(sessionId: string): string | undefined {
+  getToolset(sessionId: string): string | undefined {
     const session = this.sessions[sessionId];
     if (session) {
       this.resetTimeout(sessionId);
-      return session.category;
+      return session.toolset;
     }
     return undefined;
   }

@@ -6,8 +6,8 @@ import { describe, it, expect } from "vitest";
  * for the patterns used in the codebase.
  */
 
-describe("Category Color Generation", () => {
-  const getCategoryColor = (categoryName: string): string => {
+describe("Toolset Color Generation", () => {
+  const getToolsetColor = (toolsetName: string): string => {
     const colors = [
       "#6c757d",
       "#28a745",
@@ -18,23 +18,23 @@ describe("Category Color Generation", () => {
       "#9c27b0",
       "#4caf50",
     ];
-    const hash = categoryName
+    const hash = toolsetName
       .split("")
       .reduce((acc, char) => acc + char.charCodeAt(0), 0);
     return colors[hash % colors.length];
   };
 
-  it("should return consistent colors for the same category name", () => {
-    const categoryName = "admin";
-    const color1 = getCategoryColor(categoryName);
-    const color2 = getCategoryColor(categoryName);
+  it("should return consistent colors for the same toolset name", () => {
+    const toolsetName = "admin";
+    const color1 = getToolsetColor(toolsetName);
+    const color2 = getToolsetColor(toolsetName);
 
     expect(color1).toBe(color2);
   });
 
-  it("should return different colors for different category names", () => {
-    const color1 = getCategoryColor("admin");
-    const color2 = getCategoryColor("user");
+  it("should return different colors for different toolset names", () => {
+    const color1 = getToolsetColor("admin");
+    const color2 = getToolsetColor("user");
 
     // While not guaranteed, different inputs should likely produce different colors
     expect(color1).toMatch(/^#[0-9a-f]{6}$/);
@@ -42,28 +42,28 @@ describe("Category Color Generation", () => {
   });
 
   it("should return valid hex colors", () => {
-    const testCategories = ["admin", "user", "operator", "anonymous"];
+    const testToolsets = ["admin", "user", "operator", "anonymous"];
 
-    testCategories.forEach((category) => {
-      const color = getCategoryColor(category);
+    testToolsets.forEach((toolset) => {
+      const color = getToolsetColor(toolset);
       expect(color).toMatch(/^#[0-9a-f]{6}$/);
     });
   });
 
   it("should handle empty string", () => {
-    const color = getCategoryColor("");
+    const color = getToolsetColor("");
     expect(color).toMatch(/^#[0-9a-f]{6}$/);
   });
 
   it("should handle special characters", () => {
-    const color = getCategoryColor("test-category_123");
+    const color = getToolsetColor("test-toolset_123");
     expect(color).toMatch(/^#[0-9a-f]{6}$/);
   });
 });
 
 describe("Tool Filtering", () => {
-  const filterToolsByCategory = (tools: any[], category: string[]): any[] => {
-    return tools.filter((tool) => category.includes(tool.name));
+  const filterToolsByToolset = (tools: any[], toolset: string[]): any[] => {
+    return tools.filter((tool) => toolset.includes(tool.name));
   };
 
   const mockTools = [
@@ -72,9 +72,9 @@ describe("Tool Filtering", () => {
     { name: "tool3", service: "gateway", size: 300 },
   ];
 
-  it("should filter tools by category correctly", () => {
-    const category = ["tool1", "tool3"];
-    const filtered = filterToolsByCategory(mockTools, category);
+  it("should filter tools by toolset correctly", () => {
+    const toolset = ["tool1", "tool3"];
+    const filtered = filterToolsByToolset(mockTools, toolset);
 
     expect(filtered).toHaveLength(2);
     expect(filtered[0].name).toBe("tool1");
@@ -82,22 +82,22 @@ describe("Tool Filtering", () => {
   });
 
   it("should return empty array when no tools match", () => {
-    const category = ["nonexistent"];
-    const filtered = filterToolsByCategory(mockTools, category);
+    const toolset = ["nonexistent"];
+    const filtered = filterToolsByToolset(mockTools, toolset);
 
     expect(filtered).toHaveLength(0);
   });
 
-  it("should return all tools when category includes all tool names", () => {
-    const category = ["tool1", "tool2", "tool3"];
-    const filtered = filterToolsByCategory(mockTools, category);
+  it("should return all tools when toolset includes all tool names", () => {
+    const toolset = ["tool1", "tool2", "tool3"];
+    const filtered = filterToolsByToolset(mockTools, toolset);
 
     expect(filtered).toHaveLength(3);
   });
 
-  it("should handle empty category array", () => {
-    const category: string[] = [];
-    const filtered = filterToolsByCategory(mockTools, category);
+  it("should handle empty toolset array", () => {
+    const toolset: string[] = [];
+    const filtered = filterToolsByToolset(mockTools, toolset);
 
     expect(filtered).toHaveLength(0);
   });
