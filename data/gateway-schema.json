@@ -3450,7 +3450,7 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/Authenticator"
+                                    "$ref": "#/components/schemas/AuthenticatorUpdate"
                                 }
                             }
                         },
@@ -3480,17 +3480,17 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/PatchedAuthenticator"
+                                "$ref": "#/components/schemas/PatchedAuthenticatorUpdate"
                             }
                         },
                         "application/x-www-form-urlencoded": {
                             "schema": {
-                                "$ref": "#/components/schemas/PatchedAuthenticator"
+                                "$ref": "#/components/schemas/PatchedAuthenticatorUpdate"
                             }
                         },
                         "multipart/form-data": {
                             "schema": {
-                                "$ref": "#/components/schemas/PatchedAuthenticator"
+                                "$ref": "#/components/schemas/PatchedAuthenticatorUpdate"
                             }
                         }
                     }
@@ -3511,7 +3511,7 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/Authenticator"
+                                    "$ref": "#/components/schemas/AuthenticatorUpdate"
                                 }
                             }
                         },
@@ -9953,7 +9953,6 @@
         "/api/gateway/v1/role_user_assignments/": {
             "get": {
                 "operationId": "role_user_assignments_list",
-                "description": "Use this endpoint to give a user permission to a resource or an organization.\nThe needed data is the user, the role definition, and the object id.\nThe object must be of the type specified in the role definition.\nThe type given in the role definition and the provided object_id are used\nto look up the resource.\n\nAfter creation, the assignment cannot be edited, but can be deleted to\nremove those permissions.",
                 "parameters": [
                     {
                         "in": "query",
@@ -10045,7 +10044,7 @@
             },
             "post": {
                 "operationId": "role_user_assignments_create",
-                "description": "Use this endpoint to give a user permission to a resource or an organization.\nThe needed data is the user, the role definition, and the object id.\nThe object must be of the type specified in the role definition.\nThe type given in the role definition and the provided object_id are used\nto look up the resource.\n\nAfter creation, the assignment cannot be edited, but can be deleted to\nremove those permissions.",
+                "description": "Give a user permission to a resource, an organization, or globally (when allowed). Must specify 'role_definition' and exactly one of 'user' or 'user_ansible_id'. Can specify at most one of 'object_id' or 'object_ansible_id' (omit both for global roles). The content_type of the role definition and the provided object_id are used to look up the resource. After creation, the assignment cannot be edited, but can be deleted to remove those permissions.",
                 "tags": [
                     "role_user_assignments"
                 ],
@@ -10053,21 +10052,54 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/RoleUserAssignment"
-                            }
-                        },
-                        "application/x-www-form-urlencoded": {
-                            "schema": {
-                                "$ref": "#/components/schemas/RoleUserAssignment"
-                            }
-                        },
-                        "multipart/form-data": {
-                            "schema": {
-                                "$ref": "#/components/schemas/RoleUserAssignment"
+                                "allOf": [
+                                    {
+                                        "$ref": "#/components/schemas/RoleUserAssignment"
+                                    },
+                                    {
+                                        "description": "Must provide exactly one of: user (integer ID) or user_ansible_id (UUID). Mutual exclusivity enforced by server validation.",
+                                        "properties": {
+                                            "user": {
+                                                "type": "integer",
+                                                "nullable": true,
+                                                "description": "ID of the user to assign the role to. Mutually exclusive with user_ansible_id."
+                                            },
+                                            "user_ansible_id": {
+                                                "type": "string",
+                                                "format": "uuid",
+                                                "nullable": true,
+                                                "description": "Ansible ID of the user to assign the role to. Mutually exclusive with user."
+                                            }
+                                        }
+                                    },
+                                    {
+                                        "description": "Can provide at most one of: object_id or object_ansible_id. Omit both for global role assignments. Mutual exclusivity enforced by server validation.",
+                                        "properties": {
+                                            "object_id": {
+                                                "oneOf": [
+                                                    {
+                                                        "type": "integer"
+                                                    },
+                                                    {
+                                                        "type": "string",
+                                                        "format": "uuid"
+                                                    }
+                                                ],
+                                                "nullable": true,
+                                                "description": "ID of the resource object. Mutually exclusive with object_ansible_id."
+                                            },
+                                            "object_ansible_id": {
+                                                "type": "string",
+                                                "format": "uuid",
+                                                "nullable": true,
+                                                "description": "Ansible ID of the resource object. Mutually exclusive with object_id."
+                                            }
+                                        }
+                                    }
+                                ]
                             }
                         }
-                    },
-                    "required": true
+                    }
                 },
                 "security": [
                     {
@@ -10098,7 +10130,6 @@
         "/api/gateway/v1/role_user_assignments/{id}/": {
             "get": {
                 "operationId": "role_user_assignments_retrieve",
-                "description": "Use this endpoint to give a user permission to a resource or an organization.\nThe needed data is the user, the role definition, and the object id.\nThe object must be of the type specified in the role definition.\nThe type given in the role definition and the provided object_id are used\nto look up the resource.\n\nAfter creation, the assignment cannot be edited, but can be deleted to\nremove those permissions.",
                 "parameters": [
                     {
                         "in": "path",
@@ -10140,7 +10171,6 @@
             },
             "delete": {
                 "operationId": "role_user_assignments_destroy",
-                "description": "Use this endpoint to give a user permission to a resource or an organization.\nThe needed data is the user, the role definition, and the object id.\nThe object must be of the type specified in the role definition.\nThe type given in the role definition and the provided object_id are used\nto look up the resource.\n\nAfter creation, the assignment cannot be edited, but can be deleted to\nremove those permissions.",
                 "parameters": [
                     {
                         "in": "path",
@@ -23370,24 +23400,24 @@
                     },
                     "type": {
                         "enum": [
-                            "ansible_base.authentication.authenticator_plugins.oidc",
-                            "ansible_base.authentication.authenticator_plugins.ldap",
-                            "ansible_base.authentication.authenticator_plugins.local",
-                            "ansible_base.authentication.authenticator_plugins.github_team",
-                            "ansible_base.authentication.authenticator_plugins.saml",
+                            "ansible_base.authentication.authenticator_plugins.azuread",
+                            "ansible_base.authentication.authenticator_plugins.github",
+                            "ansible_base.authentication.authenticator_plugins.github_enterprise",
                             "ansible_base.authentication.authenticator_plugins.github_enterprise_org",
+                            "ansible_base.authentication.authenticator_plugins.github_enterprise_team",
+                            "ansible_base.authentication.authenticator_plugins.github_org",
+                            "ansible_base.authentication.authenticator_plugins.github_team",
                             "ansible_base.authentication.authenticator_plugins.google_oauth2",
                             "ansible_base.authentication.authenticator_plugins.keycloak",
+                            "ansible_base.authentication.authenticator_plugins.ldap",
+                            "ansible_base.authentication.authenticator_plugins.local",
+                            "ansible_base.authentication.authenticator_plugins.oidc",
                             "ansible_base.authentication.authenticator_plugins.radius",
-                            "ansible_base.authentication.authenticator_plugins.github_enterprise_team",
-                            "ansible_base.authentication.authenticator_plugins.github",
-                            "ansible_base.authentication.authenticator_plugins.azuread",
-                            "ansible_base.authentication.authenticator_plugins.tacacs",
-                            "ansible_base.authentication.authenticator_plugins.github_enterprise",
-                            "ansible_base.authentication.authenticator_plugins.github_org"
+                            "ansible_base.authentication.authenticator_plugins.saml",
+                            "ansible_base.authentication.authenticator_plugins.tacacs"
                         ],
                         "type": "string",
-                        "description": "* `ansible_base.authentication.authenticator_plugins.oidc` - ansible_base.authentication.authenticator_plugins.oidc\n* `ansible_base.authentication.authenticator_plugins.ldap` - ansible_base.authentication.authenticator_plugins.ldap\n* `ansible_base.authentication.authenticator_plugins.local` - ansible_base.authentication.authenticator_plugins.local\n* `ansible_base.authentication.authenticator_plugins.github_team` - ansible_base.authentication.authenticator_plugins.github_team\n* `ansible_base.authentication.authenticator_plugins.saml` - ansible_base.authentication.authenticator_plugins.saml\n* `ansible_base.authentication.authenticator_plugins.github_enterprise_org` - ansible_base.authentication.authenticator_plugins.github_enterprise_org\n* `ansible_base.authentication.authenticator_plugins.google_oauth2` - ansible_base.authentication.authenticator_plugins.google_oauth2\n* `ansible_base.authentication.authenticator_plugins.keycloak` - ansible_base.authentication.authenticator_plugins.keycloak\n* `ansible_base.authentication.authenticator_plugins.radius` - ansible_base.authentication.authenticator_plugins.radius\n* `ansible_base.authentication.authenticator_plugins.github_enterprise_team` - ansible_base.authentication.authenticator_plugins.github_enterprise_team\n* `ansible_base.authentication.authenticator_plugins.github` - ansible_base.authentication.authenticator_plugins.github\n* `ansible_base.authentication.authenticator_plugins.azuread` - ansible_base.authentication.authenticator_plugins.azuread\n* `ansible_base.authentication.authenticator_plugins.tacacs` - ansible_base.authentication.authenticator_plugins.tacacs\n* `ansible_base.authentication.authenticator_plugins.github_enterprise` - ansible_base.authentication.authenticator_plugins.github_enterprise\n* `ansible_base.authentication.authenticator_plugins.github_org` - ansible_base.authentication.authenticator_plugins.github_org"
+                        "description": "* `ansible_base.authentication.authenticator_plugins.azuread` - ansible_base.authentication.authenticator_plugins.azuread\n* `ansible_base.authentication.authenticator_plugins.github` - ansible_base.authentication.authenticator_plugins.github\n* `ansible_base.authentication.authenticator_plugins.github_enterprise` - ansible_base.authentication.authenticator_plugins.github_enterprise\n* `ansible_base.authentication.authenticator_plugins.github_enterprise_org` - ansible_base.authentication.authenticator_plugins.github_enterprise_org\n* `ansible_base.authentication.authenticator_plugins.github_enterprise_team` - ansible_base.authentication.authenticator_plugins.github_enterprise_team\n* `ansible_base.authentication.authenticator_plugins.github_org` - ansible_base.authentication.authenticator_plugins.github_org\n* `ansible_base.authentication.authenticator_plugins.github_team` - ansible_base.authentication.authenticator_plugins.github_team\n* `ansible_base.authentication.authenticator_plugins.google_oauth2` - ansible_base.authentication.authenticator_plugins.google_oauth2\n* `ansible_base.authentication.authenticator_plugins.keycloak` - ansible_base.authentication.authenticator_plugins.keycloak\n* `ansible_base.authentication.authenticator_plugins.ldap` - ansible_base.authentication.authenticator_plugins.ldap\n* `ansible_base.authentication.authenticator_plugins.local` - ansible_base.authentication.authenticator_plugins.local\n* `ansible_base.authentication.authenticator_plugins.oidc` - ansible_base.authentication.authenticator_plugins.oidc\n* `ansible_base.authentication.authenticator_plugins.radius` - ansible_base.authentication.authenticator_plugins.radius\n* `ansible_base.authentication.authenticator_plugins.saml` - ansible_base.authentication.authenticator_plugins.saml\n* `ansible_base.authentication.authenticator_plugins.tacacs` - ansible_base.authentication.authenticator_plugins.tacacs"
                     },
                     "order": {
                         "type": "integer",
@@ -23539,7 +23569,7 @@
                     "triggers": {
                         "type": "object",
                         "additionalProperties": {},
-                        "description": "Trigger information for this rule."
+                        "description": "Required. Trigger conditions dictionary that determines when this map applies. See /trigger_definition/ for structure details. Only one top-level key per request."
                     },
                     "order": {
                         "type": "integer",
@@ -23552,6 +23582,123 @@
                     "authenticator",
                     "name",
                     "triggers"
+                ]
+            },
+            "AuthenticatorUpdate": {
+                "type": "object",
+                "description": "Specialized serializer for update operations that makes type field read-only.",
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "readOnly": true
+                    },
+                    "url": {
+                        "type": "string",
+                        "readOnly": true
+                    },
+                    "related": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "type": "string"
+                        },
+                        "readOnly": true
+                    },
+                    "summary_fields": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "type": "object",
+                            "additionalProperties": {}
+                        },
+                        "readOnly": true
+                    },
+                    "created": {
+                        "type": "string",
+                        "format": "date-time",
+                        "readOnly": true,
+                        "description": "The date/time this resource was created."
+                    },
+                    "created_by": {
+                        "type": "integer",
+                        "readOnly": true,
+                        "nullable": true,
+                        "description": "The user who created this resource."
+                    },
+                    "modified": {
+                        "type": "string",
+                        "format": "date-time",
+                        "readOnly": true,
+                        "description": "The date/time this resource was created."
+                    },
+                    "modified_by": {
+                        "type": "integer",
+                        "readOnly": true,
+                        "nullable": true,
+                        "description": "The user who last modified this resource."
+                    },
+                    "name": {
+                        "type": "string",
+                        "description": "The name of this resource.",
+                        "maxLength": 512
+                    },
+                    "enabled": {
+                        "type": "boolean",
+                        "description": "Should this authenticator be enabled."
+                    },
+                    "create_objects": {
+                        "type": "boolean",
+                        "description": "Allow authenticator to create objects (users, teams, organizations)."
+                    },
+                    "remove_users": {
+                        "type": "boolean",
+                        "description": "When a user authenticates from this source should they be removed from any other groups they were previously added to."
+                    },
+                    "configuration": {
+                        "type": "object",
+                        "additionalProperties": {},
+                        "description": "The required configuration for this source."
+                    },
+                    "type": {
+                        "enum": [
+                            "ansible_base.authentication.authenticator_plugins.azuread",
+                            "ansible_base.authentication.authenticator_plugins.github",
+                            "ansible_base.authentication.authenticator_plugins.github_enterprise",
+                            "ansible_base.authentication.authenticator_plugins.github_enterprise_org",
+                            "ansible_base.authentication.authenticator_plugins.github_enterprise_team",
+                            "ansible_base.authentication.authenticator_plugins.github_org",
+                            "ansible_base.authentication.authenticator_plugins.github_team",
+                            "ansible_base.authentication.authenticator_plugins.google_oauth2",
+                            "ansible_base.authentication.authenticator_plugins.keycloak",
+                            "ansible_base.authentication.authenticator_plugins.ldap",
+                            "ansible_base.authentication.authenticator_plugins.local",
+                            "ansible_base.authentication.authenticator_plugins.oidc",
+                            "ansible_base.authentication.authenticator_plugins.radius",
+                            "ansible_base.authentication.authenticator_plugins.saml",
+                            "ansible_base.authentication.authenticator_plugins.tacacs"
+                        ],
+                        "type": "string",
+                        "readOnly": true,
+                        "description": "The type of authentication service this is.\n\n* `ansible_base.authentication.authenticator_plugins.azuread` - ansible_base.authentication.authenticator_plugins.azuread\n* `ansible_base.authentication.authenticator_plugins.github` - ansible_base.authentication.authenticator_plugins.github\n* `ansible_base.authentication.authenticator_plugins.github_enterprise` - ansible_base.authentication.authenticator_plugins.github_enterprise\n* `ansible_base.authentication.authenticator_plugins.github_enterprise_org` - ansible_base.authentication.authenticator_plugins.github_enterprise_org\n* `ansible_base.authentication.authenticator_plugins.github_enterprise_team` - ansible_base.authentication.authenticator_plugins.github_enterprise_team\n* `ansible_base.authentication.authenticator_plugins.github_org` - ansible_base.authentication.authenticator_plugins.github_org\n* `ansible_base.authentication.authenticator_plugins.github_team` - ansible_base.authentication.authenticator_plugins.github_team\n* `ansible_base.authentication.authenticator_plugins.google_oauth2` - ansible_base.authentication.authenticator_plugins.google_oauth2\n* `ansible_base.authentication.authenticator_plugins.keycloak` - ansible_base.authentication.authenticator_plugins.keycloak\n* `ansible_base.authentication.authenticator_plugins.ldap` - ansible_base.authentication.authenticator_plugins.ldap\n* `ansible_base.authentication.authenticator_plugins.local` - ansible_base.authentication.authenticator_plugins.local\n* `ansible_base.authentication.authenticator_plugins.oidc` - ansible_base.authentication.authenticator_plugins.oidc\n* `ansible_base.authentication.authenticator_plugins.radius` - ansible_base.authentication.authenticator_plugins.radius\n* `ansible_base.authentication.authenticator_plugins.saml` - ansible_base.authentication.authenticator_plugins.saml\n* `ansible_base.authentication.authenticator_plugins.tacacs` - ansible_base.authentication.authenticator_plugins.tacacs"
+                    },
+                    "order": {
+                        "type": "integer",
+                        "maximum": 2147483647,
+                        "minimum": -2147483648,
+                        "description": "The order in which an authenticator will be tried. This only pertains to username/password authenticators."
+                    },
+                    "slug": {
+                        "type": "string",
+                        "description": "An immutable identifier for the authenticator; used to generate the sso uri for sso authenticator types",
+                        "pattern": "^[-a-zA-Z0-9_]+$"
+                    },
+                    "auto_migrate_users_to": {
+                        "type": "integer",
+                        "nullable": true,
+                        "description": "Automatically move users from this authenticator to the target authenticator when a matching user logs in via the target authenticator. For this to work, the field used for the user ID on both authenticators needs to have the same value. This should only be used when migrating users between two authentication mechanisms that share the same user database (such as when both IDPs share the same LDAP user directory)."
+                    }
+                },
+                "required": [
+                    "configuration",
+                    "name"
                 ]
             },
             "AuthenticatorUser": {
@@ -25611,118 +25758,6 @@
                     }
                 }
             },
-            "PatchedAuthenticator": {
-                "type": "object",
-                "properties": {
-                    "id": {
-                        "type": "integer",
-                        "readOnly": true
-                    },
-                    "url": {
-                        "type": "string",
-                        "readOnly": true
-                    },
-                    "related": {
-                        "type": "object",
-                        "additionalProperties": {
-                            "type": "string"
-                        },
-                        "readOnly": true
-                    },
-                    "summary_fields": {
-                        "type": "object",
-                        "additionalProperties": {
-                            "type": "object",
-                            "additionalProperties": {}
-                        },
-                        "readOnly": true
-                    },
-                    "created": {
-                        "type": "string",
-                        "format": "date-time",
-                        "readOnly": true,
-                        "description": "The date/time this resource was created."
-                    },
-                    "created_by": {
-                        "type": "integer",
-                        "readOnly": true,
-                        "nullable": true,
-                        "description": "The user who created this resource."
-                    },
-                    "modified": {
-                        "type": "string",
-                        "format": "date-time",
-                        "readOnly": true,
-                        "description": "The date/time this resource was created."
-                    },
-                    "modified_by": {
-                        "type": "integer",
-                        "readOnly": true,
-                        "nullable": true,
-                        "description": "The user who last modified this resource."
-                    },
-                    "name": {
-                        "type": "string",
-                        "description": "The name of this resource.",
-                        "maxLength": 512
-                    },
-                    "enabled": {
-                        "type": "boolean",
-                        "description": "Should this authenticator be enabled."
-                    },
-                    "create_objects": {
-                        "type": "boolean",
-                        "description": "Allow authenticator to create objects (users, teams, organizations)."
-                    },
-                    "remove_users": {
-                        "type": "boolean",
-                        "description": "When a user authenticates from this source should they be removed from any other groups they were previously added to."
-                    },
-                    "configuration": {
-                        "type": "object",
-                        "additionalProperties": {},
-                        "description": "The required configuration for this source."
-                    },
-                    "type": {
-                        "enum": [
-                            "ansible_base.authentication.authenticator_plugins.oidc",
-                            "ansible_base.authentication.authenticator_plugins.ldap",
-                            "ansible_base.authentication.authenticator_plugins.local",
-                            "ansible_base.authentication.authenticator_plugins.github_team",
-                            "ansible_base.authentication.authenticator_plugins.saml",
-                            "ansible_base.authentication.authenticator_plugins.github_enterprise_org",
-                            "ansible_base.authentication.authenticator_plugins.google_oauth2",
-                            "ansible_base.authentication.authenticator_plugins.keycloak",
-                            "ansible_base.authentication.authenticator_plugins.radius",
-                            "ansible_base.authentication.authenticator_plugins.github_enterprise_team",
-                            "ansible_base.authentication.authenticator_plugins.github",
-                            "ansible_base.authentication.authenticator_plugins.azuread",
-                            "ansible_base.authentication.authenticator_plugins.tacacs",
-                            "ansible_base.authentication.authenticator_plugins.github_enterprise",
-                            "ansible_base.authentication.authenticator_plugins.github_org"
-                        ],
-                        "type": "string",
-                        "description": "* `ansible_base.authentication.authenticator_plugins.oidc` - ansible_base.authentication.authenticator_plugins.oidc\n* `ansible_base.authentication.authenticator_plugins.ldap` - ansible_base.authentication.authenticator_plugins.ldap\n* `ansible_base.authentication.authenticator_plugins.local` - ansible_base.authentication.authenticator_plugins.local\n* `ansible_base.authentication.authenticator_plugins.github_team` - ansible_base.authentication.authenticator_plugins.github_team\n* `ansible_base.authentication.authenticator_plugins.saml` - ansible_base.authentication.authenticator_plugins.saml\n* `ansible_base.authentication.authenticator_plugins.github_enterprise_org` - ansible_base.authentication.authenticator_plugins.github_enterprise_org\n* `ansible_base.authentication.authenticator_plugins.google_oauth2` - ansible_base.authentication.authenticator_plugins.google_oauth2\n* `ansible_base.authentication.authenticator_plugins.keycloak` - ansible_base.authentication.authenticator_plugins.keycloak\n* `ansible_base.authentication.authenticator_plugins.radius` - ansible_base.authentication.authenticator_plugins.radius\n* `ansible_base.authentication.authenticator_plugins.github_enterprise_team` - ansible_base.authentication.authenticator_plugins.github_enterprise_team\n* `ansible_base.authentication.authenticator_plugins.github` - ansible_base.authentication.authenticator_plugins.github\n* `ansible_base.authentication.authenticator_plugins.azuread` - ansible_base.authentication.authenticator_plugins.azuread\n* `ansible_base.authentication.authenticator_plugins.tacacs` - ansible_base.authentication.authenticator_plugins.tacacs\n* `ansible_base.authentication.authenticator_plugins.github_enterprise` - ansible_base.authentication.authenticator_plugins.github_enterprise\n* `ansible_base.authentication.authenticator_plugins.github_org` - ansible_base.authentication.authenticator_plugins.github_org",
-                        "readOnly": true
-                    },
-                    "order": {
-                        "type": "integer",
-                        "maximum": 2147483647,
-                        "minimum": -2147483648,
-                        "description": "The order in which an authenticator will be tried. This only pertains to username/password authenticators."
-                    },
-                    "slug": {
-                        "type": "string",
-                        "description": "An immutable identifier for the authenticator; used to generate the sso uri for sso authenticator types",
-                        "pattern": "^[-a-zA-Z0-9_]+$"
-                    },
-                    "auto_migrate_users_to": {
-                        "type": "integer",
-                        "nullable": true,
-                        "description": "Automatically move users from this authenticator to the target authenticator when a matching user logs in via the target authenticator. For this to work, the field used for the user ID on both authenticators needs to have the same value. This should only be used when migrating users between two authentication mechanisms that share the same user database (such as when both IDPs share the same LDAP user directory)."
-                    }
-                }
-            },
             "PatchedAuthenticatorMap": {
                 "type": "object",
                 "properties": {
@@ -25818,13 +25853,126 @@
                     "triggers": {
                         "type": "object",
                         "additionalProperties": {},
-                        "description": "Trigger information for this rule."
+                        "description": "Required. Trigger conditions dictionary that determines when this map applies. See /trigger_definition/ for structure details. Only one top-level key per request."
                     },
                     "order": {
                         "type": "integer",
                         "maximum": 2147483647,
                         "minimum": 0,
                         "description": "The order in which this rule should be processed, smaller numbers are of higher precedence. Items with the same order will be executed in random order."
+                    }
+                }
+            },
+            "PatchedAuthenticatorUpdate": {
+                "type": "object",
+                "description": "Specialized serializer for update operations that makes type field read-only.",
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "readOnly": true
+                    },
+                    "url": {
+                        "type": "string",
+                        "readOnly": true
+                    },
+                    "related": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "type": "string"
+                        },
+                        "readOnly": true
+                    },
+                    "summary_fields": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "type": "object",
+                            "additionalProperties": {}
+                        },
+                        "readOnly": true
+                    },
+                    "created": {
+                        "type": "string",
+                        "format": "date-time",
+                        "readOnly": true,
+                        "description": "The date/time this resource was created."
+                    },
+                    "created_by": {
+                        "type": "integer",
+                        "readOnly": true,
+                        "nullable": true,
+                        "description": "The user who created this resource."
+                    },
+                    "modified": {
+                        "type": "string",
+                        "format": "date-time",
+                        "readOnly": true,
+                        "description": "The date/time this resource was created."
+                    },
+                    "modified_by": {
+                        "type": "integer",
+                        "readOnly": true,
+                        "nullable": true,
+                        "description": "The user who last modified this resource."
+                    },
+                    "name": {
+                        "type": "string",
+                        "description": "The name of this resource.",
+                        "maxLength": 512
+                    },
+                    "enabled": {
+                        "type": "boolean",
+                        "description": "Should this authenticator be enabled."
+                    },
+                    "create_objects": {
+                        "type": "boolean",
+                        "description": "Allow authenticator to create objects (users, teams, organizations)."
+                    },
+                    "remove_users": {
+                        "type": "boolean",
+                        "description": "When a user authenticates from this source should they be removed from any other groups they were previously added to."
+                    },
+                    "configuration": {
+                        "type": "object",
+                        "additionalProperties": {},
+                        "description": "The required configuration for this source."
+                    },
+                    "type": {
+                        "enum": [
+                            "ansible_base.authentication.authenticator_plugins.azuread",
+                            "ansible_base.authentication.authenticator_plugins.github",
+                            "ansible_base.authentication.authenticator_plugins.github_enterprise",
+                            "ansible_base.authentication.authenticator_plugins.github_enterprise_org",
+                            "ansible_base.authentication.authenticator_plugins.github_enterprise_team",
+                            "ansible_base.authentication.authenticator_plugins.github_org",
+                            "ansible_base.authentication.authenticator_plugins.github_team",
+                            "ansible_base.authentication.authenticator_plugins.google_oauth2",
+                            "ansible_base.authentication.authenticator_plugins.keycloak",
+                            "ansible_base.authentication.authenticator_plugins.ldap",
+                            "ansible_base.authentication.authenticator_plugins.local",
+                            "ansible_base.authentication.authenticator_plugins.oidc",
+                            "ansible_base.authentication.authenticator_plugins.radius",
+                            "ansible_base.authentication.authenticator_plugins.saml",
+                            "ansible_base.authentication.authenticator_plugins.tacacs"
+                        ],
+                        "type": "string",
+                        "readOnly": true,
+                        "description": "The type of authentication service this is.\n\n* `ansible_base.authentication.authenticator_plugins.azuread` - ansible_base.authentication.authenticator_plugins.azuread\n* `ansible_base.authentication.authenticator_plugins.github` - ansible_base.authentication.authenticator_plugins.github\n* `ansible_base.authentication.authenticator_plugins.github_enterprise` - ansible_base.authentication.authenticator_plugins.github_enterprise\n* `ansible_base.authentication.authenticator_plugins.github_enterprise_org` - ansible_base.authentication.authenticator_plugins.github_enterprise_org\n* `ansible_base.authentication.authenticator_plugins.github_enterprise_team` - ansible_base.authentication.authenticator_plugins.github_enterprise_team\n* `ansible_base.authentication.authenticator_plugins.github_org` - ansible_base.authentication.authenticator_plugins.github_org\n* `ansible_base.authentication.authenticator_plugins.github_team` - ansible_base.authentication.authenticator_plugins.github_team\n* `ansible_base.authentication.authenticator_plugins.google_oauth2` - ansible_base.authentication.authenticator_plugins.google_oauth2\n* `ansible_base.authentication.authenticator_plugins.keycloak` - ansible_base.authentication.authenticator_plugins.keycloak\n* `ansible_base.authentication.authenticator_plugins.ldap` - ansible_base.authentication.authenticator_plugins.ldap\n* `ansible_base.authentication.authenticator_plugins.local` - ansible_base.authentication.authenticator_plugins.local\n* `ansible_base.authentication.authenticator_plugins.oidc` - ansible_base.authentication.authenticator_plugins.oidc\n* `ansible_base.authentication.authenticator_plugins.radius` - ansible_base.authentication.authenticator_plugins.radius\n* `ansible_base.authentication.authenticator_plugins.saml` - ansible_base.authentication.authenticator_plugins.saml\n* `ansible_base.authentication.authenticator_plugins.tacacs` - ansible_base.authentication.authenticator_plugins.tacacs"
+                    },
+                    "order": {
+                        "type": "integer",
+                        "maximum": 2147483647,
+                        "minimum": -2147483648,
+                        "description": "The order in which an authenticator will be tried. This only pertains to username/password authenticators."
+                    },
+                    "slug": {
+                        "type": "string",
+                        "description": "An immutable identifier for the authenticator; used to generate the sso uri for sso authenticator types",
+                        "pattern": "^[-a-zA-Z0-9_]+$"
+                    },
+                    "auto_migrate_users_to": {
+                        "type": "integer",
+                        "nullable": true,
+                        "description": "Automatically move users from this authenticator to the target authenticator when a matching user logs in via the target authenticator. For this to work, the field used for the user ID on both authenticators needs to have the same value. This should only be used when migrating users between two authentication mechanisms that share the same user database (such as when both IDPs share the same LDAP user directory)."
                     }
                 }
             },
@@ -26964,6 +27112,7 @@
                     },
                     "organization": {
                         "type": "integer",
+                        "readOnly": true,
                         "description": "The organization of this team."
                     },
                     "description": {
@@ -27498,147 +27647,74 @@
             },
             "RoleUserAssignment": {
                 "type": "object",
-                "oneOf": [
-                    {
-                        "description": "Role assignment using user ID",
-                        "type": "object",
-                        "properties": {
-                            "id": {
-                                "type": "integer",
-                                "readOnly": true
-                            },
-                            "url": {
-                                "type": "string",
-                                "readOnly": true
-                            },
-                            "related": {
-                                "type": "object",
-                                "additionalProperties": {
-                                    "type": "string"
-                                },
-                                "readOnly": true
-                            },
-                            "summary_fields": {
-                                "type": "object",
-                                "additionalProperties": {
-                                    "type": "object",
-                                    "additionalProperties": {}
-                                },
-                                "readOnly": true
-                            },
-                            "created": {
-                                "type": "string",
-                                "format": "date-time",
-                                "readOnly": true,
-                                "description": "The date/time this resource was created."
-                            },
-                            "created_by": {
-                                "type": "integer",
-                                "readOnly": true,
-                                "nullable": true,
-                                "description": "The user who created this resource."
-                            },
-                            "content_type": {
-                                "type": "string",
-                                "description": "String to use for references to this type from other models in the API.",
-                                "readOnly": true
-                            },
-                            "object_id": {
-                                "type": "string",
-                                "nullable": true,
-                                "description": "The primary key of the object this assignment applies to; null value indicates system-wide assignment."
-                            },
-                            "object_ansible_id": {
-                                "type": "string",
-                                "format": "uuid",
-                                "nullable": true,
-                                "description": "The resource id of the object this role applies to. An alternative to the object_id field."
-                            },
-                            "role_definition": {
-                                "type": "integer",
-                                "description": "The role definition which defines permissions conveyed by this assignment."
-                            },
-                            "user": {
-                                "type": "integer",
-                                "description": "The ID of the user who will receive permissions from this assignment."
-                            }
-                        },
-                        "required": [
-                            "role_definition",
-                            "user"
-                        ]
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "readOnly": true
                     },
-                    {
-                        "description": "Role assignment using user Ansible ID (resource ID)",
+                    "url": {
+                        "type": "string",
+                        "readOnly": true
+                    },
+                    "related": {
                         "type": "object",
-                        "properties": {
-                            "id": {
-                                "type": "integer",
-                                "readOnly": true
-                            },
-                            "url": {
-                                "type": "string",
-                                "readOnly": true
-                            },
-                            "related": {
-                                "type": "object",
-                                "additionalProperties": {
-                                    "type": "string"
-                                },
-                                "readOnly": true
-                            },
-                            "summary_fields": {
-                                "type": "object",
-                                "additionalProperties": {
-                                    "type": "object",
-                                    "additionalProperties": {}
-                                },
-                                "readOnly": true
-                            },
-                            "created": {
-                                "type": "string",
-                                "format": "date-time",
-                                "readOnly": true,
-                                "description": "The date/time this resource was created."
-                            },
-                            "created_by": {
-                                "type": "integer",
-                                "readOnly": true,
-                                "nullable": true,
-                                "description": "The user who created this resource."
-                            },
-                            "content_type": {
-                                "type": "string",
-                                "description": "String to use for references to this type from other models in the API.",
-                                "readOnly": true
-                            },
-                            "object_id": {
-                                "type": "string",
-                                "nullable": true,
-                                "description": "The primary key of the object this assignment applies to; null value indicates system-wide assignment."
-                            },
-                            "object_ansible_id": {
-                                "type": "string",
-                                "format": "uuid",
-                                "nullable": true,
-                                "description": "The resource id of the object this role applies to. An alternative to the object_id field."
-                            },
-                            "role_definition": {
-                                "type": "integer",
-                                "description": "The role definition which defines permissions conveyed by this assignment."
-                            },
-                            "user_ansible_id": {
-                                "type": "string",
-                                "format": "uuid",
-                                "nullable": true,
-                                "description": "The resource ID of the user who will receive permissions from this assignment. An alternative to user field."
-                            }
+                        "additionalProperties": {
+                            "type": "string"
                         },
-                        "required": [
-                            "role_definition",
-                            "user_ansible_id"
-                        ]
+                        "readOnly": true
+                    },
+                    "summary_fields": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "type": "object",
+                            "additionalProperties": {}
+                        },
+                        "readOnly": true
+                    },
+                    "created": {
+                        "type": "string",
+                        "format": "date-time",
+                        "readOnly": true,
+                        "description": "The date/time this resource was created."
+                    },
+                    "created_by": {
+                        "type": "integer",
+                        "readOnly": true,
+                        "nullable": true,
+                        "description": "The user who created this resource."
+                    },
+                    "content_type": {
+                        "type": "string",
+                        "description": "String to use for references to this type from other models in the API.",
+                        "readOnly": true
+                    },
+                    "object_id": {
+                        "type": "string",
+                        "nullable": true,
+                        "description": "The primary key of the object this assignment applies to; null value indicates system-wide assignment."
+                    },
+                    "object_ansible_id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "nullable": true,
+                        "description": "The resource id of the object this role applies to. An alternative to the object_id field."
+                    },
+                    "role_definition": {
+                        "type": "integer",
+                        "description": "The role definition which defines permissions conveyed by this assignment."
+                    },
+                    "user": {
+                        "type": "integer"
+                    },
+                    "user_ansible_id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "nullable": true,
+                        "description": "The resource ID of the user who will receive permissions from this assignment. An alternative to user field."
                     }
+                },
+                "required": [
+                    "role_definition"
                 ]
             },
             "SSOAuthenticator": {
@@ -29480,122 +29556,6 @@
                 "required": [
                     "message"
                 ]
-            },
-            "AuthenticatorUpdate": {
-                "type": "object",
-                "properties": {
-                    "id": {
-                        "type": "integer",
-                        "readOnly": true
-                    },
-                    "url": {
-                        "type": "string",
-                        "readOnly": true
-                    },
-                    "related": {
-                        "type": "object",
-                        "additionalProperties": {
-                            "type": "string"
-                        },
-                        "readOnly": true
-                    },
-                    "summary_fields": {
-                        "type": "object",
-                        "additionalProperties": {
-                            "type": "object",
-                            "additionalProperties": {}
-                        },
-                        "readOnly": true
-                    },
-                    "created": {
-                        "type": "string",
-                        "format": "date-time",
-                        "readOnly": true,
-                        "description": "The date/time this resource was created."
-                    },
-                    "created_by": {
-                        "type": "integer",
-                        "readOnly": true,
-                        "nullable": true,
-                        "description": "The user who created this resource."
-                    },
-                    "modified": {
-                        "type": "string",
-                        "format": "date-time",
-                        "readOnly": true,
-                        "description": "The date/time this resource was created."
-                    },
-                    "modified_by": {
-                        "type": "integer",
-                        "readOnly": true,
-                        "nullable": true,
-                        "description": "The user who last modified this resource."
-                    },
-                    "name": {
-                        "type": "string",
-                        "description": "The name of this resource.",
-                        "maxLength": 512
-                    },
-                    "enabled": {
-                        "type": "boolean",
-                        "description": "Should this authenticator be enabled."
-                    },
-                    "create_objects": {
-                        "type": "boolean",
-                        "description": "Allow authenticator to create objects (users, teams, organizations)."
-                    },
-                    "remove_users": {
-                        "type": "boolean",
-                        "description": "When a user authenticates from this source should they be removed from any other groups they were previously added to."
-                    },
-                    "configuration": {
-                        "type": "object",
-                        "additionalProperties": {},
-                        "description": "The required configuration for this source."
-                    },
-                    "type": {
-                        "enum": [
-                            "ansible_base.authentication.authenticator_plugins.oidc",
-                            "ansible_base.authentication.authenticator_plugins.ldap",
-                            "ansible_base.authentication.authenticator_plugins.local",
-                            "ansible_base.authentication.authenticator_plugins.github_team",
-                            "ansible_base.authentication.authenticator_plugins.saml",
-                            "ansible_base.authentication.authenticator_plugins.github_enterprise_org",
-                            "ansible_base.authentication.authenticator_plugins.google_oauth2",
-                            "ansible_base.authentication.authenticator_plugins.keycloak",
-                            "ansible_base.authentication.authenticator_plugins.radius",
-                            "ansible_base.authentication.authenticator_plugins.github_enterprise_team",
-                            "ansible_base.authentication.authenticator_plugins.github",
-                            "ansible_base.authentication.authenticator_plugins.azuread",
-                            "ansible_base.authentication.authenticator_plugins.tacacs",
-                            "ansible_base.authentication.authenticator_plugins.github_enterprise",
-                            "ansible_base.authentication.authenticator_plugins.github_org"
-                        ],
-                        "type": "string",
-                        "description": "* `ansible_base.authentication.authenticator_plugins.oidc` - ansible_base.authentication.authenticator_plugins.oidc\n* `ansible_base.authentication.authenticator_plugins.ldap` - ansible_base.authentication.authenticator_plugins.ldap\n* `ansible_base.authentication.authenticator_plugins.local` - ansible_base.authentication.authenticator_plugins.local\n* `ansible_base.authentication.authenticator_plugins.github_team` - ansible_base.authentication.authenticator_plugins.github_team\n* `ansible_base.authentication.authenticator_plugins.saml` - ansible_base.authentication.authenticator_plugins.saml\n* `ansible_base.authentication.authenticator_plugins.github_enterprise_org` - ansible_base.authentication.authenticator_plugins.github_enterprise_org\n* `ansible_base.authentication.authenticator_plugins.google_oauth2` - ansible_base.authentication.authenticator_plugins.google_oauth2\n* `ansible_base.authentication.authenticator_plugins.keycloak` - ansible_base.authentication.authenticator_plugins.keycloak\n* `ansible_base.authentication.authenticator_plugins.radius` - ansible_base.authentication.authenticator_plugins.radius\n* `ansible_base.authentication.authenticator_plugins.github_enterprise_team` - ansible_base.authentication.authenticator_plugins.github_enterprise_team\n* `ansible_base.authentication.authenticator_plugins.github` - ansible_base.authentication.authenticator_plugins.github\n* `ansible_base.authentication.authenticator_plugins.azuread` - ansible_base.authentication.authenticator_plugins.azuread\n* `ansible_base.authentication.authenticator_plugins.tacacs` - ansible_base.authentication.authenticator_plugins.tacacs\n* `ansible_base.authentication.authenticator_plugins.github_enterprise` - ansible_base.authentication.authenticator_plugins.github_enterprise\n* `ansible_base.authentication.authenticator_plugins.github_org` - ansible_base.authentication.authenticator_plugins.github_org",
-                        "readOnly": true
-                    },
-                    "order": {
-                        "type": "integer",
-                        "maximum": 2147483647,
-                        "minimum": -2147483648,
-                        "description": "The order in which an authenticator will be tried. This only pertains to username/password authenticators."
-                    },
-                    "slug": {
-                        "type": "string",
-                        "description": "An immutable identifier for the authenticator; used to generate the sso uri for sso authenticator types",
-                        "pattern": "^[-a-zA-Z0-9_]+$"
-                    },
-                    "auto_migrate_users_to": {
-                        "type": "integer",
-                        "nullable": true,
-                        "description": "Automatically move users from this authenticator to the target authenticator when a matching user logs in via the target authenticator. For this to work, the field used for the user ID on both authenticators needs to have the same value. This should only be used when migrating users between two authentication mechanisms that share the same user database (such as when both IDPs share the same LDAP user directory)."
-                    }
-                },
-                "required": [
-                    "configuration",
-                    "name"
-                ]
             }
         },
         "securitySchemes": {
@@ -29612,7 +29572,7 @@
             "SessionAuthentication": {
                 "type": "apiKey",
                 "in": "cookie",
-                "name": "gateway_sessionid"
+                "name": "gateway_sessionid44926"
             }
         }
     }
