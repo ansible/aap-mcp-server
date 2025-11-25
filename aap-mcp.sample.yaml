@@ -169,17 +169,17 @@ categories:
     - controller.execution_environments_update
     - controller.execution_environments_destroy
 
-  developer_testing:
-    - controller.job_templates_launch_create
-    - controller.workflow_job_templates_launch_create
-    - controller.jobs_list
-    - controller.jobs_retrieve
-    - controller.jobs_job_events_list
-    - controller.jobs_job_host_summaries_list
-    - controller.jobs_stdout_retrieve
-    - controller.workflow_jobs_list
-    - controller.workflow_jobs_retrieve
-    - controller.workflow_jobs_workflow_nodes_list
+  # developer_testing:
+  #   - controller.job_templates_launch_create
+  #   - controller.workflow_job_templates_launch_create
+  #   - controller.jobs_list
+  #   - controller.jobs_retrieve
+  #   - controller.jobs_job_events_list
+  #   - controller.jobs_job_host_summaries_list
+  #   - controller.jobs_stdout_retrieve
+  #   - controller.workflow_jobs_list
+  #   - controller.workflow_jobs_retrieve
+  #   - controller.workflow_jobs_workflow_nodes_list
 
   # Categories below this comment have yet to be clarified/validated
   # Phase 3
