@@ -18,7 +18,7 @@ describe("MetricsService", () => {
     metricsService.recordToolExecution(
       "test_tool",
       "test_service",
-      "test_category",
+      "test_toolset",
       "success",
       0.1, // 100ms
     );
@@ -40,7 +40,7 @@ describe("MetricsService", () => {
     metricsService.recordToolError(
       "test_tool",
       "test_service",
-      "test_category",
+      "test_toolset",
       "timeout",
     );
 
@@ -98,14 +98,14 @@ describe("MetricsService", () => {
     metricsService.recordToolExecution(
       "tool1",
       "service1",
-      "category1",
+      "toolset1",
       "success",
       0.1,
     );
     metricsService.recordToolExecution(
       "tool2",
       "service2",
-      "category2",
+      "toolset2",
       "error",
       0.2,
     );
@@ -119,7 +119,7 @@ describe("MetricsService", () => {
     metricsService.recordToolExecution(
       "test_tool",
       "test_service",
-      "test_category",
+      "test_toolset",
       "success",
       0,
     );

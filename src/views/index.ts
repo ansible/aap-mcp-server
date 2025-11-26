@@ -3,17 +3,17 @@ export { renderToolsList, type ToolWithSuccessRate } from "./tools.js";
 export {
   renderToolDetails,
   type LogEntry,
-  type CategoryWithAccess,
+  type ToolsetWithAccess,
   type ToolDetailsData,
 } from "./tool-details.js";
 export { renderLogs, type LogsEntry, type LogsData } from "./logs.js";
 export {
-  renderCategoriesOverview,
-  renderCategoryTools,
-  type CategoryData,
-  type CategoriesOverviewData,
-  type CategoryToolsData,
-} from "./categories.js";
+  renderToolsetsOverview,
+  renderToolsetTools,
+  type ToolsetData,
+  type ToolsetsOverviewData,
+  type ToolsetToolsData,
+} from "./toolsets.js";
 export {
   renderServicesOverview,
   renderServiceTools,

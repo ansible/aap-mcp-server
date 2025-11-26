@@ -3,17 +3,17 @@ import {
   renderDashboard,
   renderToolsList,
   renderToolDetails,
-  renderCategoriesOverview,
-  renderCategoryTools,
+  renderToolsetsOverview,
+  renderToolsetTools,
   renderLogs,
   renderServicesOverview,
   renderServiceTools,
   renderEndpointsOverview,
   type ToolWithSuccessRate,
   type ToolDetailsData,
-  type CategoryWithAccess,
-  type CategoriesOverviewData,
-  type CategoryToolsData,
+  type ToolsetWithAccess,
+  type ToolsetsOverviewData,
+  type ToolsetToolsData,
   type LogsData,
   type ServicesOverviewData,
   type ServiceToolsData,
@@ -84,8 +84,8 @@ const getAllLogEntries = async (): Promise<
   }
 };
 
-// Generate dynamic color for category based on name
-const getCategoryColor = (categoryName: string): string => {
+// Generate dynamic color for toolset based on name
+const getToolsetColor = (toolsetName: string): string => {
   const colors = [
     "#6c757d",
     "#28a745",
@@ -96,25 +96,25 @@ const getCategoryColor = (categoryName: string): string => {
     "#9c27b0",
     "#4caf50",
   ];
-  const hash = categoryName
+  const hash = toolsetName
     .split("")
     .reduce((acc, char) => acc + char.charCodeAt(0), 0);
   return colors[hash % colors.length];
 };
 
-// Filter tools based on category
-const filterToolsByCategory = (
+// Filter tools based on toolset
+const filterToolsByToolset = (
   tools: AAPMcpToolDefinition[],
-  category: string[],
+  toolset: string[],
 ): AAPMcpToolDefinition[] => {
-  return tools.filter((tool) => category.includes(tool.name));
+  return tools.filter((tool) => toolset.includes(tool.name));
 };
 
 // Configure web UI routes
 export const configureWebUIRoutes = (
   app: express.Application,
   allTools: AAPMcpToolDefinition[],
-  allCategories: Record<string, string[]>,
+  allToolsets: Record<string, string[]>,
   recordApiQueries: boolean,
   allowWriteOperations: boolean,
   logEntriesSizeLimit: number,
@@ -203,17 +203,15 @@ export const configureWebUIRoutes = (
         { success: 0, error: 0 },
       );
 
-      // Check which categories have access to this tool
-      const categoriesWithAccess: CategoryWithAccess[] = [];
-      for (const [categoryName, categoryTools] of Object.entries(
-        allCategories,
-      )) {
-        if (categoryTools.includes(toolName)) {
-          categoriesWithAccess.push({
-            name: categoryName,
+      // Check which toolsets have access to this tool
+      const toolsetsWithAccess: ToolsetWithAccess[] = [];
+      for (const [toolsetName, toolsetTools] of Object.entries(allToolsets)) {
+        if (toolsetTools.includes(toolName)) {
+          toolsetsWithAccess.push({
+            name: toolsetName,
             displayName:
-              categoryName.charAt(0).toUpperCase() + categoryName.slice(1),
-            color: getCategoryColor(categoryName),
+              toolsetName.charAt(0).toUpperCase() + toolsetName.slice(1),
+            color: getToolsetColor(toolsetName),
           });
         }
       }
@@ -225,7 +223,7 @@ export const configureWebUIRoutes = (
         last10Calls,
         errorCodeSummary,
         chartData,
-        categoriesWithAccess,
+        toolsetsWithAccess,
       };
 
       // Use the view function to render the HTML
@@ -271,76 +269,76 @@ export const configureWebUIRoutes = (
     }
   });
 
-  // Category overview endpoint
-  app.get("/category", (req, res) => {
+  // Toolset overview endpoint
+  app.get("/toolset", (req, res) => {
     try {
-      // Calculate stats for each category
-      const categories = Object.entries(allCategories).map(
-        ([categoryName, categoryTools]) => ({
-          name: categoryName,
+      // Calculate stats for each toolset
+      const toolsets = Object.entries(allToolsets).map(
+        ([toolsetName, toolsetTools]) => ({
+          name: toolsetName,
           displayName:
-            categoryName.charAt(0).toUpperCase() + categoryName.slice(1),
-          description: `${categoryName.charAt(0).toUpperCase() + categoryName.slice(1)} category with specific tool access`,
-          tools: filterToolsByCategory(allTools, categoryTools),
-          color: getCategoryColor(categoryName),
+            toolsetName.charAt(0).toUpperCase() + toolsetName.slice(1),
+          description: `${toolsetName.charAt(0).toUpperCase() + toolsetName.slice(1)} toolset with specific tool access`,
+          tools: filterToolsByToolset(allTools, toolsetTools),
+          color: getToolsetColor(toolsetName),
           toolCount: 0, // Will be calculated below
           totalSize: 0, // Will be calculated below
         }),
       );
 
-      // Calculate sizes and add to category data
-      const categoryStats = categories.map((category) => ({
-        ...category,
-        toolCount: category.tools.length,
-        totalSize: category.tools.reduce(
+      // Calculate sizes and add to toolset data
+      const toolsetStats = toolsets.map((toolset) => ({
+        ...toolset,
+        toolCount: toolset.tools.length,
+        totalSize: toolset.tools.reduce(
           (sum, tool) => sum + (tool.size || 0),
           0,
         ),
       }));
 
       // Prepare data for the view
-      const categoriesOverviewData: CategoriesOverviewData = {
-        categories: categoryStats,
+      const toolsetsOverviewData: ToolsetsOverviewData = {
+        toolsets: toolsetStats,
         allTools,
       };
 
       // Use the view function to render the HTML
-      const htmlContent = renderCategoriesOverview(categoriesOverviewData);
+      const htmlContent = renderToolsetsOverview(toolsetsOverviewData);
 
       res.setHeader("Content-Type", "text/html");
       res.send(htmlContent);
     } catch (error) {
       console.error(
-        `${getTimestamp()} Error generating category overview:`,
+        `${getTimestamp()} Error generating toolset overview:`,
         error,
       );
       res.status(500).json({
-        error: "Failed to generate category overview",
+        error: "Failed to generate toolset overview",
         message: error instanceof Error ? error.message : String(error),
       });
     }
   });
 
-  // Category tools endpoint
-  app.get("/category/:name", (req, res) => {
+  // Toolset tools endpoint
+  app.get("/toolset/:name", (req, res) => {
     try {
-      const categoryName = req.params.name.toLowerCase();
+      const toolsetName = req.params.name.toLowerCase();
 
-      // Get the category based on the name
-      const category = allCategories[categoryName];
-      if (!category) {
-        const availableCategories = Object.keys(allCategories).join(", ");
+      // Get the toolset based on the name
+      const toolset = allToolsets[toolsetName];
+      if (!toolset) {
+        const availableToolsets = Object.keys(allToolsets).join(", ");
         return res.status(404).json({
-          error: "Category not found",
-          message: `Category '${req.params.name}' does not exist. Available categories: ${availableCategories}`,
+          error: "Toolset not found",
+          message: `Toolset '${req.params.name}' does not exist. Available toolsets: ${availableToolsets}`,
         });
       }
 
       const displayName =
-        categoryName.charAt(0).toUpperCase() + categoryName.slice(1);
+        toolsetName.charAt(0).toUpperCase() + toolsetName.slice(1);
 
-      // Filter tools based on category
-      const filteredTools = filterToolsByCategory(allTools, category);
+      // Filter tools based on toolset
+      const filteredTools = filterToolsByToolset(allTools, toolset);
 
       // Calculate total size
       const totalSize = filteredTools.reduce(
@@ -349,26 +347,26 @@ export const configureWebUIRoutes = (
       );
 
       // Prepare data for the view
-      const categoryToolsData: CategoryToolsData = {
-        categoryName,
+      const toolsetToolsData: ToolsetToolsData = {
+        toolsetName: toolsetName,
         displayName,
         filteredTools,
         totalSize,
-        allCategories,
+        allToolsets: allToolsets,
       };
 
       // Use the view function to render the HTML
-      const htmlContent = renderCategoryTools(categoryToolsData);
+      const htmlContent = renderToolsetTools(toolsetToolsData);
 
       res.setHeader("Content-Type", "text/html");
       res.send(htmlContent);
     } catch (error) {
       console.error(
-        `${getTimestamp()} Error generating category tool list:`,
+        `${getTimestamp()} Error generating toolset tool list:`,
         error,
       );
       res.status(500).json({
-        error: "Failed to generate category tool list",
+        error: "Failed to generate toolset tool list",
         message: error instanceof Error ? error.message : String(error),
       });
     }
@@ -591,29 +589,27 @@ export const configureWebUIRoutes = (
   // API endpoints overview
   app.get("/endpoints", (req, res) => {
     try {
-      // Get category filter from query parameter
-      const categoryFilter = req.query.category as string | undefined;
+      // Get toolset filter from query parameter
+      const toolsetFilter = req.query.toolset as string | undefined;
 
-      // Filter tools by category if specified
+      // Filter tools by toolset if specified
       let toolsToDisplay = allTools;
-      if (categoryFilter && allCategories[categoryFilter]) {
-        toolsToDisplay = filterToolsByCategory(
+      if (toolsetFilter && allToolsets[toolsetFilter]) {
+        toolsToDisplay = filterToolsByToolset(
           allTools,
-          allCategories[categoryFilter],
+          allToolsets[toolsetFilter],
         );
       }
 
-      // Helper function to find categories for a tool
-      const getCategoriesForTool = (toolName: string): string[] => {
-        const categories: string[] = [];
-        for (const [categoryName, categoryTools] of Object.entries(
-          allCategories,
-        )) {
-          if (categoryTools.includes(toolName)) {
-            categories.push(categoryName);
+      // Helper function to find toolsets for a tool
+      const getToolsetsForTool = (toolName: string): string[] => {
+        const toolsets: string[] = [];
+        for (const [toolsetName, toolsetTools] of Object.entries(allToolsets)) {
+          if (toolsetTools.includes(toolName)) {
+            toolsets.push(toolsetName);
           }
         }
-        return categories;
+        return toolsets;
       };
 
       // Group endpoints by service
@@ -624,7 +620,7 @@ export const configureWebUIRoutes = (
             acc[service] = [];
           }
 
-          const categories = getCategoriesForTool(tool.name);
+          const toolsets = getToolsetsForTool(tool.name);
 
           acc[service].push({
             path: tool.pathTemplate,
@@ -632,7 +628,7 @@ export const configureWebUIRoutes = (
             name: tool.name,
             description: tool.description,
             toolName: tool.name,
-            categories,
+            toolsets,
             logs: tool.logs || [],
           });
 
@@ -652,8 +648,8 @@ export const configureWebUIRoutes = (
       const endpointsOverviewData: EndpointsOverviewData = {
         allTools: toolsToDisplay,
         endpointsByService,
-        allCategories,
-        selectedCategory: categoryFilter,
+        allToolsets,
+        selectedToolset: toolsetFilter,
       };
 
       // Use the view function to render the HTML
@@ -679,7 +675,7 @@ export const configureWebUIRoutes = (
       // Prepare data for the dashboard view
       const dashboardData: DashboardData = {
         allTools,
-        allCategories,
+        allToolsets,
         recordApiQueries,
         allowWriteOperations,
       };

@@ -41,14 +41,14 @@ export class MetricsService {
     this.mcpToolExecutionsTotal = new Counter({
       name: "mcp_tool_executions_total",
       help: "Total number of MCP tool executions",
-      labelNames: ["tool_name", "service", "category", "status"],
+      labelNames: ["tool_name", "service", "toolset", "status"],
       registers: [register],
     });
 
     this.mcpToolExecutionDuration = new Histogram({
       name: "mcp_tool_execution_duration_seconds",
       help: "MCP tool execution duration in seconds",
-      labelNames: ["tool_name", "service", "category"],
+      labelNames: ["tool_name", "service", "toolset"],
       buckets: [0.01, 0.05, 0.1, 0.5, 1, 2, 5, 10, 30],
       registers: [register],
     });
@@ -56,7 +56,7 @@ export class MetricsService {
     this.mcpToolErrors = new Counter({
       name: "mcp_tool_errors_total",
       help: "Total number of MCP tool execution errors",
-      labelNames: ["tool_name", "service", "category", "error_type"],
+      labelNames: ["tool_name", "service", "toolset", "error_type"],
       registers: [register],
     });
 
@@ -102,25 +102,25 @@ export class MetricsService {
   recordToolExecution(
     toolName: string,
     service: string,
-    category: string,
+    toolset: string,
     status: "success" | "error",
     duration: number,
   ): void {
     this.mcpToolExecutionsTotal
-      .labels(toolName, service, category, status)
+      .labels(toolName, service, toolset, status)
       .inc();
     this.mcpToolExecutionDuration
-      .labels(toolName, service, category)
+      .labels(toolName, service, toolset)
       .observe(duration);
   }
 
   recordToolError(
     toolName: string,
     service: string,
-    category: string,
+    toolset: string,
     errorType: string,
   ): void {
-    this.mcpToolErrors.labels(toolName, service, category, errorType).inc();
+    this.mcpToolErrors.labels(toolName, service, toolset, errorType).inc();
   }
 
   setActiveTools(service: string, count: number): void {

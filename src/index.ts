@@ -30,7 +30,7 @@ import { SessionManager } from "./session.js";
 // Load environment variables
 config();
 
-type Category = string[];
+type Toolset = string[];
 
 interface AapMcpConfig {
   record_api_queries?: boolean;
@@ -41,7 +41,7 @@ interface AapMcpConfig {
   base_url?: string;
   session_timeout?: number;
   services?: ServiceConfig[];
-  categories: Record<string, string[]>;
+  toolsets: Record<string, string[]>;
 }
 
 // Load configuration from file
@@ -50,8 +50,8 @@ const loadConfig = (): AapMcpConfig => {
   const configFile = readFileSync(configPath, "utf8");
   const config = yaml.load(configFile) as AapMcpConfig;
 
-  if (!config.categories) {
-    throw new Error("Invalid configuration: missing categories section");
+  if (!config.toolsets) {
+    throw new Error("Invalid configuration: missing toolsets section");
   }
 
   return config;
@@ -59,7 +59,7 @@ const loadConfig = (): AapMcpConfig => {
 
 // Load configuration
 const localConfig = loadConfig();
-const allCategories: Record<string, Category> = localConfig.categories;
+const allToolsets: Record<string, Toolset> = localConfig.toolsets;
 
 // Configuration constants (with priority: env var > config file > default)
 const CONFIG = {
@@ -162,55 +162,53 @@ const storeSessionData = (
   sessionId: string,
   token: string,
   userAgent: string,
-  category: string,
+  toolset: string,
   transport: StreamableHTTPServerTransport,
 ): void => {
-  sessionManager.store(sessionId, token, userAgent, category, transport);
+  sessionManager.store(sessionId, token, userAgent, toolset, transport);
 };
 
 const deleteSessionData = (sessionId: string): void => {
   sessionManager.delete(sessionId);
 };
 
-// Determine user category based on category name
-const getUserCategory = (category?: string): Category => {
-  // If category is provided, try to find it
-  if (category) {
-    const categoryName = category.toLowerCase();
-    if (allCategories[categoryName]) {
-      return allCategories[categoryName];
+// Determine user toolset based on toolset name
+const getUserToolset = (toolset?: string): Toolset => {
+  // If toolset is provided, try to find it
+  if (toolset) {
+    const toolsetName = toolset.toLowerCase();
+    if (allToolsets[toolsetName]) {
+      return allToolsets[toolsetName];
     } else {
       console.warn(
-        `${getTimestamp()} Unknown category: ${category}, defaulting to 'all' category`,
+        `${getTimestamp()} Unknown toolset: ${toolset}, defaulting to 'all' toolset`,
       );
     }
   }
 
-  // Default to "all" category if no category provided or category not found
-  if (allCategories["all"]) {
-    return allCategories["all"];
+  // Default to "all" toolset if no toolset provided or toolset not found
+  if (allToolsets["all"]) {
+    return allToolsets["all"];
   }
 
-  // If "all" category doesn't exist, return all available tools
-  console.warn(
-    `${getTimestamp()} No 'all' category found, returning all tools`,
-  );
+  // If "all" toolset doesn't exist, return all available tools
+  console.warn(`${getTimestamp()} No 'all' toolset found, returning all tools`);
   return allTools.map((tool) => tool.name);
 };
 
-// Filter tools based on category
-const filterToolsByCategory = (
+// Filter tools based on toolset
+const filterToolsByToolset = (
   tools: AAPMcpToolDefinition[],
-  category: Category,
+  toolset: Toolset,
 ): AAPMcpToolDefinition[] => {
-  return tools.filter((tool) => category.includes(tool.name));
+  return tools.filter((tool) => toolset.includes(tool.name));
 };
 
-// Find which category a tool belongs to (returns first match or "uncategorized")
-const getCategoryForTool = (toolName: string): string => {
-  for (const [categoryName, categoryTools] of Object.entries(allCategories)) {
-    if (categoryTools.includes(toolName)) {
-      return categoryName;
+// Find which toolset a tool belongs to (returns first match or "uncategorized")
+const getToolsetForTool = (toolName: string): string => {
+  for (const [toolsetName, toolsetTools] of Object.entries(allToolsets)) {
+    if (toolsetTools.includes(toolName)) {
+      return toolsetName;
     }
   }
   return "uncategorized";
@@ -317,17 +315,17 @@ const createMcpServer = (): Server => {
     // Get the session ID from the transport context
     const sessionId = extra?.sessionId;
 
-    // Get category from session data
-    let categoryOverride: string | undefined;
+    // Get toolset from session data
+    let toolsetOverride: string | undefined;
     if (sessionId && sessionManager.has(sessionId)) {
-      categoryOverride = sessionManager.getCategory(sessionId);
+      toolsetOverride = sessionManager.getToolset(sessionId);
     }
 
-    // Determine user category based on category from session
-    const category = getUserCategory(categoryOverride);
+    // Determine user toolset based on toolset from session
+    const toolset = getUserToolset(toolsetOverride);
 
-    // Filter tools based on category
-    const filteredTools = filterToolsByCategory(allTools, category);
+    // Filter tools based on toolset
+    const filteredTools = filterToolsByToolset(allTools, toolset);
 
     return {
       tools: filteredTools.map((tool) => ({
@@ -356,8 +354,8 @@ const createMcpServer = (): Server => {
       throw new Error(`Unknown tool: ${name}`);
     }
 
-    // Get category for this tool
-    const toolCategory = getCategoryForTool(tool.name);
+    // Get toolset for this tool
+    const toolToolset = getToolsetForTool(tool.name);
 
     // Get user-agent from session data (if available)
     let userAgent = "unknown";
@@ -417,7 +415,7 @@ const createMcpServer = (): Server => {
       // Make HTTP request
       fullUrl = `${CONFIG.BASE_URL}${url}`;
       console.log(
-        `${getTimestamp()} [req:${correlationId}|category:${toolCategory}] ${tool.name} → ${tool.method.toUpperCase()} ${fullUrl}`,
+        `${getTimestamp()} [req:${correlationId}|toolset:${toolToolset}] ${tool.name} → ${tool.method.toUpperCase()} ${fullUrl}`,
       );
       response = await fetch(fullUrl, requestOptions);
 
@@ -431,18 +429,18 @@ const createMcpServer = (): Server => {
       // Log response with timing
       const duration = ((Date.now() - _startTime) / 1000).toFixed(2);
       console.log(
-        `${getTimestamp()} [req:${correlationId}|category:${toolCategory}] ${tool.name} → ${response.status} ${response.statusText} (${duration}s)`,
+        `${getTimestamp()} [req:${correlationId}|toolset:${toolToolset}] ${tool.name} → ${response.status} ${response.statusText} (${duration}s)`,
       );
 
       // Log the tool access (only if recording is enabled)
       if (recordApiQueries && toolLogger) {
-        // Add category information to the tool for metrics
-        const toolWithCategory = {
+        // Add toolset information to the tool for metrics
+        const toolWithToolset = {
           ...tool,
-          category: toolCategory,
+          toolset: toolToolset,
         };
         await toolLogger.logToolAccess(
-          toolWithCategory,
+          toolWithToolset,
           fullUrl,
           {
             method: tool.method.toUpperCase(),
@@ -473,18 +471,18 @@ const createMcpServer = (): Server => {
         ? `${response.status} ${response.statusText}`
         : "No Response";
       console.error(
-        `${getTimestamp()} [req:${correlationId}|category:${toolCategory}] ${tool.name} → ${statusInfo} (${duration}s) - ERROR: ${error instanceof Error ? error.message : String(error)}`,
+        `${getTimestamp()} [req:${correlationId}|toolset:${toolToolset}] ${tool.name} → ${statusInfo} (${duration}s) - ERROR: ${error instanceof Error ? error.message : String(error)}`,
       );
 
       // Log the failed tool access (only if recording is enabled)
       if (recordApiQueries && toolLogger) {
-        // Add category information to the tool for metrics
-        const toolWithCategory = {
+        // Add toolset information to the tool for metrics
+        const toolWithToolset = {
           ...tool,
-          category: toolCategory,
+          toolset: toolToolset,
         };
         await toolLogger.logToolAccess(
-          toolWithCategory,
+          toolWithToolset,
           fullUrl,
           {
             method: tool.method.toUpperCase(),
@@ -525,7 +523,7 @@ app.use(
 const mcpPostHandler = async (
   req: express.Request,
   res: express.Response,
-  categoryOverride?: string,
+  toolsetOverride?: string,
 ) => {
   const sessionId = req.headers["mcp-session-id"] as string;
   const authHeader = req.headers["authorization"] as string;
@@ -555,14 +553,14 @@ const mcpPostHandler = async (
                 // Validate token (no permissions extraction)
                 await validateToken(token);
 
-                // Store session data with userAgent, category, and transport
+                // Store session data with userAgent, toolset, and transport
                 const userAgent = req.headers["user-agent"] || "unknown";
-                const category = categoryOverride || "all";
+                const toolset = toolsetOverride || "all";
                 storeSessionData(
                   sessionId,
                   token,
                   userAgent,
-                  category,
+                  toolset,
                   transport,
                 );
               } catch (error) {
@@ -662,7 +660,7 @@ const mcpPostHandler = async (
 const mcpGetHandler = async (
   req: express.Request,
   res: express.Response,
-  _categoryOverride?: string,
+  _toolsetOverride?: string,
 ) => {
   const sessionId = req.headers["mcp-session-id"] as string;
   const _authHeader = req.headers["authorization"] as string;
@@ -691,7 +689,7 @@ const mcpGetHandler = async (
 const mcpDeleteHandler = async (
   req: express.Request,
   res: express.Response,
-  _categoryOverride?: string,
+  _toolsetOverride?: string,
 ) => {
   const sessionId = req.headers["mcp-session-id"] as string;
 
@@ -726,7 +724,7 @@ if (enableUI) {
   configureWebUIRoutes(
     app,
     allTools,
-    allCategories,
+    allToolsets,
     recordApiQueries,
     allowWriteOperations,
     logEntriesSizeLimit,
@@ -738,52 +736,52 @@ app.post("/mcp", (req, res) => mcpPostHandler(req, res));
 app.get("/mcp", (req, res) => mcpGetHandler(req, res));
 app.delete("/mcp", (req, res) => mcpDeleteHandler(req, res));
 
-app.post("/:category/mcp", (req, res) => {
-  const category = req.params.category;
+app.post("/:toolset/mcp", (req, res) => {
+  const toolset = req.params.toolset;
   console.log(
-    `${getTimestamp()} Category-specific POST request for category: ${category}`,
+    `${getTimestamp()} Toolset-specific POST request for toolset: ${toolset}`,
   );
-  return mcpPostHandler(req, res, category);
+  return mcpPostHandler(req, res, toolset);
 });
 
-app.get("/:category/mcp", (req, res) => {
-  const category = req.params.category;
+app.get("/:toolset/mcp", (req, res) => {
+  const toolset = req.params.toolset;
   console.log(
-    `${getTimestamp()} Category-specific GET request for category: ${category}`,
+    `${getTimestamp()} Toolset-specific GET request for toolset: ${toolset}`,
   );
-  return mcpGetHandler(req, res, category);
+  return mcpGetHandler(req, res, toolset);
 });
 
-app.delete("/:category/mcp", (req, res) => {
-  const category = req.params.category;
+app.delete("/:toolset/mcp", (req, res) => {
+  const toolset = req.params.toolset;
   console.log(
-    `${getTimestamp()} Category-specific DELETE request for category: ${category}`,
+    `${getTimestamp()} Toolset-specific DELETE request for toolset: ${toolset}`,
   );
-  return mcpDeleteHandler(req, res, category);
+  return mcpDeleteHandler(req, res, toolset);
 });
 
-app.post("/mcp/:category", (req, res) => {
-  const category = req.params.category;
+app.post("/mcp/:toolset", (req, res) => {
+  const toolset = req.params.toolset;
   console.log(
-    `${getTimestamp()} Category-specific POST request for category: ${category}`,
+    `${getTimestamp()} Toolset-specific POST request for toolset: ${toolset}`,
   );
-  return mcpPostHandler(req, res, category);
+  return mcpPostHandler(req, res, toolset);
 });
 
-app.get("/mcp/:category", (req, res) => {
-  const category = req.params.category;
+app.get("/mcp/:toolset", (req, res) => {
+  const toolset = req.params.toolset;
   console.log(
-    `${getTimestamp()} Category-specific GET request for category: ${category}`,
+    `${getTimestamp()} Toolset-specific GET request for toolset: ${toolset}`,
   );
-  return mcpGetHandler(req, res, category);
+  return mcpGetHandler(req, res, toolset);
 });
 
-app.delete("/mcp/:category", (req, res) => {
-  const category = req.params.category;
+app.delete("/mcp/:toolset", (req, res) => {
+  const toolset = req.params.toolset;
   console.log(
-    `${getTimestamp()} Category-specific DELETE request for category: ${category}`,
+    `${getTimestamp()} Toolset-specific DELETE request for toolset: ${toolset}`,
   );
-  return mcpDeleteHandler(req, res, category);
+  return mcpDeleteHandler(req, res, toolset);
 });
 
 // Health check endpoint (always enabled)
@@ -821,7 +819,7 @@ async function main(): Promise<void> {
   console.log(
     `  Services: ${servicesConfig.length > 0 ? servicesConfig.map((s) => s.name).join(", ") : "none"}`,
   );
-  console.log(`  Categories: ${Object.keys(allCategories).length} enabled`);
+  console.log(`  Toolsets: ${Object.keys(allToolsets).length} enabled`);
   console.log(
     `  Write operations: ${allowWriteOperations ? "ENABLED" : "DISABLED"}`,
   );

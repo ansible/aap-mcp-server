@@ -50,7 +50,7 @@ describe("Dashboard View", () => {
         deprecated: false,
       },
     ],
-    allCategories: {
+    allToolsets: {
       admin: ["tool1", "tool2"],
       user: ["tool1"],
       operator: ["tool3"],
@@ -73,10 +73,10 @@ describe("Dashboard View", () => {
     expect(html).toContain("3"); // Should show 3 total tools
   });
 
-  it("should include categories count", () => {
+  it("should include toolsets count", () => {
     const html = renderDashboard(mockDashboardData);
 
-    expect(html).toContain("3"); // Should show 3 categories
+    expect(html).toContain("3"); // Should show 3 toolsets
   });
 
   it("should include service information", () => {
@@ -107,7 +107,7 @@ describe("Dashboard View", () => {
   it("should handle empty tools array", () => {
     const emptyData: DashboardData = {
       allTools: [],
-      allCategories: {},
+      allToolsets: {},
       recordApiQueries: false,
       allowWriteOperations: false,
     };
@@ -129,7 +129,7 @@ describe("Dashboard View", () => {
     const html = renderDashboard(mockDashboardData);
 
     expect(html).toContain('href="/tools"');
-    expect(html).toContain('href="/category"');
+    expect(html).toContain('href="/toolset"');
     expect(html).toContain('href="/services"');
   });
 
