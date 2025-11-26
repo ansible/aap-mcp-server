@@ -252,7 +252,6 @@ async function generateMcpRequests(): Promise<number> {
       tool: "controller__settings_list",
       params: {},
     },
-    { name: "developer_testing", tool: "controller__jobs_list", params: {} },
   ];
 
   try {

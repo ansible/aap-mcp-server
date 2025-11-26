@@ -32,9 +32,9 @@ The MCP server requires token validation during startup. The mock server accepts
 
 ### 2. HAR Generator (`scripts/generate-mcp-har.ts`)
 
-Generates `mcp-requests.har` containing 21 HTTP request/response pairs:
+Generates `mcp-requests.har` containing 18 HTTP request/response pairs:
 
-- **7 endpoint categories**: job_management, inventory_management, system_monitoring, user_management, security_compliance, platform_configuration, developer_testing
+- **6 endpoint categories**: job_management, inventory_management, system_monitoring, user_management, security_compliance, platform_configuration
 - **3 requests per category**:
   1. `initialize` - Sends MCP initialization request, captures session ID from response header
   2. `tools/list` - Lists available tools (with session ID header)
@@ -82,7 +82,7 @@ Automated security scanning workflow that:
 
 1. Starts mock AAP server (port 8080)
 2. Starts MCP server configured to use mock AAP (port 3000)
-3. Generates HAR file with all 7 endpoint categories
+3. Generates HAR file with all 6 endpoint categories
 4. Runs RapiDAST with passive scanning
 5. Uploads results as artifacts
 6. Displays summary in workflow UI
@@ -122,7 +122,7 @@ npm start &
 BASE_URL=http://localhost:3000 \
 BEARER_TOKEN_OAUTH2_AUTHENTICATION=test-token \
 npx tsx scripts/generate-mcp-har.ts
-# Creates mcp-requests.har with 21 HTTP entries
+# Creates mcp-requests.har with 18 HTTP entries
 ```
 
 4. Run RapiDAST in Docker:
@@ -208,9 +208,9 @@ Warnings are expected and low-severity:
 | -------------------- | ------------------- |
 | Total workflow time  | ~2 minutes          |
 | Passive scan time    | ~2 seconds          |
-| HAR file size        | 116K                |
-| HTTP requests tested | 21                  |
-| Endpoint categories  | 7                   |
+| HAR file size        | ~100K               |
+| HTTP requests tested | 18                  |
+| Endpoint categories  | 6                   |
 | Success rate         | 100% (all HTTP 200) |
 
 ## Configuration
