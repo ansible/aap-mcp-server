@@ -37,7 +37,7 @@ function initSession(): Promise<string> {
     const options: http.RequestOptions = {
       hostname: "localhost",
       port: 3000,
-      path: "/mcp/developer_testing",
+      path: "/mcp/job_management",
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -74,7 +74,7 @@ function getTools(sessionId: string): Promise<Tool[]> {
     const options: http.RequestOptions = {
       hostname: "localhost",
       port: 3000,
-      path: "/mcp/developer_testing",
+      path: "/mcp/job_management",
       method: "POST",
       headers: {
         "Content-Type": "application/json",
