@@ -11,6 +11,11 @@
 # Configuration for Prometheus metrics endpoint (defaults to false if not specified)
 # enable_metrics: true
 
+# Configuration for analytics telemetry (using Segment)
+# Required: Provide a valid Segment write key to enable telemetry
+# Lower priority than ANALYTICS_KEY environment variable
+# analytics_key: "your-segment-write-key-here"
+
 # Configuration for base URL (defaults to https://localhost if not specified)
 # Lower priority than BASE_URL environment variable
 # base_url: "https://localhost:8443"
