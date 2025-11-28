@@ -26,6 +26,7 @@ import {
   type ServiceConfig,
 } from "./openapi-loader.js";
 import { SessionManager } from "./session.js";
+import { AnalyticsService } from "./analytics.js";
 
 // Load environment variables
 config();
@@ -42,6 +43,7 @@ interface AapMcpConfig {
   session_timeout?: number;
   services?: ServiceConfig[];
   toolsets: Record<string, string[]>;
+  analytics_key?: string;
 }
 
 // Load configuration from file
@@ -68,7 +70,15 @@ const CONFIG = {
   SESSION_TIMEOUT: process.env.SESSION_TIMEOUT
     ? parseInt(process.env.SESSION_TIMEOUT, 10)
     : localConfig.session_timeout || 120, // Default to 120 seconds (2 minutes)
+  ANALYTICS_KEY: (
+    process.env.ANALYTICS_KEY ||
+    localConfig.analytics_key ||
+    ""
+  ).trim(),
 } as const;
+
+// Initialize analytics service (always instantiated, but only enabled if key provided)
+const analyticsService = new AnalyticsService();
 
 // Log entries size limit for /logs endpoint
 const logEntriesSizeLimit = 10000;
@@ -166,6 +176,9 @@ const storeSessionData = (
   transport: StreamableHTTPServerTransport,
 ): void => {
   sessionManager.store(sessionId, token, userAgent, toolset, transport);
+
+  // Track session started event
+  analyticsService.trackMcpSessionStarted(sessionId, userAgent, toolset, token);
 };
 
 const deleteSessionData = (sessionId: string): void => {
@@ -452,9 +465,20 @@ const createMcpServer = (): Server => {
         );
       }
 
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${JSON.stringify(result)}`);
-      }
+      const executionTimeMs = Date.now() - _startTime;
+      const parameterLength = JSON.stringify(args).length;
+      const token = sessionManager.getToken(sessionId);
+
+      analyticsService.trackMcpToolCalled(
+        tool.name,
+        toolToolset,
+        userAgent,
+        sessionId,
+        parameterLength,
+        response.status,
+        executionTimeMs,
+        token,
+      );
 
       return {
         content: [
@@ -493,6 +517,23 @@ const createMcpServer = (): Server => {
           _startTime,
         );
       }
+
+      // Track failed tool call (network/other errors)
+      const executionTimeMs = Date.now() - _startTime;
+      const parameterLength = JSON.stringify(args).length;
+      const token = sessionManager.getToken(sessionId);
+      const httpStatus = response?.status || 0;
+
+      analyticsService.trackMcpToolCalled(
+        tool.name,
+        toolToolset,
+        userAgent,
+        sessionId,
+        parameterLength,
+        httpStatus,
+        executionTimeMs,
+        token,
+      );
 
       throw new Error(
         `Tool execution failed: ${error instanceof Error ? error.message : String(error)}`,
@@ -876,12 +917,30 @@ async function main(): Promise<void> {
     console.log("");
     console.log("═══════════════════════════════════════════════════════════");
     console.log("");
+
+    // Initialize analytics with periodic status reporting (only if key provided)
+    if (CONFIG.ANALYTICS_KEY) {
+      const serverVersion = process.env.npm_package_version || "1.0.0"; // From package.json
+      const containerVersion = process.env.CONTAINER_VERSION || "unknown";
+      const readOnlyMode = !allowWriteOperations;
+
+      analyticsService.initialize(
+        CONFIG.ANALYTICS_KEY,
+        () => sessionManager.getActiveCount(),
+        serverVersion,
+        containerVersion,
+        readOnlyMode,
+      );
+    }
   });
 }
 
 // Graceful shutdown
 process.on("SIGINT", async () => {
   console.log(`${getTimestamp()} Shutting down server...`);
+
+  // Shutdown analytics service
+  await analyticsService.shutdown();
 
   // Close all active sessions and transports
   for (const sessionId of sessionManager.getAllSessionIds()) {
