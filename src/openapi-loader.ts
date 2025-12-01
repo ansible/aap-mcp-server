@@ -151,7 +151,7 @@ export const getDefaultServiceConfigs = (
 export const reformatEdaTool = (
   tool: AAPMcpToolDefinition,
 ): AAPMcpToolDefinition => {
-  tool.name = "eda." + tool.name;
+  tool.name = "eda-" + tool.name;
   tool.pathTemplate = "/api/eda/v1" + tool.pathTemplate;
   return tool;
 };
@@ -162,7 +162,7 @@ export const reformatEdaTool = (
 export const reformatGatewayTool = (
   tool: AAPMcpToolDefinition,
 ): AAPMcpToolDefinition | false => {
-  tool.name = "gateway." + tool.name;
+  tool.name = "gateway-" + tool.name;
   if (!tool.deprecated && tool.description?.includes("Legacy")) {
     tool.logs.push({
       severity: "WARN",
@@ -195,7 +195,7 @@ export const reformatGalaxyTool = (
   const originalName = tool.name;
   tool.name = tool.name.replace(
     /(api_galaxy_v3_|api_galaxy_|)(.+)/,
-    "galaxy.$2",
+    "galaxy-$2",
   );
   if (originalName !== tool.name) {
     tool.logs.push({
@@ -226,7 +226,7 @@ export const reformatControllerTool = (
   // Remove api_ prefix if it exists (backwards compatibility),
   // then always prepend controller.
   tool.name = tool.name.replace(/^api_/, "");
-  tool.name = "controller." + tool.name;
+  tool.name = "controller-" + tool.name;
 
   return tool;
 };

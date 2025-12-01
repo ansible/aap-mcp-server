@@ -96,20 +96,20 @@ Define custom toolsets that group related functionality:
 ```yaml
 toolsets:
   job_management:
-    - controller.job_templates_launch_create
-    - controller.workflow_job_templates_launch_create
-    - controller.jobs_read
-    - controller.workflow_jobs_read
+    - controller-job_templates_launch_create
+    - controller-workflow_job_templates_launch_create
+    - controller-jobs_read
+    - controller-workflow_jobs_read
 
   inventory_management:
-    - controller.inventories_list
-    - controller.hosts_list
-    - controller.groups_list
+    - controller-inventories_list
+    - controller-hosts_list
+    - controller-groups_list
 
   system_monitoring:
-    - controller.ping_list
-    - controller.config_list
-    - gateway.activitystream_list
+    - controller-ping_list
+    - controller-config_list
+    - gateway-activitystream_list
 ```
 
 ### Environment Variables

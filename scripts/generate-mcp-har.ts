@@ -230,26 +230,26 @@ async function generateMcpRequests(): Promise<number> {
 
   // All MCP endpoint categories from aap-mcp.yaml
   const categories: Category[] = [
-    { name: "job_management", tool: "controller__jobs_list", params: {} },
+    { name: "job_management", tool: "controller-jobs_list", params: {} },
     {
       name: "inventory_management",
-      tool: "controller__inventories_list",
+      tool: "controller-inventories_list",
       params: {},
     },
     {
       name: "system_monitoring",
-      tool: "controller__instance_groups_list",
+      tool: "controller-instance_groups_list",
       params: {},
     },
-    { name: "user_management", tool: "gateway__teams_list", params: {} },
+    { name: "user_management", tool: "gateway-teams_list", params: {} },
     {
       name: "security_compliance",
-      tool: "controller__credentials_list",
+      tool: "controller-credentials_list",
       params: {},
     },
     {
       name: "platform_configuration",
-      tool: "controller__settings_list",
+      tool: "controller-settings_list",
       params: {},
     },
   ];

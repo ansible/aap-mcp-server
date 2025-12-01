@@ -52,217 +52,217 @@ services:
 toolsets:
   # Phase 1
   job_management:
-    - controller.job_templates_launch_retrieve
-    - controller.job_templates_launch_create
-    - controller.workflow_job_templates_launch_create
-    - controller.jobs_retrieve
-    - controller.workflow_jobs_retrieve
-    - controller.jobs_stdout_retrieve
-    - controller.jobs_job_events_list
-    - controller.jobs_cancel_create
-    - controller.workflow_jobs_cancel_create
-    - controller.jobs_relaunch_retrieve
-    - controller.jobs_relaunch_create
-    - controller.workflow_jobs_relaunch_create
-    - controller.jobs_list
-    - eda.activation_instances_list
-    - eda.activation_instances_logs_list
-    - controller.analytics_retrieve
-    - controller.metrics_retrieve
-    - controller.projects_list
-    - controller.job_templates_list
-    - controller.workflow_job_templates_list
-    - controller.job_templates_retrieve
-    - controller.workflow_job_templates_retrieve
-    - controller.jobs_job_host_summaries_list
-    - controller.workflow_jobs_list
-    - controller.workflow_jobs_workflow_nodes_list
+    - controller-job_templates_launch_retrieve
+    - controller-job_templates_launch_create
+    - controller-workflow_job_templates_launch_create
+    - controller-jobs_retrieve
+    - controller-workflow_jobs_retrieve
+    - controller-jobs_stdout_retrieve
+    - controller-jobs_job_events_list
+    - controller-jobs_cancel_create
+    - controller-workflow_jobs_cancel_create
+    - controller-jobs_relaunch_retrieve
+    - controller-jobs_relaunch_create
+    - controller-workflow_jobs_relaunch_create
+    - controller-jobs_list
+    - eda-activation_instances_list
+    - eda-activation_instances_logs_list
+    - controller-analytics_retrieve
+    - controller-metrics_retrieve
+    - controller-projects_list
+    - controller-job_templates_list
+    - controller-workflow_job_templates_list
+    - controller-job_templates_retrieve
+    - controller-workflow_job_templates_retrieve
+    - controller-jobs_job_host_summaries_list
+    - controller-workflow_jobs_list
+    - controller-workflow_jobs_workflow_nodes_list
 
   inventory_management:
-    - controller.inventories_list
-    - controller.inventory_sources_update_create
-    - controller.hosts_list
-    - controller.hosts_retrieve
-    - controller.hosts_variable_data_retrieve
-    - controller.groups_list
-    - controller.groups_create
+    - controller-inventories_list
+    - controller-inventory_sources_update_create
+    - controller-hosts_list
+    - controller-hosts_retrieve
+    - controller-hosts_variable_data_retrieve
+    - controller-groups_list
+    - controller-groups_create
 
   system_monitoring:
-    - controller.instance_groups_list
-    - controller.instance_groups_create
-    - controller.instance_groups_retrieve
-    - controller.mesh_visualizer_retrieve
-    - controller.instances_create
-    - gateway.activitystream_list
-    - gateway.activitystream_retrieve
-    - gateway.authenticators_list
-    - controller.activity_stream_list
-    - controller.activity_stream_retrieve
-    - controller.instances_retrieve
-    - gateway.status_retrieve
-    - gateway.feature_flags_state_retrieve
+    - controller-instance_groups_list
+    - controller-instance_groups_create
+    - controller-instance_groups_retrieve
+    - controller-mesh_visualizer_retrieve
+    - controller-instances_create
+    - gateway-activitystream_list
+    - gateway-activitystream_retrieve
+    - gateway-authenticators_list
+    - controller-activity_stream_list
+    - controller-activity_stream_retrieve
+    - controller-instances_retrieve
+    - gateway-status_retrieve
+    - gateway-feature_flags_state_retrieve
 
   # Phase 2
   user_management:
-    - gateway.teams_list
-    - gateway.teams_retrieve
-    - gateway.teams_create
-    - gateway.teams_update
-    - gateway.teams_destroy
-    - gateway.teams_users_list
-    - gateway.me_list
-    - gateway.role_definitions_list
-    - gateway.role_team_assignments_list
-    - gateway.role_user_assignments_list
-    - gateway.role_user_assignments_create
-    - gateway.role_user_assignments_destroy
-    - gateway.organizations_list
-    - gateway.organizations_retrieve
-    - gateway.organizations_create
-    - gateway.organizations_update
-    - gateway.organizations_destroy
-    - gateway.activitystream_list
-    - controller.activity_stream_list
-    - gateway.users_list
-    - gateway.users_retrieve
-    - gateway.users_create
-    - gateway.users_update
-    - gateway.users_destroy
-    - gateway.users_teams_list
-    - gateway.authenticators_list
-    - gateway.authenticators_retrieve
-    - gateway.authenticators_create
-    - gateway.authenticators_update
-    - gateway.authenticators_destroy
-    - gateway.authenticator_maps_list
-    - gateway.authenticator_maps_create
-    # - galaxy.api_galaxy__ui_v1_namespaces_list
-    # - galaxy.api_galaxy__ui_v1_namespaces_create
-    # - galaxy.repositories_ansible_ansible_list
-    # - galaxy.repositories_ansible_ansible_create
+    - gateway-teams_list
+    - gateway-teams_retrieve
+    - gateway-teams_create
+    - gateway-teams_update
+    - gateway-teams_destroy
+    - gateway-teams_users_list
+    - gateway-me_list
+    - gateway-role_definitions_list
+    - gateway-role_team_assignments_list
+    - gateway-role_user_assignments_list
+    - gateway-role_user_assignments_create
+    - gateway-role_user_assignments_destroy
+    - gateway-organizations_list
+    - gateway-organizations_retrieve
+    - gateway-organizations_create
+    - gateway-organizations_update
+    - gateway-organizations_destroy
+    - gateway-activitystream_list
+    - controller-activity_stream_list
+    - gateway-users_list
+    - gateway-users_retrieve
+    - gateway-users_create
+    - gateway-users_update
+    - gateway-users_destroy
+    - gateway-users_teams_list
+    - gateway-authenticators_list
+    - gateway-authenticators_retrieve
+    - gateway-authenticators_create
+    - gateway-authenticators_update
+    - gateway-authenticators_destroy
+    - gateway-authenticator_maps_list
+    - gateway-authenticator_maps_create
+    # - galaxy-api_galaxy__ui_v1_namespaces_list
+    # - galaxy-api_galaxy__ui_v1_namespaces_create
+    # - galaxy-repositories_ansible_ansible_list
+    # - galaxy-repositories_ansible_ansible_create
 
   security_compliance:
-    - controller.credentials_list
-    - controller.credentials_create
-    - controller.credentials_retrieve
-    - controller.credentials_test_create
-    - controller.jobs_list
-    - gateway.activitystream_list
-    - controller.activity_stream_list
-    # - galaxy.api_galaxy_content_v3_collections_versions_read
-    # - galaxy.collection_import_read
-    - controller.credential_types_list
-    - controller.credential_types_create
-    - controller.credential_types_retrieve
-    - controller.credential_types_update
-    - controller.credential_types_destroy
+    - controller-credentials_list
+    - controller-credentials_create
+    - controller-credentials_retrieve
+    - controller-credentials_test_create
+    - controller-jobs_list
+    - gateway-activitystream_list
+    - controller-activity_stream_list
+    # - galaxy-api_galaxy_content_v3_collections_versions_read
+    # - galaxy-collection_import_read
+    - controller-credential_types_list
+    - controller-credential_types_create
+    - controller-credential_types_retrieve
+    - controller-credential_types_update
+    - controller-credential_types_destroy
 
   platform_configuration:
-    - controller.settings_list
-    - controller.settings_retrieve
-    - controller.settings_partial_update
-    - gateway.settings_list
-    - gateway.settings_getter
-    - gateway.settings_update
-    - controller.config_retrieve
-    - controller.config_create
-    - controller.notification_templates_list
-    - controller.notification_templates_create
-    - controller.notification_templates_retrieve
-    - controller.notification_templates_update
-    - controller.notification_templates_destroy
-    - controller.execution_environments_list
-    - controller.execution_environments_create
-    - controller.execution_environments_retrieve
-    - controller.execution_environments_update
-    - controller.execution_environments_destroy
+    - controller-settings_list
+    - controller-settings_retrieve
+    - controller-settings_partial_update
+    - gateway-settings_list
+    - gateway-settings_getter
+    - gateway-settings_update
+    - controller-config_retrieve
+    - controller-config_create
+    - controller-notification_templates_list
+    - controller-notification_templates_create
+    - controller-notification_templates_retrieve
+    - controller-notification_templates_update
+    - controller-notification_templates_destroy
+    - controller-execution_environments_list
+    - controller-execution_environments_create
+    - controller-execution_environments_retrieve
+    - controller-execution_environments_update
+    - controller-execution_environments_destroy
 
   # Categories below this comment have yet to be clarified/validated
   # Phase 3
   # event_management:
-  #   - eda.event_streams_list
-  #   - eda.event_streams_create
-  #   - eda.event_streams_retrieve
-  #   - eda.event_streams_partial_update
-  #   - eda.event_streams_destroy
-  #   - eda.activations_list
-  #   - eda.activations_create
-  #   - eda.activations_retrieve
-  #   - eda.activations_partial_update
-  #   - eda.activations_destroy
-  #   - eda.activations_enable_create
-  #   - eda.activations_disable_create
-  #   - eda.activations_restart_create
-  #   - eda.activation_instances_list
-  #   - eda.activation_instances_retrieve
-  #   - eda.activation_instances_logs_list
-  #   - eda.audit_rules_list
-  #   - eda.audit_rules_retrieve
-  #   - eda.audit_rules_actions_list
-  #   - eda.audit_rules_events_list
-  #   - eda.decision_environments_list
-  #   - eda.decision_environments_create
-  #   - eda.decision_environments_retrieve
-  #   - eda.decision_environments_partial_update
-  #   - eda.decision_environments_destroy
-  #   - eda.rulebooks_list
-  #   - eda.rulebooks_retrieve
-  #   - eda.rulebooks_sources_list
-  #   - eda.rulebooks_json_retrieve
-  #   - eda.projects_list
-  #   - eda.projects_create
-  #   - eda.projects_retrieve
-  #   - eda.projects_partial_update
-  #   - eda.projects_destroy
-  #   - eda.projects_sync_create
+  #   - eda-event_streams_list
+  #   - eda-event_streams_create
+  #   - eda-event_streams_retrieve
+  #   - eda-event_streams_partial_update
+  #   - eda-event_streams_destroy
+  #   - eda-activations_list
+  #   - eda-activations_create
+  #   - eda-activations_retrieve
+  #   - eda-activations_partial_update
+  #   - eda-activations_destroy
+  #   - eda-activations_enable_create
+  #   - eda-activations_disable_create
+  #   - eda-activations_restart_create
+  #   - eda-activation_instances_list
+  #   - eda-activation_instances_retrieve
+  #   - eda-activation_instances_logs_list
+  #   - eda-audit_rules_list
+  #   - eda-audit_rules_retrieve
+  #   - eda-audit_rules_actions_list
+  #   - eda-audit_rules_events_list
+  #   - eda-decision_environments_list
+  #   - eda-decision_environments_create
+  #   - eda-decision_environments_retrieve
+  #   - eda-decision_environments_partial_update
+  #   - eda-decision_environments_destroy
+  #   - eda-rulebooks_list
+  #   - eda-rulebooks_retrieve
+  #   - eda-rulebooks_sources_list
+  #   - eda-rulebooks_json_retrieve
+  #   - eda-projects_list
+  #   - eda-projects_create
+  #   - eda-projects_retrieve
+  #   - eda-projects_partial_update
+  #   - eda-projects_destroy
+  #   - eda-projects_sync_create
 
   # integration:
-  #   - controller.notification_templates_list
-  #   - controller.notification_templates_create
-  #   - controller.notification_templates_retrieve
-  #   - controller.notification_templates_update
-  #   - controller.notification_templates_destroy
-  #   - controller.notification_templates_test_create
-  #   - controller.job_templates_notification_templates_error_list
-  #   - controller.job_templates_notification_templates_started_list
-  #   - controller.job_templates_notification_templates_success_list
-  #   - controller.workflow_job_templates_notification_templates_error_list
-  #   - controller.workflow_job_templates_notification_templates_started_list
-  #   - controller.workflow_job_templates_notification_templates_success_list
-  #   - controller.job_templates_webhook_key_list
-  #   - controller.job_templates_webhook_key_create
-  #   - controller.workflow_job_templates_webhook_key_list
-  #   - controller.workflow_job_templates_webhook_key_create
-  #   - gateway.tokens_list
-  #   - gateway.tokens_create
-  #   - gateway.tokens_retrieve
-  #   - gateway.tokens_update
-  #   - gateway.tokens_partial_update
-  #   - gateway.tokens_destroy
-  #   - gateway.applications_list
-  #   - gateway.applications_create
-  #   - gateway.applications_retrieve
-  #   - gateway.applications_update
-  #   - gateway.applications_partial_update
-  #   - gateway.applications_destroy
-  #   - gateway.applications_tokens_list
-  #   - gateway.authenticator_maps_list
-  #   - gateway.authenticator_maps_create
-  #   - gateway.authenticator_maps_retrieve
-  #   - gateway.authenticator_maps_update
-  #   - gateway.authenticator_maps_partial_update
-  #   - gateway.authenticator_maps_destroy
-  #   - gateway.authenticator_maps_authenticators_list
-  #   - gateway.authenticator_maps_authenticators_associate_create
-  #   - gateway.authenticator_maps_authenticators_disassociate_create
-  #   - gateway.http_ports_update
-  #   - gateway.http_ports_partial_update
-  #   - gateway.http_ports_destroy
+  #   - controller-notification_templates_list
+  #   - controller-notification_templates_create
+  #   - controller-notification_templates_retrieve
+  #   - controller-notification_templates_update
+  #   - controller-notification_templates_destroy
+  #   - controller-notification_templates_test_create
+  #   - controller-job_templates_notification_templates_error_list
+  #   - controller-job_templates_notification_templates_started_list
+  #   - controller-job_templates_notification_templates_success_list
+  #   - controller-workflow_job_templates_notification_templates_error_list
+  #   - controller-workflow_job_templates_notification_templates_started_list
+  #   - controller-workflow_job_templates_notification_templates_success_list
+  #   - controller-job_templates_webhook_key_list
+  #   - controller-job_templates_webhook_key_create
+  #   - controller-workflow_job_templates_webhook_key_list
+  #   - controller-workflow_job_templates_webhook_key_create
+  #   - gateway-tokens_list
+  #   - gateway-tokens_create
+  #   - gateway-tokens_retrieve
+  #   - gateway-tokens_update
+  #   - gateway-tokens_partial_update
+  #   - gateway-tokens_destroy
+  #   - gateway-applications_list
+  #   - gateway-applications_create
+  #   - gateway-applications_retrieve
+  #   - gateway-applications_update
+  #   - gateway-applications_partial_update
+  #   - gateway-applications_destroy
+  #   - gateway-applications_tokens_list
+  #   - gateway-authenticator_maps_list
+  #   - gateway-authenticator_maps_create
+  #   - gateway-authenticator_maps_retrieve
+  #   - gateway-authenticator_maps_update
+  #   - gateway-authenticator_maps_partial_update
+  #   - gateway-authenticator_maps_destroy
+  #   - gateway-authenticator_maps_authenticators_list
+  #   - gateway-authenticator_maps_authenticators_associate_create
+  #   - gateway-authenticator_maps_authenticators_disassociate_create
+  #   - gateway-http_ports_update
+  #   - gateway-http_ports_partial_update
+  #   - gateway-http_ports_destroy
 
   # developer_integration:
-  #   - controller.credentials_test_create
-  #   - controller.jobs_job_events_list
-  #   - controller.jobs_retrieve
-  #   - controller.instance_groups_retrieve
-  #   - controller.job_templates_launch_create
-  #   - controller.workflow_job_templates_launch_create
+  #   - controller-credentials_test_create
+  #   - controller-jobs_job_events_list
+  #   - controller-jobs_retrieve
+  #   - controller-instance_groups_retrieve
+  #   - controller-job_templates_launch_create
+  #   - controller-workflow_job_templates_launch_create
