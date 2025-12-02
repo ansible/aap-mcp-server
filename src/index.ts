@@ -779,7 +779,7 @@ app.get("/:toolset/mcp", (req, res) => {
   console.log(
     `${getTimestamp()} Toolset-specific GET request for toolset: ${toolset}`,
   );
-  return mcpGetHandler(req, res, toolset);
+  return mcpGetHandler(req, res);
 });
 
 app.delete("/:toolset/mcp", (req, res) => {
@@ -787,7 +787,7 @@ app.delete("/:toolset/mcp", (req, res) => {
   console.log(
     `${getTimestamp()} Toolset-specific DELETE request for toolset: ${toolset}`,
   );
-  return mcpDeleteHandler(req, res, toolset);
+  return mcpDeleteHandler(req, res);
 });
 
 app.post("/mcp/:toolset", (req, res) => {
@@ -803,7 +803,7 @@ app.get("/mcp/:toolset", (req, res) => {
   console.log(
     `${getTimestamp()} Toolset-specific GET request for toolset: ${toolset}`,
   );
-  return mcpGetHandler(req, res, toolset);
+  return mcpGetHandler(req, res);
 });
 
 app.delete("/mcp/:toolset", (req, res) => {
@@ -811,7 +811,7 @@ app.delete("/mcp/:toolset", (req, res) => {
   console.log(
     `${getTimestamp()} Toolset-specific DELETE request for toolset: ${toolset}`,
   );
-  return mcpDeleteHandler(req, res, toolset);
+  return mcpDeleteHandler(req, res);
 });
 
 // Health check endpoint (always enabled)
