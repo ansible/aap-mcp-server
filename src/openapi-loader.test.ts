@@ -96,18 +96,18 @@ describe("OpenAPI Loader", () => {
   });
 
   describe("reformatEdaTool", () => {
-    it("should add eda prefix and update path template", () => {
+    it("should update path template without changing name", () => {
       const mockTool = createMockTool();
 
       const result = reformatEdaTool(mockTool);
 
-      expect(result.name).toBe("eda.test-tool");
+      expect(result.name).toBe("test-tool");
       expect(result.pathTemplate).toBe("/api/eda/v1/test/path");
     });
   });
 
   describe("reformatGatewayTool", () => {
-    it("should add gateway prefix without modifying description", () => {
+    it("should not modify tool name or description", () => {
       const mockTool = createMockTool({
         description: "Test tool description\n\nExtra details",
       });
@@ -116,7 +116,7 @@ describe("OpenAPI Loader", () => {
 
       expect(result).toBeTruthy();
       if (result) {
-        expect(result.name).toBe("gateway.test-tool");
+        expect(result.name).toBe("test-tool");
         expect(result.description).toBe(
           "Test tool description\n\nExtra details",
         );
@@ -149,7 +149,7 @@ describe("OpenAPI Loader", () => {
 
       expect(result).toBeTruthy();
       if (result) {
-        expect(result.name).toBe("gateway.test-tool");
+        expect(result.name).toBe("test-tool");
         expect(result.description).toBe(undefined);
       }
     });
@@ -165,7 +165,7 @@ describe("OpenAPI Loader", () => {
 
       expect(result).toBeTruthy();
       if (result) {
-        expect(result.name).toBe("gateway.test-tool");
+        expect(result.name).toBe("test-tool");
         expect(result.description).toBe(veryLongDescription);
         // Verify no truncation logs are added
         expect(result.logs).not.toContainEqual({
@@ -186,7 +186,7 @@ describe("OpenAPI Loader", () => {
 
       expect(result).toBeTruthy();
       if (result) {
-        expect(result.name).toBe("gateway.test-tool");
+        expect(result.name).toBe("test-tool");
         expect(result.description).toBe(specialDescription);
       }
     });
@@ -227,13 +227,13 @@ describe("OpenAPI Loader", () => {
 
       expect(result).toBeTruthy();
       if (result) {
-        expect(result.name).toBe("galaxy.collections_create");
+        expect(result.name).toBe("collections_create");
       }
     });
   });
 
   describe("reformatControllerTool", () => {
-    it("should update path template and name", () => {
+    it("should update path template and remove api_ prefix from name", () => {
       const mockTool = createMockTool({
         name: "api_jobs_list",
         pathTemplate: "/api/v2/jobs/",
@@ -242,7 +242,7 @@ describe("OpenAPI Loader", () => {
 
       const result = reformatControllerTool(mockTool);
 
-      expect(result.name).toBe("controller.jobs_list");
+      expect(result.name).toBe("jobs_list");
       expect(result.pathTemplate).toBe("/api/controller/v2/jobs/");
       expect(result.description).toBe("List jobs\n\nExtra details");
     });
@@ -255,7 +255,7 @@ describe("OpenAPI Loader", () => {
 
       const result = reformatControllerTool(mockTool);
 
-      expect(result.name).toBe("controller.test_tool");
+      expect(result.name).toBe("test_tool");
     });
 
     it("should preserve very long descriptions without truncation", () => {
@@ -269,7 +269,7 @@ describe("OpenAPI Loader", () => {
 
       const result = reformatControllerTool(mockTool);
 
-      expect(result.name).toBe("controller.complex_operation");
+      expect(result.name).toBe("complex_operation");
       expect(result.pathTemplate).toBe("/api/controller/v2/complex/");
       expect(result.description).toBe(veryLongDescription);
       // Verify no truncation logs are added
@@ -288,7 +288,7 @@ describe("OpenAPI Loader", () => {
 
       const result = reformatControllerTool(mockTool);
 
-      expect(result.name).toBe("controller.undefined_desc");
+      expect(result.name).toBe("undefined_desc");
       expect(result.pathTemplate).toBe("/api/controller/v2/test/");
       expect(result.description).toBe(undefined);
     });
@@ -304,7 +304,7 @@ describe("OpenAPI Loader", () => {
 
       const result = reformatControllerTool(mockTool);
 
-      expect(result.name).toBe("controller.multiline_test");
+      expect(result.name).toBe("multiline_test");
       expect(result.pathTemplate).toBe("/api/controller/v2/multiline/");
       expect(result.description).toBe(multilineDescription);
     });

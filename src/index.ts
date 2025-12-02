@@ -135,6 +135,27 @@ if (ignoreCertificateErrors) {
 // TypeScript interfaces
 
 // Helper functions
+
+/**
+ * Extract part after the period from a tool name
+ * Examples: "controller.jobs_list" -> "jobs_list", "jobs_list" -> "jobs_list"
+ */
+const extractToolNameAfterPrefix = (name: string): string => {
+  const match = name.match(/\.(.+)$/);
+  return match ? match[1] : name;
+};
+
+/**
+ * Find a tool by its external name (without service prefix)
+ * This handles the case where MCP client calls a tool using the short name
+ */
+const findToolByExternalName = (
+  externalName: string,
+  availableTools: AAPMcpToolDefinition[],
+): AAPMcpToolDefinition | undefined => {
+  return availableTools.find((tool) => tool.name === externalName);
+};
+
 const extractBearerToken = (
   authHeader: string | undefined,
 ): string | undefined => {
@@ -214,13 +235,18 @@ const filterToolsByToolset = (
   tools: AAPMcpToolDefinition[],
   toolset: Toolset,
 ): AAPMcpToolDefinition[] => {
-  return tools.filter((tool) => toolset.includes(tool.name));
+  // Strip prefixes from toolset entries for comparison since config has full names
+  // but tools now only have short names (e.g., config has "controller.jobs_list" but tool.name is "jobs_list")
+  const toolsetWithoutPrefixes = toolset.map(extractToolNameAfterPrefix);
+  return tools.filter((tool) => toolsetWithoutPrefixes.includes(tool.name));
 };
 
 // Find which toolset a tool belongs to (returns first match or "uncategorized")
 const getToolsetForTool = (toolName: string): string => {
   for (const [toolsetName, toolsetTools] of Object.entries(allToolsets)) {
-    if (toolsetTools.includes(toolName)) {
+    // Strip prefixes from toolset entries since config has full names but tool names are short
+    const toolsetWithoutPrefixes = toolsetTools.map(extractToolNameAfterPrefix);
+    if (toolsetWithoutPrefixes.includes(toolName)) {
       return toolsetName;
     }
   }
@@ -361,8 +387,13 @@ const createMcpServer = (): Server => {
     // Generate correlation ID for this request
     const correlationId = randomUUID().substring(0, 8);
 
-    // Find the matching tool
-    const tool = allTools.find((t) => t.name === name);
+    // Get user's toolset to ensure they have access to this tool
+    const toolsetOverride = sessionManager.getToolset(sessionId);
+    const toolset = getUserToolset(toolsetOverride);
+    const filteredTools = filterToolsByToolset(allTools, toolset);
+
+    // Find the matching tool by external name (without service prefix)
+    const tool = findToolByExternalName(name, filteredTools);
     if (!tool) {
       throw new Error(`Unknown tool: ${name}`);
     }
