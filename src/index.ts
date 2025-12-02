@@ -27,6 +27,10 @@ import {
 } from "./openapi-loader.js";
 import { SessionManager } from "./session.js";
 import { AnalyticsService } from "./analytics.js";
+import {
+  extractToolNameAfterPrefix,
+  findToolByExternalName,
+} from "./tool-utils.js";
 
 // Load environment variables
 config();
@@ -135,26 +139,6 @@ if (ignoreCertificateErrors) {
 // TypeScript interfaces
 
 // Helper functions
-
-/**
- * Extract part after the period from a tool name
- * Examples: "controller.jobs_list" -> "jobs_list", "jobs_list" -> "jobs_list"
- */
-const extractToolNameAfterPrefix = (name: string): string => {
-  const match = name.match(/\.(.+)$/);
-  return match ? match[1] : name;
-};
-
-/**
- * Find a tool by its external name (without service prefix)
- * This handles the case where MCP client calls a tool using the short name
- */
-const findToolByExternalName = (
-  externalName: string,
-  availableTools: AAPMcpToolDefinition[],
-): AAPMcpToolDefinition | undefined => {
-  return availableTools.find((tool) => tool.name === externalName);
-};
 
 const extractBearerToken = (
   authHeader: string | undefined,
