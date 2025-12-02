@@ -6,6 +6,7 @@ describe("Dashboard View", () => {
     allTools: [
       {
         name: "tool1",
+        fullName: "eda.tool1",
         service: "eda",
         size: 100,
         method: "GET",
@@ -21,6 +22,7 @@ describe("Dashboard View", () => {
       },
       {
         name: "tool2",
+        fullName: "controller.tool2",
         service: "controller",
         size: 200,
         method: "POST",
@@ -36,6 +38,7 @@ describe("Dashboard View", () => {
       },
       {
         name: "tool3",
+        fullName: "gateway.tool3",
         service: "gateway",
         size: 300,
         method: "GET",

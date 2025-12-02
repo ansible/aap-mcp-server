@@ -92,7 +92,7 @@ export const renderToolDetails = (data: ToolDetailsData): string => {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>${tool.name} - Tool Details</title>
+    <title>${tool.fullName} - Tool Details</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         body {
@@ -437,7 +437,7 @@ export const renderToolDetails = (data: ToolDetailsData): string => {
         ${renderHeader()}
 
         <div class="tool-header">
-            <h1>${tool.name}</h1>
+            <h1>${tool.fullName}</h1>
             <span class="service-badge service-${tool.service || "unknown"}">${tool.service || "unknown"}</span>
         </div>
 

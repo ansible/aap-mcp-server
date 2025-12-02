@@ -16,8 +16,8 @@ export const renderToolsList = (data: ToolsListData): string => {
   const toolRows = tools
     .map(
       (tool) => `
-    <tr data-name="${tool.name}" data-size="${tool.size}" data-service="${tool.service || "unknown"}" data-success-rate="${tool.successRate === "N/A" ? -1 : parseFloat(tool.successRate)}">
-      <td><a href="/tools/${encodeURIComponent(tool.name)}" style="color: #007acc; text-decoration: none;">${tool.name}</a></td>
+    <tr data-name="${tool.fullName}" data-size="${tool.size}" data-service="${tool.service || "unknown"}" data-success-rate="${tool.successRate === "N/A" ? -1 : parseFloat(tool.successRate)}">
+      <td><a href="/tools/${encodeURIComponent(tool.fullName)}" style="color: #007acc; text-decoration: none;">${tool.fullName}</a></td>
       <td>${tool.size}</td>
       <td><span class="service-${tool.service || "unknown"}">${tool.service || "unknown"}</span></td>
       <td><span class="success-rate ${tool.successRate === "N/A" ? "no-data" : parseFloat(tool.successRate) >= 90 ? "excellent" : parseFloat(tool.successRate) >= 70 ? "good" : "poor"}">${tool.successRate}</span></td>

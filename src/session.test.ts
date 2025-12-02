@@ -386,8 +386,10 @@ describe("SessionManager", () => {
         expect(sessionManager.getToolset("session-1")).toBe("test-toolset");
       });
 
-      it("should return undefined for non-existent session", () => {
-        expect(sessionManager.getToolset("non-existent")).toBeUndefined();
+      it("should throw error for non-existent session", () => {
+        expect(() => sessionManager.getToolset("non-existent")).toThrow(
+          "Invalid or missing session ID",
+        );
       });
     });
 

@@ -4,7 +4,7 @@ import { getLogIcon } from "./utils.js";
 
 export interface DashboardData {
   allTools: AAPMcpToolDefinition[];
-  allToolsets: Record<string, string[]>;
+  allToolsets: Record<string, AAPMcpToolDefinition[]>;
   recordApiQueries: boolean;
   allowWriteOperations: boolean;
 }
@@ -22,7 +22,9 @@ export const renderDashboard = (data: DashboardData): string => {
     { tools: AAPMcpToolDefinition[]; size: number }
   > = {};
   for (const [toolsetName, toolsetTools] of Object.entries(allToolsets)) {
-    const tools = allTools.filter((tool) => toolsetTools.includes(tool.name));
+    const tools = allTools.filter((tool) =>
+      toolsetTools.map((t) => t.fullName).includes(tool.fullName),
+    );
     toolsetStats[toolsetName] = {
       tools,
       size: tools.reduce((sum, tool) => sum + (tool.size || 0), 0),
