@@ -15,7 +15,7 @@ export default [
     ],
   },
   {
-    files: ["src/**/*.ts", "src/**/*.js"],
+    files: ["src/**/*.ts", "src/**/*.js", "scripts/**/*.ts", "scripts/**/*.js"],
     languageOptions: {
       parser: tsparser,
       parserOptions: {
