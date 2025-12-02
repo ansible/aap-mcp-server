@@ -27,15 +27,9 @@ import {
 } from "./openapi-loader.js";
 import { SessionManager } from "./session.js";
 import { AnalyticsService } from "./analytics.js";
-import {
-  extractToolNameAfterPrefix,
-  findToolByExternalName,
-} from "./tool-utils.js";
 
 // Load environment variables
 config();
-
-type Toolset = string[];
 
 interface AapMcpConfig {
   record_api_queries?: boolean;
@@ -65,7 +59,6 @@ const loadConfig = (): AapMcpConfig => {
 
 // Load configuration
 const localConfig = loadConfig();
-const allToolsets: Record<string, Toolset> = localConfig.toolsets;
 
 // Configuration constants (with priority: env var > config file > default)
 const CONFIG = {
@@ -191,50 +184,19 @@ const deleteSessionData = (sessionId: string): void => {
 };
 
 // Determine user toolset based on toolset name
-const getUserToolset = (toolset?: string): Toolset => {
-  // If toolset is provided, try to find it
-  if (toolset) {
-    const toolsetName = toolset.toLowerCase();
-    if (allToolsets[toolsetName]) {
-      return allToolsets[toolsetName];
-    } else {
-      console.warn(
-        `${getTimestamp()} Unknown toolset: ${toolset}, defaulting to 'all' toolset`,
-      );
-    }
-  }
-
-  // Default to "all" toolset if no toolset provided or toolset not found
-  if (allToolsets["all"]) {
-    return allToolsets["all"];
-  }
-
-  // If "all" toolset doesn't exist, return all available tools
-  console.warn(`${getTimestamp()} No 'all' toolset found, returning all tools`);
-  return allTools.map((tool) => tool.name);
-};
-
-// Filter tools based on toolset
-const filterToolsByToolset = (
-  tools: AAPMcpToolDefinition[],
-  toolset: Toolset,
-): AAPMcpToolDefinition[] => {
-  // Strip prefixes from toolset entries for comparison since config has full names
-  // but tools now only have short names (e.g., config has "controller.jobs_list" but tool.name is "jobs_list")
-  const toolsetWithoutPrefixes = toolset.map(extractToolNameAfterPrefix);
-  return tools.filter((tool) => toolsetWithoutPrefixes.includes(tool.name));
+const getToolsByToolset = (toolset: string): AAPMcpToolDefinition[] => {
+  return allToolsets[toolset];
 };
 
 // Find which toolset a tool belongs to (returns first match or "uncategorized")
 const getToolsetForTool = (toolName: string): string => {
   for (const [toolsetName, toolsetTools] of Object.entries(allToolsets)) {
-    // Strip prefixes from toolset entries since config has full names but tool names are short
-    const toolsetWithoutPrefixes = toolsetTools.map(extractToolNameAfterPrefix);
-    if (toolsetWithoutPrefixes.includes(toolName)) {
+    if (toolsetTools.map((t) => t.name).includes(toolName)) {
       return toolsetName;
     }
   }
-  return "uncategorized";
+
+  throw new Error("Invalid tool name");
 };
 
 // Generate tools from OpenAPI specs
@@ -243,6 +205,7 @@ const generateTools = async (): Promise<AAPMcpToolDefinition[]> => {
   let rawToolList: AAPMcpToolDefinition[] = [];
 
   for (const spec of openApiSpecs) {
+    if (!spec.service) throw new Error("service key should not be undefined");
     console.log(`${getTimestamp()}   Loading ${spec.service}...`);
     let oas = new OASNormalize(spec.spec);
     const derefedDocument = await oas.deref();
@@ -277,6 +240,8 @@ const generateTools = async (): Promise<AAPMcpToolDefinition[]> => {
       );
     }
   }
+
+  rawToolList.map((e) => (e.fullName = `${e.service}.${e.name}`));
 
   // Calculate size for each tool and sort by size
   const toolsWithSize: AAPMcpToolDefinition[] = rawToolList.map((tool) => {
@@ -338,20 +303,17 @@ const createMcpServer = (): Server => {
     // Get the session ID from the transport context
     const sessionId = extra?.sessionId;
 
-    // Get toolset from session data
-    let toolsetOverride: string | undefined;
-    if (sessionId && sessionManager.has(sessionId)) {
-      toolsetOverride = sessionManager.getToolset(sessionId);
+    if (!sessionId || !sessionManager.has(sessionId)) {
+      throw new Error("Invalid or missing session ID");
     }
+    // Get toolset from session data
+    const toolset = sessionManager.getToolset(sessionId);
 
     // Determine user toolset based on toolset from session
-    const toolset = getUserToolset(toolsetOverride);
-
-    // Filter tools based on toolset
-    const filteredTools = filterToolsByToolset(allTools, toolset);
+    const availableTools = getToolsByToolset(toolset);
 
     return {
-      tools: filteredTools.map((tool) => ({
+      tools: availableTools.map((tool) => ({
         name: tool.name,
         description: tool.description,
         inputSchema: tool.inputSchema,
@@ -372,12 +334,11 @@ const createMcpServer = (): Server => {
     const correlationId = randomUUID().substring(0, 8);
 
     // Get user's toolset to ensure they have access to this tool
-    const toolsetOverride = sessionManager.getToolset(sessionId);
-    const toolset = getUserToolset(toolsetOverride);
-    const filteredTools = filterToolsByToolset(allTools, toolset);
+    const toolset = sessionManager.getToolset(sessionId);
+    const availableTools = getToolsByToolset(toolset);
 
     // Find the matching tool by external name (without service prefix)
-    const tool = findToolByExternalName(name, filteredTools);
+    const tool = availableTools.find((t) => t.name === name);
     if (!tool) {
       throw new Error(`Unknown tool: ${name}`);
     }
@@ -579,7 +540,7 @@ app.use(
 const mcpPostHandler = async (
   req: express.Request,
   res: express.Response,
-  toolsetOverride?: string,
+  toolset: string = "all",
 ) => {
   const sessionId = req.headers["mcp-session-id"] as string;
   const authHeader = req.headers["authorization"] as string;
@@ -611,7 +572,6 @@ const mcpPostHandler = async (
 
                 // Store session data with userAgent, toolset, and transport
                 const userAgent = req.headers["user-agent"] || "unknown";
-                const toolset = toolsetOverride || "all";
                 storeSessionData(
                   sessionId,
                   token,
@@ -713,13 +673,8 @@ const mcpPostHandler = async (
 };
 
 // MCP GET endpoint for streaming data
-const mcpGetHandler = async (
-  req: express.Request,
-  res: express.Response,
-  _toolsetOverride?: string,
-) => {
+const mcpGetHandler = async (req: express.Request, res: express.Response) => {
   const sessionId = req.headers["mcp-session-id"] as string;
-  const _authHeader = req.headers["authorization"] as string;
 
   if (!sessionId || !sessionManager.has(sessionId)) {
     res.status(400).send("Invalid or missing session ID");
@@ -745,7 +700,6 @@ const mcpGetHandler = async (
 const mcpDeleteHandler = async (
   req: express.Request,
   res: express.Response,
-  _toolsetOverride?: string,
 ) => {
   const sessionId = req.headers["mcp-session-id"] as string;
 
@@ -772,7 +726,35 @@ const mcpDeleteHandler = async (
   }
 };
 
+const loadToolsetsFromCfg = (
+  localConfig: AapMcpConfig,
+): Record<string, AAPMcpToolDefinition[]> => {
+  const entries = Object.entries(localConfig.toolsets).map(
+    ([name, cfgToolList]) => [
+      name,
+      allTools.filter((t) => cfgToolList.includes(t.fullName)),
+    ],
+  );
+
+  const allListWithDup = entries
+    .map((e) => e[1])
+    .flat() as AAPMcpToolDefinition[];
+
+  const allList = allListWithDup.reduce((acc: AAPMcpToolDefinition[], e) => {
+    console.log(`${e.name}`);
+    const existingToolsByName: string[] = acc.map((t) => t.name);
+    if (!existingToolsByName.includes(e.name)) acc.push(e);
+    return acc;
+  }, [] as AAPMcpToolDefinition[]);
+
+  // Inject the "all" toolset
+  const allToolsets = Object.fromEntries([...entries, ...[["all", allList]]]);
+
+  return allToolsets;
+};
+
 const allTools: AAPMcpToolDefinition[] = await generateTools();
+const allToolsets = loadToolsetsFromCfg(localConfig);
 
 // Web UI routes (only enabled if enable_ui is true)
 if (enableUI) {
@@ -805,7 +787,7 @@ app.get("/:toolset/mcp", (req, res) => {
   console.log(
     `${getTimestamp()} Toolset-specific GET request for toolset: ${toolset}`,
   );
-  return mcpGetHandler(req, res, toolset);
+  return mcpGetHandler(req, res);
 });
 
 app.delete("/:toolset/mcp", (req, res) => {
@@ -813,7 +795,7 @@ app.delete("/:toolset/mcp", (req, res) => {
   console.log(
     `${getTimestamp()} Toolset-specific DELETE request for toolset: ${toolset}`,
   );
-  return mcpDeleteHandler(req, res, toolset);
+  return mcpDeleteHandler(req, res);
 });
 
 app.post("/mcp/:toolset", (req, res) => {
@@ -829,7 +811,7 @@ app.get("/mcp/:toolset", (req, res) => {
   console.log(
     `${getTimestamp()} Toolset-specific GET request for toolset: ${toolset}`,
   );
-  return mcpGetHandler(req, res, toolset);
+  return mcpGetHandler(req, res);
 });
 
 app.delete("/mcp/:toolset", (req, res) => {
@@ -837,7 +819,7 @@ app.delete("/mcp/:toolset", (req, res) => {
   console.log(
     `${getTimestamp()} Toolset-specific DELETE request for toolset: ${toolset}`,
   );
-  return mcpDeleteHandler(req, res, toolset);
+  return mcpDeleteHandler(req, res);
 });
 
 // Health check endpoint (always enabled)

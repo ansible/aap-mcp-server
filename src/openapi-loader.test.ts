@@ -14,6 +14,8 @@ const createMockTool = (
   overrides: Partial<AAPMcpToolDefinition> = {},
 ): AAPMcpToolDefinition => ({
   name: "test-tool",
+  service: "foobar",
+  fullName: "foobar.test-tool",
   description: "Test tool",
   inputSchema: {},
   pathTemplate: "/test/path",

@@ -21,7 +21,7 @@ interface ToolsetToolsData {
   displayName: string;
   filteredTools: AAPMcpToolDefinition[];
   totalSize: number;
-  allToolsets: Record<string, string[]>;
+  allToolsets: Record<string, AAPMcpToolDefinition[]>;
 }
 
 export const renderToolsetsOverview = (data: ToolsetsOverviewData): string => {
@@ -175,7 +175,7 @@ export const renderToolsetTools = (data: ToolsetToolsData): string => {
     .map(
       (tool) => `
     <tr>
-      <td><a href="/tools/${encodeURIComponent(tool.name)}" style="color: #007acc; text-decoration: none;">${tool.name}</a></td>
+      <td><a href="/tools/${encodeURIComponent(tool.fullName)}" style="color: #007acc; text-decoration: none;">${tool.fullName}</a></td>
       <td>${tool.size}</td>
       <td><span class="service-${tool.service || "unknown"}">${tool.service || "unknown"}</span></td>
     </tr>

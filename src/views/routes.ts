@@ -102,19 +102,11 @@ const getToolsetColor = (toolsetName: string): string => {
   return colors[hash % colors.length];
 };
 
-// Filter tools based on toolset
-const filterToolsByToolset = (
-  tools: AAPMcpToolDefinition[],
-  toolset: string[],
-): AAPMcpToolDefinition[] => {
-  return tools.filter((tool) => toolset.includes(tool.name));
-};
-
 // Configure web UI routes
 export const configureWebUIRoutes = (
   app: express.Application,
   allTools: AAPMcpToolDefinition[],
-  allToolsets: Record<string, string[]>,
+  allToolsets: Record<string, AAPMcpToolDefinition[]>,
   recordApiQueries: boolean,
   allowWriteOperations: boolean,
   logEntriesSizeLimit: number,
@@ -162,21 +154,21 @@ export const configureWebUIRoutes = (
   });
 
   // Individual tool details endpoint
-  app.get("/tools/:name", async (req, res) => {
+  app.get("/tools/:fullName", async (req, res) => {
     try {
-      const toolName = req.params.name;
+      const toolFullName = req.params.fullName;
 
       // Find the tool
-      const tool = allTools.find((t) => t.name === toolName);
+      const tool = allTools.find((t) => t.fullName === toolFullName);
       if (!tool) {
         return res.status(404).json({
           error: "Tool not found",
-          message: `Tool '${toolName}' does not exist`,
+          message: `Tool '${toolFullName}' does not exist`,
         });
       }
 
       // Get log entries for this tool
-      const logEntries = await getToolLogEntries(toolName);
+      const logEntries = await getToolLogEntries(toolFullName);
       const last10Calls = logEntries.slice(-10).reverse(); // Get last 10, most recent first
 
       // Calculate error code summary
@@ -206,7 +198,7 @@ export const configureWebUIRoutes = (
       // Check which toolsets have access to this tool
       const toolsetsWithAccess: ToolsetWithAccess[] = [];
       for (const [toolsetName, toolsetTools] of Object.entries(allToolsets)) {
-        if (toolsetTools.includes(toolName)) {
+        if (toolsetTools.map((t) => t.fullName).includes(toolFullName)) {
           toolsetsWithAccess.push({
             name: toolsetName,
             displayName:
@@ -279,7 +271,7 @@ export const configureWebUIRoutes = (
           displayName:
             toolsetName.charAt(0).toUpperCase() + toolsetName.slice(1),
           description: `${toolsetName.charAt(0).toUpperCase() + toolsetName.slice(1)} toolset with specific tool access`,
-          tools: filterToolsByToolset(allTools, toolsetTools),
+          tools: toolsetTools,
           color: getToolsetColor(toolsetName),
           toolCount: 0, // Will be calculated below
           totalSize: 0, // Will be calculated below
@@ -324,21 +316,11 @@ export const configureWebUIRoutes = (
     try {
       const toolsetName = req.params.name.toLowerCase();
 
-      // Get the toolset based on the name
-      const toolset = allToolsets[toolsetName];
-      if (!toolset) {
-        const availableToolsets = Object.keys(allToolsets).join(", ");
-        return res.status(404).json({
-          error: "Toolset not found",
-          message: `Toolset '${req.params.name}' does not exist. Available toolsets: ${availableToolsets}`,
-        });
-      }
-
       const displayName =
         toolsetName.charAt(0).toUpperCase() + toolsetName.slice(1);
 
       // Filter tools based on toolset
-      const filteredTools = filterToolsByToolset(allTools, toolset);
+      const filteredTools = allToolsets[toolsetName];
 
       // Calculate total size
       const totalSize = filteredTools.reduce(
@@ -595,17 +577,14 @@ export const configureWebUIRoutes = (
       // Filter tools by toolset if specified
       let toolsToDisplay = allTools;
       if (toolsetFilter && allToolsets[toolsetFilter]) {
-        toolsToDisplay = filterToolsByToolset(
-          allTools,
-          allToolsets[toolsetFilter],
-        );
+        toolsToDisplay = allToolsets[toolsetFilter];
       }
 
       // Helper function to find toolsets for a tool
       const getToolsetsForTool = (toolName: string): string[] => {
         const toolsets: string[] = [];
         for (const [toolsetName, toolsetTools] of Object.entries(allToolsets)) {
-          if (toolsetTools.includes(toolName)) {
+          if (toolsetTools.map((t) => t.fullName).includes(toolName)) {
             toolsets.push(toolsetName);
           }
         }
@@ -620,14 +599,14 @@ export const configureWebUIRoutes = (
             acc[service] = [];
           }
 
-          const toolsets = getToolsetsForTool(tool.name);
+          const toolsets = getToolsetsForTool(tool.fullName);
 
           acc[service].push({
             path: tool.pathTemplate,
             method: tool.method.toUpperCase(),
-            name: tool.name,
+            name: tool.fullName,
             description: tool.description,
-            toolName: tool.name,
+            toolName: tool.fullName,
             toolsets,
             logs: tool.logs || [],
           });

@@ -96,6 +96,7 @@ export interface McpToolLogEntry {
 }
 
 export interface AAPMcpToolDefinition extends McpToolDefinition {
+  fullName: string;
   deprecated: boolean;
   service?: string;
   originalDescription?: string;
