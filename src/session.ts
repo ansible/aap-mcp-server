@@ -136,13 +136,13 @@ export class SessionManager {
     return undefined;
   }
 
-  getToolset(sessionId: string): string | undefined {
+  getToolset(sessionId: string): string {
     const session = this.sessions[sessionId];
-    if (session) {
-      this.resetTimeout(sessionId);
-      return session.toolset;
+    if (!session) {
+      throw new Error("Invalid or missing session ID");
     }
-    return undefined;
+    this.resetTimeout(sessionId);
+    return session.toolset;
   }
 
   getUserAgent(sessionId: string): string | undefined {

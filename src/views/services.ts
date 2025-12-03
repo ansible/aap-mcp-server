@@ -201,7 +201,7 @@ export const renderServiceTools = (data: ServiceToolsData): string => {
       const logBadges = Object.entries(logCounts)
         .map(([severity, count]) => {
           const icon = getLogIcon(severity);
-          return `<a href="/tools/${encodeURIComponent(tool.name)}" class="log-badge ${severity}">
+          return `<a href="/tools/${encodeURIComponent(tool.fullName)}" class="log-badge ${severity}">
         <span class="log-icon ${severity}">${icon}</span>
         ${count}
       </a>`;
@@ -210,7 +210,7 @@ export const renderServiceTools = (data: ServiceToolsData): string => {
 
       return `
     <tr>
-      <td><a href="/tools/${encodeURIComponent(tool.name)}" style="color: #007acc; text-decoration: none;">${tool.name}</a></td>
+      <td><a href="/tools/${encodeURIComponent(tool.fullName)}" style="color: #007acc; text-decoration: none;">${tool.fullName}</a></td>
       <td>${tool.size}</td>
       <td><span class="method-${tool.method.toLowerCase()}">${tool.method}</span></td>
       <td class="logs-column">${logBadges || '<span class="no-logs">—</span>'}</td>
@@ -264,7 +264,7 @@ export const renderServiceTools = (data: ServiceToolsData): string => {
             ${group.tools
               .map(
                 (tool) =>
-                  `<a href="/tools/${encodeURIComponent(tool.name)}" class="tool-link">${tool.name}</a>`,
+                  `<a href="/tools/${encodeURIComponent(tool.fullName)}" class="tool-link">${tool.fullName}</a>`,
               )
               .join("")}
           </div>

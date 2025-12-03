@@ -16,7 +16,7 @@ export interface EndpointData {
 export interface EndpointsOverviewData {
   allTools: AAPMcpToolDefinition[];
   endpointsByService: Record<string, EndpointData[]>;
-  allToolsets?: Record<string, string[]>;
+  allToolsets?: Record<string, AAPMcpToolDefinition[]>;
   selectedToolset?: string;
 }
 
