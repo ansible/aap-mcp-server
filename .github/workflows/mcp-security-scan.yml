@@ -1,0 +1,29 @@
+name: MCP Security Scan
+
+# TODO: Configure trigger conditions
+on:
+  workflow_dispatch: # Manual trigger for now
+
+permissions:
+  contents: read
+
+jobs:
+  mcp-security-scan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Placeholder - MCP Security Scanner
+        run: |
+          echo "TODO: Implement MCP security scanning"
+          echo "Reference: https://github.com/sidhpurwala-huzaifa/mcp-security-scanner"
+          echo ""
+          echo "Steps needed:"
+          echo "  1. Setup Python 3.10+"
+          echo "  2. Install mcp-security-scanner"
+          echo "  3. Start MCP server"
+          echo "  4. Run security scan"
+          echo "  5. Upload results"
