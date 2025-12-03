@@ -16,10 +16,7 @@ import { extractToolsFromApi } from "./extract-tools.js";
 import { readFileSync, writeFileSync } from "fs";
 import { join } from "path";
 import * as yaml from "js-yaml";
-import { ToolLogger } from "./logger.js";
 import { metricsService } from "./metrics.js";
-// View imports are now handled by the routes module
-import { configureWebUIRoutes } from "./views/routes.js";
 import {
   loadOpenApiSpecs,
   type AAPMcpToolDefinition,
@@ -32,9 +29,7 @@ import { AnalyticsService } from "./analytics.js";
 config();
 
 interface AapMcpConfig {
-  record_api_queries?: boolean;
   "ignore-certificate-errors"?: boolean;
-  enable_ui?: boolean;
   enable_metrics?: boolean;
   allow_write_operations?: boolean;
   base_url?: string;
@@ -77,9 +72,6 @@ const CONFIG = {
 // Initialize analytics service (always instantiated, but only enabled if key provided)
 const analyticsService = new AnalyticsService();
 
-// Log entries size limit for /logs endpoint
-const logEntriesSizeLimit = 10000;
-
 // Helper function to get boolean configuration with environment variable override
 const getBooleanConfig = (
   envVar: string,
@@ -90,18 +82,10 @@ const getBooleanConfig = (
     : (configValue ?? false);
 };
 
-// Get configuration settings (priority: env var > config file > default)
-const recordApiQueries = getBooleanConfig(
-  "RECORD_API_QUERIES",
-  localConfig.record_api_queries,
-);
-
 const ignoreCertificateErrors = getBooleanConfig(
   "IGNORE_CERTIFICATE_ERRORS",
   localConfig["ignore-certificate-errors"],
 );
-
-const enableUI = getBooleanConfig("ENABLE_UI", localConfig.enable_ui);
 
 const allowWriteOperations = getBooleanConfig(
   "ALLOW_WRITE_OPERATIONS",
@@ -281,9 +265,6 @@ const generateTools = async (): Promise<AAPMcpToolDefinition[]> => {
   return toolsWithSize;
 };
 
-// Initialize logger only if recording is enabled
-const toolLogger = recordApiQueries ? new ToolLogger() : null;
-
 // Factory function to create a new Server instance with request handlers
 // Each transport gets its own Server instance to prevent session routing conflicts
 const createMcpServer = (): Server => {
@@ -415,35 +396,14 @@ const createMcpServer = (): Server => {
         result = await response.text();
       }
 
-      // Log response with timing
-      const duration = ((Date.now() - _startTime) / 1000).toFixed(2);
-      console.log(
-        `${getTimestamp()} [req:${correlationId}|toolset:${toolToolset}] ${tool.name} → ${response.status} ${response.statusText} (${duration}s)`,
-      );
-
-      // Log the tool access (only if recording is enabled)
-      if (recordApiQueries && toolLogger) {
-        // Add toolset information to the tool for metrics
-        const toolWithToolset = {
-          ...tool,
-          toolset: toolToolset,
-        };
-        await toolLogger.logToolAccess(
-          toolWithToolset,
-          fullUrl,
-          {
-            method: tool.method.toUpperCase(),
-            userAgent: userAgent,
-          },
-          result,
-          response.status,
-          _startTime,
-        );
-      }
-
       const executionTimeMs = Date.now() - _startTime;
       const parameterLength = JSON.stringify(args).length;
       const token = sessionManager.getToken(sessionId);
+
+      // Log response with timing
+      console.log(
+        `${getTimestamp()} [req:${correlationId}|toolset:${toolToolset}] ${tool.name} → ${response.status} ${response.statusText} (${executionTimeMs}ms)`,
+      );
 
       analyticsService.trackMcpToolCalled(
         tool.name,
@@ -454,6 +414,13 @@ const createMcpServer = (): Server => {
         response.status,
         executionTimeMs,
         token,
+      );
+      metricsService.recordToolExecution(
+        tool.name,
+        tool.service || "unknown",
+        toolset,
+        response.status,
+        executionTimeMs,
       );
 
       return {
@@ -466,39 +433,17 @@ const createMcpServer = (): Server => {
       };
     } catch (error) {
       // Log the error with timing
-      const duration = ((Date.now() - _startTime) / 1000).toFixed(2);
-      const statusInfo = response
-        ? `${response.status} ${response.statusText}`
-        : "No Response";
-      console.error(
-        `${getTimestamp()} [req:${correlationId}|toolset:${toolToolset}] ${tool.name} → ${statusInfo} (${duration}s) - ERROR: ${error instanceof Error ? error.message : String(error)}`,
-      );
-
-      // Log the failed tool access (only if recording is enabled)
-      if (recordApiQueries && toolLogger) {
-        // Add toolset information to the tool for metrics
-        const toolWithToolset = {
-          ...tool,
-          toolset: toolToolset,
-        };
-        await toolLogger.logToolAccess(
-          toolWithToolset,
-          fullUrl,
-          {
-            method: tool.method.toUpperCase(),
-            userAgent: userAgent,
-          },
-          { error: error instanceof Error ? error.message : String(error) },
-          response?.status || 0,
-          _startTime,
-        );
-      }
-
-      // Track failed tool call (network/other errors)
+      const statusInfo = response;
       const executionTimeMs = Date.now() - _startTime;
       const parameterLength = JSON.stringify(args).length;
       const token = sessionManager.getToken(sessionId);
       const httpStatus = response?.status || 0;
+
+      console.error(
+        `${getTimestamp()} [req:${correlationId}|toolset:${toolToolset}] ${tool.name} → ${statusInfo} (${executionTimeMs}ms) - ERROR: ${error instanceof Error ? error.message : String(error)}`,
+      );
+
+      // Track failed tool call (network/other errors)
 
       analyticsService.trackMcpToolCalled(
         tool.name,
@@ -509,6 +454,12 @@ const createMcpServer = (): Server => {
         httpStatus,
         executionTimeMs,
         token,
+      );
+      metricsService.recordToolError(
+        tool.name,
+        tool.service || "unknown",
+        toolset,
+        httpStatus,
       );
 
       throw new Error(
@@ -756,19 +707,6 @@ const loadToolsetsFromCfg = (
 const allTools: AAPMcpToolDefinition[] = await generateTools();
 const allToolsets = loadToolsetsFromCfg(localConfig);
 
-// Web UI routes (only enabled if enable_ui is true)
-if (enableUI) {
-  // Configure web UI routes from separate module
-  configureWebUIRoutes(
-    app,
-    allTools,
-    allToolsets,
-    recordApiQueries,
-    allowWriteOperations,
-    logEntriesSizeLimit,
-  );
-}
-
 // Set up routes
 app.post("/mcp", (req, res) => mcpPostHandler(req, res));
 app.get("/mcp", (req, res) => mcpGetHandler(req, res));
@@ -861,11 +799,9 @@ async function main(): Promise<void> {
   console.log(
     `  Write operations: ${allowWriteOperations ? "ENABLED" : "DISABLED"}`,
   );
-  console.log(`  API recording: ${recordApiQueries ? "ENABLED" : "DISABLED"}`);
   console.log(
     `  Certificate validation: ${ignoreCertificateErrors ? "DISABLED" : "ENABLED"}`,
   );
-  console.log(`  Web UI: ${enableUI ? "ENABLED" : "DISABLED"}`);
   console.log(`  Metrics: ${enableMetrics ? "ENABLED" : "DISABLED"}`);
   console.log("");
   console.log("───────────────────────────────────────────────────────────");
@@ -905,9 +841,6 @@ async function main(): Promise<void> {
     console.log("");
     console.log("Available endpoints:");
     console.log(`  • MCP endpoint: http://localhost:${PORT}/mcp`);
-    if (enableUI) {
-      console.log(`  • Web UI: http://localhost:${PORT}`);
-    }
     if (enableMetrics) {
       console.log(`  • Metrics: http://localhost:${PORT}/metrics`);
     }

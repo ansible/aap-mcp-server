@@ -44,14 +44,8 @@ The configuration file supports the following options:
 #### Basic Settings
 
 ```yaml
-# Enable API query logging (optional, defaults to false)
-record_api_queries: true
-
 # Disable HTTPS certificate validation for development (optional, defaults to false)
 ignore-certificate-errors: true
-
-# Enable web UI dashboard (optional, defaults to false)
-enable_ui: true
 
 # AAP base URL (optional, defaults to https://localhost)
 # Lower priority than BASE_URL environment variable
@@ -160,17 +154,6 @@ npm run dev
 npm start
 ```
 
-### Web UI Dashboard
-
-When `enable_ui: true` is set in the configuration, the service provides a web interface:
-
-- **Dashboard**: `http://localhost:3000/` - Service overview and statistics
-- **Tools List**: `http://localhost:3000/tools` - Browse all available tools
-- **Toolsets**: `http://localhost:3000/toolset` - View tools by toolset
-- **Services**: `http://localhost:3000/services` - Service-specific tool listings
-- **Logs**: `http://localhost:3000/logs` - API query logs (when logging is enabled)
-- **Health**: `http://localhost:3000/api/v1/health` - Service health check
-
 ### MCP Endpoints
 
 The service provides several MCP endpoints:
@@ -246,7 +229,7 @@ The service generates tools from AAP OpenAPI specifications for:
 - **Gateway**: User and team management, organizations, role definitions
 - **Galaxy**: Collection management and versions
 
-Tool availability depends on your configured toolsets and user permissions. When the web UI is enabled, you can browse available tools at `http://localhost:3000/tools`.
+Tool availability depends on your configured toolsets and user permissions.
 
 ## Prometheus Metrics
 
@@ -285,12 +268,9 @@ http://localhost:3000/metrics
 - **Flexible Configuration**: YAML-based configuration with environment variable overrides
 - **Service Selection**: Enable/disable specific AAP services
 - **Local File Support**: Load OpenAPI specs from local files or remote URLs
-- **Web UI Dashboard**: Optional web interface for browsing tools and logs
 - **Role-based Access Control**: Custom toolsets and permission-based tool filtering
 - **Session Management**: Token validation and user permission detection
-- **API Query Logging**: Optional logging of all tool usage
 - **Prometheus Metrics**: Comprehensive metrics for monitoring and observability
-- **Health Monitoring**: Built-in health check endpoint for container orchestration
 
 ### Configuration Design
 
@@ -304,7 +284,7 @@ The configuration system follows a hierarchical approach:
 2. **YAML Configuration File** (`aap-mcp.yaml`)
    - Service definitions with custom URLs and local file paths
    - Custom toolsets for role-based access
-   - Feature toggles (UI, logging, certificate validation)
+   - Feature toggles (certificate validation, write operations)
 
 3. **Built-in Defaults** (lowest priority)
    - Default OpenAPI specification URLs for each service
@@ -397,25 +377,6 @@ yq eval . aap-mcp.yaml
 
 # Validate against sample
 diff aap-mcp.sample.yaml aap-mcp.yaml
-```
-
-### Logs and Debugging
-
-The service provides detailed console logging for:
-
-- Configuration loading and validation
-- OpenAPI specification loading (local files vs URLs)
-- Service enabling/disabling
-- Session initialization and cleanup
-- Tool filtering by toolset
-- API request execution and responses
-
-Enable additional logging:
-
-```yaml
-# In aap-mcp.yaml
-record_api_queries: true # Enable API query logging
-enable_ui: true # Access logs via web UI at /logs
 ```
 
 ### Health Monitoring

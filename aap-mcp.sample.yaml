@@ -1,12 +1,6 @@
 ---
-# Configuration for API query recording
-# record_api_queries: false
-
 # Configuration for HTTPS certificate validation
 # ignore-certificate-errors: false
-
-# Configuration for Web UI (defaults to false if not specified)
-# enable_ui: false
 
 # Configuration for Prometheus metrics endpoint (defaults to false if not specified)
 # enable_metrics: true
