@@ -37,7 +37,6 @@ export const loadToolsetsFromCfg = (
     .flat() as AAPMcpToolDefinition[];
 
   const allList = allListWithDup.reduce((acc: AAPMcpToolDefinition[], e) => {
-    console.log(`${e.name}`);
     const existingToolsByName: string[] = acc.map((t) => t.name);
     if (!existingToolsByName.includes(e.name)) acc.push(e);
     return acc;
