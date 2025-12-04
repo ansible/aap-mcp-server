@@ -21,7 +21,7 @@ RUN microdnf install --setopt=install_weak_deps=0 --nodocs -y \
 # RUN . /opt/rh/gcc-toolset-13/enable && make
 
 # Multi-stage build for AAP MCP Service
-FROM registry.redhat.io/ubi9/nodejs-22-minimal@sha256:6ddab6c88ac7fdb81db5e903fa0c6664ecc69ed93b5f0fb12ea3824add18fa1b AS builder
+FROM registry.redhat.io/ubi9/nodejs-22-minimal@sha256:52fe23eb5ad4a98609666e629dfc267e3dd08a45105dc25c783acebd10c2b305 AS builder
 
 USER root
 
@@ -48,7 +48,7 @@ RUN npm install
 RUN npm run build
 
 # Production stage
-FROM registry.redhat.io/ubi9/nodejs-22-minimal@sha256:6ddab6c88ac7fdb81db5e903fa0c6664ecc69ed93b5f0fb12ea3824add18fa1b AS production
+FROM registry.redhat.io/ubi9/nodejs-22-minimal@sha256:52fe23eb5ad4a98609666e629dfc267e3dd08a45105dc25c783acebd10c2b305 AS production
 
 USER root
 
