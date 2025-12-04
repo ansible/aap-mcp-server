@@ -1,29 +1,421 @@
 name: MCP Security Scan
 
-# TODO: Configure trigger conditions
+# Run on daily schedule and manual trigger
 on:
-  workflow_dispatch: # Manual trigger for now
+  schedule:
+    # Run daily at 2 AM UTC
+    - cron: "0 2 * * *"
+  workflow_dispatch:
 
+# Restrict GITHUB_TOKEN permissions to minimal required access
 permissions:
   contents: read
 
 jobs:
+  generate-matrix:
+    runs-on: ubuntu-latest
+    outputs:
+      endpoints: ${{ steps.set-matrix.outputs.endpoints }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Extract toolsets from config
+        id: set-matrix
+        run: |
+          # Extract toolset names from aap-mcp.sample.yaml
+          # Only get uncommented toolsets (lines that start with two spaces and a word character)
+          TOOLSETS=$(grep -E '^  [a-z_]+:' aap-mcp.sample.yaml | sed 's/:$//' | sed 's/^  //')
+
+          # Convert to JSON array with path and name
+          ENDPOINTS="["
+          FIRST=true
+          while IFS= read -r toolset; do
+            if [ -n "$toolset" ]; then
+              # Convert snake_case to Title Case for display
+              NAME=$(echo "$toolset" | sed 's/_/ /g' | awk '{for(i=1;i<=NF;i++) $i=toupper(substr($i,1,1)) tolower(substr($i,2))}1')
+
+              if [ "$FIRST" = true ]; then
+                ENDPOINTS="${ENDPOINTS}{\"path\":\"$toolset\",\"name\":\"$NAME\"}"
+                FIRST=false
+              else
+                ENDPOINTS="${ENDPOINTS},{\"path\":\"$toolset\",\"name\":\"$NAME\"}"
+              fi
+            fi
+          done <<< "$TOOLSETS"
+          ENDPOINTS="${ENDPOINTS}]"
+
+          echo "endpoints=$ENDPOINTS" >> $GITHUB_OUTPUT
+          echo "Generated matrix for endpoints:"
+          echo "$ENDPOINTS" | jq .
+
   mcp-security-scan:
+    needs: generate-matrix
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        endpoint: ${{ fromJson(needs.generate-matrix.outputs.endpoints) }}
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Placeholder - MCP Security Scanner
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20.x"
+          cache: "npm"
+
+      - name: Install Node.js dependencies
+        run: npm ci --include=dev
+
+      - name: Build project
+        run: npm run build --if-present
+
+      - name: Start mock AAP server
         run: |
-          echo "TODO: Implement MCP security scanning"
-          echo "Reference: https://github.com/sidhpurwala-huzaifa/mcp-security-scanner"
+          npx tsx scripts/mock-aap-server.ts &
+          echo "MOCK_AAP_PID=$!" >> $GITHUB_ENV
+        working-directory: ${{ github.workspace }}
+
+      - name: Wait for mock AAP server
+        run: |
+          for i in {1..10}; do
+            if curl -s http://localhost:8080/health > /dev/null 2>&1; then
+              echo "Mock AAP server is ready"
+              break
+            fi
+            if [ $i -eq 10 ]; then
+              echo "Mock AAP server failed to start"
+              exit 1
+            fi
+            sleep 1
+          done
+
+      - name: Create MCP configuration
+        run: cp aap-mcp.sample.yaml aap-mcp.yaml
+
+      - name: Start MCP server
+        env:
+          BASE_URL: http://localhost:8080
+          BEARER_TOKEN_OAUTH2_AUTHENTICATION: test-token
+          MCP_PORT: 3000
+        run: |
+          npm start &
+          echo "MCP_PID=$!" >> $GITHUB_ENV
+        working-directory: ${{ github.workspace }}
+
+      - name: Wait for MCP server
+        run: |
+          for i in {1..30}; do
+            if curl -s http://localhost:3000/api/v1/health > /dev/null 2>&1; then
+              echo "MCP server is ready"
+              break
+            fi
+            if [ $i -eq 30 ]; then
+              echo "MCP server failed to start"
+              exit 1
+            fi
+            sleep 1
+          done
+
+      - name: Verify servers are running
+        run: |
+          echo "Testing Mock AAP server..."
+          curl -v http://localhost:8080/health
           echo ""
-          echo "Steps needed:"
-          echo "  1. Setup Python 3.10+"
-          echo "  2. Install mcp-security-scanner"
-          echo "  3. Start MCP server"
-          echo "  4. Run security scan"
-          echo "  5. Upload results"
+          echo "Testing MCP server..."
+          curl -v http://localhost:3000/api/v1/health
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Cache Python dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-mcp-scanner-${{ hashFiles('**/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-mcp-scanner-
+            ${{ runner.os }}-pip-
+
+      - name: Install MCP Security Scanner
+        run: |
+          git clone https://github.com/sidhpurwala-huzaifa/mcp-security-scanner.git /tmp/mcp-scanner
+          cd /tmp/mcp-scanner
+          pip install -r requirements.txt
+          pip install -e .
+
+          # Copy the scanner spec schema to our results directory for enrichment
+          cp src/mcp_scanner/scanner_specs.schema ${{ github.workspace }}/scanner_specs.schema
+
+      - name: Create results directory
+        run: |
+          mkdir -p mcp-scan-results
+          chmod 777 mcp-scan-results
+
+      - name: Run MCP Security Scan (JSON Output)
+        id: mcp-scan-json
+        continue-on-error: true
+        run: |
+          echo "Running MCP Security Scanner for ${{ matrix.endpoint.name }}..."
+          mcp-scan scan \
+            --url http://localhost:3000/mcp/${{ matrix.endpoint.path }} \
+            --transport http \
+            --auth-type bearer \
+            --auth-token test-token \
+            --format json \
+            --output mcp-scan-results/scan-report.json \
+            --verbose
+
+      - name: Display scan summary
+        if: always()
+        run: |
+          echo "Generating GitHub Step Summary..."
+          echo "Files in mcp-scan-results:"
+          ls -la mcp-scan-results/ || echo "No results directory"
+
+          # Start the summary
+          {
+            echo "# 🔒 MCP Security Scan Results"
+            echo ""
+            echo "**Endpoint:** ${{ matrix.endpoint.name }}"
+            echo ""
+            echo "**Scan Target:** \`http://localhost:3000/mcp/${{ matrix.endpoint.path }}\`"
+            echo ""
+          } >> $GITHUB_STEP_SUMMARY
+
+          # Extract summary from JSON report
+          if [ -f mcp-scan-results/scan-report.json ]; then
+            echo "✓ Found JSON report, extracting summary..."
+
+            # Load and parse the scanner spec schema to enrich findings
+            echo "Loading scanner spec schema for enrichment..."
+            SPEC_ENRICHMENT_AVAILABLE=true
+            if [ -f scanner_specs.schema ]; then
+              SPEC_DATA=$(cat scanner_specs.schema | grep -A 99999 '^{' | sed 's/^```json//' | sed 's/^```$//' | jq '.checks | map({(.id): .}) | add' 2>/dev/null) || {
+                echo "⚠️  Failed to parse scanner spec schema"
+                SPEC_ENRICHMENT_AVAILABLE=false
+              }
+            else
+              echo "⚠️  Scanner spec schema file not found"
+              SPEC_ENRICHMENT_AVAILABLE=false
+            fi
+
+            # Calculate summary from findings (there's no summary object in the JSON)
+            CRITICAL=$(jq '[.findings[] | select(.severity == "critical" and .passed == false)] | length' mcp-scan-results/scan-report.json)
+            HIGH=$(jq '[.findings[] | select(.severity == "high" and .passed == false)] | length' mcp-scan-results/scan-report.json)
+            MEDIUM=$(jq '[.findings[] | select(.severity == "medium" and .passed == false)] | length' mcp-scan-results/scan-report.json)
+            LOW=$(jq '[.findings[] | select(.severity == "low" and .passed == false)] | length' mcp-scan-results/scan-report.json)
+            PASSED=$(jq '[.findings[] | select(.passed == true)] | length' mcp-scan-results/scan-report.json)
+            FAILED=$(jq '[.findings[] | select(.passed == false)] | length' mcp-scan-results/scan-report.json)
+
+            {
+              echo "## 📊 Summary"
+              echo ""
+              echo "| Severity | Count |"
+              echo "|----------|-------|"
+              echo "| 🔴 Critical | $CRITICAL |"
+              echo "| 🟠 High | $HIGH |"
+              echo "| 🟡 Medium | $MEDIUM |"
+              echo "| 🔵 Low | $LOW |"
+              echo ""
+              echo "| Result | Count |"
+              echo "|--------|-------|"
+              echo "| ✅ Passed | $PASSED |"
+              echo "| ❌ Failed | $FAILED |"
+              echo ""
+            } >> $GITHUB_STEP_SUMMARY
+
+            # Determine overall status
+            if [ "$FAILED" -gt "0" ]; then
+              echo "**Overall Status:** ⚠️ Security issues detected" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "**Overall Status:** ✅ All checks passed" >> $GITHUB_STEP_SUMMARY
+            fi
+            echo "" >> $GITHUB_STEP_SUMMARY
+
+            # Show warning if spec enrichment is not available
+            if [ "$SPEC_ENRICHMENT_AVAILABLE" = false ]; then
+              {
+                echo "> ⚠️ **Note**: Unable to load scanner specification schema for detailed context enrichment."
+                echo "> Results below show basic information only. For full test details, see the [Scanner Specification](https://github.com/sidhpurwala-huzaifa/mcp-security-scanner/blob/main/src/mcp_scanner/scanner_specs.schema)."
+                echo ""
+              } >> $GITHUB_STEP_SUMMARY
+            fi
+
+            # Show failed checks prominently if there are any
+            if [ "$FAILED" -gt "0" ]; then
+              {
+                echo "## ⚠️ Failed Security Checks"
+                echo ""
+              } >> $GITHUB_STEP_SUMMARY
+
+              # Use enriched output if spec data is available, otherwise basic output
+              if [ "$SPEC_ENRICHMENT_AVAILABLE" = true ]; then
+                # Extract and display failed checks with enriched data from spec
+                # Sort by severity (critical > high > medium > low > info)
+                echo "$SPEC_DATA" | jq --slurpfile findings mcp-scan-results/scan-report.json -r '
+                  . as $specs |
+                  $findings[0].findings |
+                  map(select(.passed == false)) |
+                  sort_by(
+                    if .severity == "critical" then 0
+                    elif .severity == "high" then 1
+                    elif .severity == "medium" then 2
+                    elif .severity == "low" then 3
+                    else 4 end
+                  ) |
+                  .[] |
+                  . as $finding |
+                  ($specs[$finding.id] // {}) as $spec |
+                  (if .severity == "critical" then "🔴"
+                   elif .severity == "high" then "🟠"
+                   elif .severity == "medium" then "🟡"
+                   elif .severity == "low" then "🔵"
+                   else "⚪" end) as $emoji |
+                  "### " + $emoji + " " + .id + ": " + .title +
+                  "\n- **Severity:** " + .severity +
+                  "\n- **Category:** " + .category +
+                  "\n\n**What was detected:** " + ($spec.detect // "N/A") +
+                  "\n\n**Test steps:**\n" + (($spec.test.steps // []) | map("- " + .) | join("\n")) +
+                  "\n\n**Pass criteria:**\n" + (($spec.pass_criteria // []) | map("- " + .) | join("\n")) +
+                  "\n\n**Fail criteria:**\n" + (($spec.fail_criteria // []) | map("- " + .) | join("\n")) +
+                  "\n\n**Actual result:** " + .details +
+                  "\n\n**Remediation:**\n" + (.remediation | map("- " + .) | join("\n")) +
+                  "\n"
+                ' >> $GITHUB_STEP_SUMMARY
+              else
+                # Fallback: Basic output without enrichment
+                jq -r '[.findings[] | select(.passed == false)] |
+                  sort_by(
+                    if .severity == "critical" then 0
+                    elif .severity == "high" then 1
+                    elif .severity == "medium" then 2
+                    elif .severity == "low" then 3
+                    else 4 end
+                  ) |
+                  .[] |
+                  (if .severity == "critical" then "🔴"
+                   elif .severity == "high" then "🟠"
+                   elif .severity == "medium" then "🟡"
+                   elif .severity == "low" then "🔵"
+                   else "⚪" end) as $emoji |
+                  "### " + $emoji + " " + .id + ": " + .title +
+                  "\n- **Severity:** " + .severity +
+                  "\n- **Category:** " + .category +
+                  "\n- **Details:** " + .details +
+                  "\n- **Remediation:**\n" + (.remediation | map("  - " + .) | join("\n")) +
+                  "\n"
+                ' mcp-scan-results/scan-report.json >> $GITHUB_STEP_SUMMARY
+              fi
+
+              echo "" >> $GITHUB_STEP_SUMMARY
+            fi
+
+            # Add detailed results in a collapsible section
+            {
+              echo "<details>"
+              echo "<summary>📋 Full Scan Results (click to expand)</summary>"
+              echo ""
+              echo "## All Checks"
+              echo ""
+            } >> $GITHUB_STEP_SUMMARY
+
+            # Display all results with enriched spec data if available, sorted by severity
+            if [ "$SPEC_ENRICHMENT_AVAILABLE" = true ]; then
+              echo "$SPEC_DATA" | jq --slurpfile findings mcp-scan-results/scan-report.json -r '
+                . as $specs |
+                $findings[0].findings |
+                sort_by(
+                  if .severity == "critical" then 0
+                  elif .severity == "high" then 1
+                  elif .severity == "medium" then 2
+                  elif .severity == "low" then 3
+                  else 4 end
+                ) |
+                .[] |
+                . as $finding |
+                ($specs[$finding.id] // {}) as $spec |
+                (if .severity == "critical" then "🔴"
+                 elif .severity == "high" then "🟠"
+                 elif .severity == "medium" then "🟡"
+                 elif .severity == "low" then "🔵"
+                 else "⚪" end) as $emoji |
+                (if .passed then "✅" else "❌" end) as $status |
+                "### " + $status + " " + $emoji + " " + .id + ": " + .title +
+                "\n- **Severity:** " + .severity +
+                "\n- **Category:** " + .category +
+                "\n- **Passed:** " + (.passed | tostring) +
+                "\n\n**What was tested:** " + ($spec.detect // "N/A") +
+                "\n\n**Result:** " + .details +
+                "\n"
+              ' >> $GITHUB_STEP_SUMMARY
+            else
+              # Fallback: Basic output without enrichment
+              jq -r '[.findings[]] |
+                sort_by(
+                  if .severity == "critical" then 0
+                  elif .severity == "high" then 1
+                  elif .severity == "medium" then 2
+                  elif .severity == "low" then 3
+                  else 4 end
+                ) |
+                .[] |
+                (if .severity == "critical" then "🔴"
+                 elif .severity == "high" then "🟠"
+                 elif .severity == "medium" then "🟡"
+                 elif .severity == "low" then "🔵"
+                 else "⚪" end) as $emoji |
+                (if .passed then "✅" else "❌" end) as $status |
+                "### " + $status + " " + $emoji + " " + .id + ": " + .title +
+                "\n- **Severity:** " + .severity +
+                "\n- **Category:** " + .category +
+                "\n- **Passed:** " + (.passed | tostring) +
+                "\n- **Details:** " + .details +
+                "\n"
+              ' mcp-scan-results/scan-report.json >> $GITHUB_STEP_SUMMARY
+            fi
+
+            {
+              echo "</details>"
+              echo ""
+            } >> $GITHUB_STEP_SUMMARY
+          else
+            echo "✗ No JSON report found"
+            echo "⚠️ No scan results found" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          # Add artifact download link
+          {
+            echo "## 📦 Artifacts"
+            echo ""
+            echo "Full scan results are available in the workflow artifacts."
+            echo ""
+          } >> $GITHUB_STEP_SUMMARY
+
+          echo ""
+          echo "Summary generation complete. Check the 'Summary' tab in GitHub Actions."
+
+      - name: Upload scan results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: mcp-security-scan-results-${{ matrix.endpoint.path }}
+          path: mcp-scan-results/
+          retention-days: 30
+
+      - name: Cleanup
+        if: always()
+        run: |
+          echo "Stopping servers..."
+          kill $MCP_PID || true
+          kill $MOCK_AAP_PID || true
+          sleep 2
+          # Ensure processes are killed
+          pkill -f "node dist/index.js" || true
+          pkill -f "mock-aap-server" || true
