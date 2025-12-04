@@ -831,6 +831,10 @@ async function main(): Promise<void> {
   }
   console.log("");
   console.log(`Total tools loaded: ${allTools.length}`);
+  for (const [toolsetName, toolsetTools] of Object.entries(allToolsets)) {
+    console.log(`  ${toolsetName}: ${toolsetTools.length}`);
+  }
+
   console.log("");
   console.log("═══════════════════════════════════════════════════════════");
 
