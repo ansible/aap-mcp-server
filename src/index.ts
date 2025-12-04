@@ -66,7 +66,7 @@ const CONFIG = {
   MCP_PORT: process.env.MCP_PORT ? parseInt(process.env.MCP_PORT, 10) : 3000,
   SESSION_TIMEOUT: process.env.SESSION_TIMEOUT
     ? parseInt(process.env.SESSION_TIMEOUT, 10)
-    : localConfig.session_timeout || 120, // Default to 120 seconds (2 minutes)
+    : localConfig.session_timeout || 1200, // 20 minutes, to accomodate Claude
   ANALYTICS_KEY: (
     process.env.ANALYTICS_KEY ||
     localConfig.analytics_key ||
