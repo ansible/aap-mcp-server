@@ -5,8 +5,6 @@ describe("MetricsService", () => {
   beforeEach(() => {
     // Reset metrics before each test
     try {
-      metricsService.httpRequestDuration.reset();
-      metricsService.httpRequestsTotal.reset();
       metricsService.mcpToolExecutionDuration.reset();
       metricsService.mcpToolExecutionsTotal.reset();
     } catch (_e) {
@@ -19,7 +17,7 @@ describe("MetricsService", () => {
       "test_tool",
       "test_service",
       "test_toolset",
-      "success",
+      200,
       0.1, // 100ms
     );
 
@@ -28,20 +26,12 @@ describe("MetricsService", () => {
     expect(metricsService.mcpToolExecutionDuration).toBeDefined();
   });
 
-  it("should record HTTP requests", () => {
-    metricsService.recordHttpRequest("GET", "/api/test", 200, 0.05);
-
-    // Verify the metrics exist and can be retrieved
-    expect(metricsService.httpRequestsTotal).toBeDefined();
-    expect(metricsService.httpRequestDuration).toBeDefined();
-  });
-
   it("should record tool errors", () => {
     metricsService.recordToolError(
       "test_tool",
       "test_service",
       "test_toolset",
-      "timeout",
+      0,
     );
 
     // Verify the metrics exist and can be retrieved
@@ -70,18 +60,6 @@ describe("MetricsService", () => {
     expect(metricsService.mcpSessionsTimeoutTotal).toBeDefined();
   });
 
-  it("should record API calls", () => {
-    metricsService.recordApiCall(
-      "test_endpoint",
-      "test_service",
-      "success",
-      0.1,
-    );
-
-    // Verify the metrics exist and can be retrieved
-    expect(metricsService.mcpApiCallsTotal).toBeDefined();
-  });
-
   it("should return metrics as string", async () => {
     const metrics = await metricsService.getMetrics();
     expect(typeof metrics).toBe("string");
@@ -99,14 +77,14 @@ describe("MetricsService", () => {
       "tool1",
       "service1",
       "toolset1",
-      "success",
+      200,
       0.1,
     );
     metricsService.recordToolExecution(
       "tool2",
       "service2",
       "toolset2",
-      "error",
+      500,
       0.2,
     );
 
@@ -120,7 +98,7 @@ describe("MetricsService", () => {
       "test_tool",
       "test_service",
       "test_toolset",
-      "success",
+      200,
       0,
     );
 
