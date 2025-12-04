@@ -20,24 +20,13 @@ import { metricsService } from "./metrics.js";
 import {
   loadOpenApiSpecs,
   type AAPMcpToolDefinition,
-  type ServiceConfig,
 } from "./openapi-loader.js";
 import { SessionManager } from "./session.js";
 import { AnalyticsService } from "./analytics.js";
+import { AapMcpConfig, loadToolsetsFromCfg } from "./config-utils.js";
 
 // Load environment variables
 config();
-
-interface AapMcpConfig {
-  "ignore-certificate-errors"?: boolean;
-  enable_metrics?: boolean;
-  allow_write_operations?: boolean;
-  base_url?: string;
-  session_timeout?: number;
-  services?: ServiceConfig[];
-  toolsets: Record<string, string[]>;
-  analytics_key?: string;
-}
 
 // Load configuration from file
 const loadConfig = (): AapMcpConfig => {
@@ -677,35 +666,8 @@ const mcpDeleteHandler = async (
   }
 };
 
-const loadToolsetsFromCfg = (
-  localConfig: AapMcpConfig,
-): Record<string, AAPMcpToolDefinition[]> => {
-  const entries = Object.entries(localConfig.toolsets).map(
-    ([name, cfgToolList]) => [
-      name,
-      allTools.filter((t) => cfgToolList.includes(t.fullName)),
-    ],
-  );
-
-  const allListWithDup = entries
-    .map((e) => e[1])
-    .flat() as AAPMcpToolDefinition[];
-
-  const allList = allListWithDup.reduce((acc: AAPMcpToolDefinition[], e) => {
-    console.log(`${e.name}`);
-    const existingToolsByName: string[] = acc.map((t) => t.name);
-    if (!existingToolsByName.includes(e.name)) acc.push(e);
-    return acc;
-  }, [] as AAPMcpToolDefinition[]);
-
-  // Inject the "all" toolset
-  const allToolsets = Object.fromEntries([...entries, ...[["all", allList]]]);
-
-  return allToolsets;
-};
-
 const allTools: AAPMcpToolDefinition[] = await generateTools();
-const allToolsets = loadToolsetsFromCfg(localConfig);
+const allToolsets = loadToolsetsFromCfg(allTools, localConfig);
 
 // Set up routes
 app.post("/mcp", (req, res) => mcpPostHandler(req, res));
