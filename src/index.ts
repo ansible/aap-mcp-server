@@ -727,6 +727,17 @@ app.get("/api/v1/health", (req, res) => {
   res.json({ status: "ok" });
 });
 
+app.get("/", (req, res) => {
+  const endpoints = Object.keys(allToolsets)
+    .filter((name) => name !== "all")
+    .map((toolset) => `/mcp/${toolset}`);
+  const banner = `This is a MCP server, you can access it with a MCP client through the following end-points:
+    - ${endpoints.join("\r\n    - ")}
+  or just /mcp if you want to get access to all the tools at the same time.`;
+  res.set("Content-Type", "text/plain");
+  res.status(200).send(banner);
+});
+
 // Prometheus metrics endpoint (conditional based on config)
 const enableMetrics = getBooleanConfig(
   "ENABLE_METRICS",
