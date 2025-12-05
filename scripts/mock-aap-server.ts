@@ -218,7 +218,9 @@ function extractId(pathname: string): number {
 }
 
 const server = http.createServer(
-  (req: http.IncomingMessage, res: http.ServerResponse) => {
+  async (req: http.IncomingMessage, res: http.ServerResponse) => {
+    const waitingDuration = 50 + Math.log(Math.random() * 10) * 1000;
+    await new Promise((resolve) => setTimeout(resolve, waitingDuration));
     // Enable CORS
     res.setHeader("Access-Control-Allow-Origin", "*");
     res.setHeader(

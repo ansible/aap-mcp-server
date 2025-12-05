@@ -300,9 +300,6 @@ const createMcpServer = (): Server => {
       throw new Error("Session not found");
     }
 
-    // Generate correlation ID for this request
-    const correlationId = randomUUID().substring(0, 8);
-
     // Get user's toolset to ensure they have access to this tool
     const toolset = sessionManager.getToolset(sessionId);
     const availableTools = getToolsByToolset(toolset);
@@ -323,7 +320,7 @@ const createMcpServer = (): Server => {
     }
 
     // Get the Bearer token for this session
-    const bearerToken = sessionManager.getToken(sessionId)!;
+    const token = sessionManager.getToken(sessionId)!;
 
     // Execute the tool by making HTTP request
     let result: any;
@@ -335,7 +332,7 @@ const createMcpServer = (): Server => {
       // Build URL from path template and parameters
       let url = tool.pathTemplate;
       const headers: Record<string, string> = {
-        Authorization: `Bearer ${bearerToken}`,
+        Authorization: `Bearer ${token}`,
         Accept: "application/json",
       };
 
@@ -373,9 +370,6 @@ const createMcpServer = (): Server => {
 
       // Make HTTP request
       fullUrl = `${CONFIG.BASE_URL}${url}`;
-      console.log(
-        `${getTimestamp()} [req:${correlationId}|toolset:${toolToolset}] ${tool.name} → ${tool.method.toUpperCase()} ${fullUrl}`,
-      );
       response = await fetch(fullUrl, requestOptions);
 
       const contentType = response.headers.get("content-type");
@@ -384,33 +378,6 @@ const createMcpServer = (): Server => {
       } else {
         result = await response.text();
       }
-
-      const executionTimeMs = Date.now() - _startTime;
-      const parameterLength = JSON.stringify(args).length;
-      const token = sessionManager.getToken(sessionId);
-
-      // Log response with timing
-      console.log(
-        `${getTimestamp()} [req:${correlationId}|toolset:${toolToolset}] ${tool.name} → ${response.status} ${response.statusText} (${executionTimeMs}ms)`,
-      );
-
-      analyticsService.trackMcpToolCalled(
-        tool.name,
-        toolToolset,
-        userAgent,
-        sessionId,
-        parameterLength,
-        response.status,
-        executionTimeMs,
-        token,
-      );
-      metricsService.recordToolExecution(
-        tool.name,
-        tool.service || "unknown",
-        toolset,
-        response.status,
-        executionTimeMs,
-      );
 
       return {
         content: [
@@ -421,18 +388,16 @@ const createMcpServer = (): Server => {
         ],
       };
     } catch (error) {
-      // Log the error with timing
-      const statusInfo = response;
+      throw new Error(
+        `Tool execution failed: ${error instanceof Error ? error.message : String(error)}`,
+      );
+    } finally {
       const executionTimeMs = Date.now() - _startTime;
       const parameterLength = JSON.stringify(args).length;
-      const token = sessionManager.getToken(sessionId);
-      const httpStatus = response?.status || 0;
 
-      console.error(
-        `${getTimestamp()} [req:${correlationId}|toolset:${toolToolset}] ${tool.name} → ${statusInfo} (${executionTimeMs}ms) - ERROR: ${error instanceof Error ? error.message : String(error)}`,
+      console.log(
+        `${getTimestamp()} [toolset:${toolToolset}] ${tool.name} → ${response && response.status} ${response && response.statusText} (${executionTimeMs}ms)`,
       );
-
-      // Track failed tool call (network/other errors)
 
       analyticsService.trackMcpToolCalled(
         tool.name,
@@ -440,20 +405,21 @@ const createMcpServer = (): Server => {
         userAgent,
         sessionId,
         parameterLength,
-        httpStatus,
+        response ? response.status : 0,
         executionTimeMs,
         token,
       );
-      metricsService.recordToolError(
+      metricsService.recordToolExecution(
         tool.name,
-        tool.service || "unknown",
-        toolset,
-        httpStatus,
+        response ? response.status : 0,
+        executionTimeMs,
       );
-
-      throw new Error(
-        `Tool execution failed: ${error instanceof Error ? error.message : String(error)}`,
-      );
+      if (!response || !response.ok) {
+        metricsService.recordToolError(
+          tool.name,
+          response ? response.status : 0,
+        );
+      }
     }
   });
 
@@ -820,6 +786,7 @@ async function main(): Promise<void> {
     console.log(`  • MCP endpoint: http://localhost:${PORT}/mcp`);
     if (enableMetrics) {
       console.log(`  • Metrics: http://localhost:${PORT}/metrics`);
+      metricsService.setActiveTools(allToolsets["all"].length);
     }
     console.log("");
     console.log("═══════════════════════════════════════════════════════════");
