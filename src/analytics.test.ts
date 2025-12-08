@@ -6,6 +6,7 @@ const mockAnalyticsInstance = {
   track: vi.fn(),
   closeAndFlush: vi.fn().mockResolvedValue(undefined),
   on: vi.fn().mockReturnValue(undefined), // Make sure .on() calls return properly
+  register: vi.fn().mockReturnValue(undefined), // Mock the register method for plugins
 };
 
 // Mock the @segment/analytics-node module to return the same instance every time
@@ -25,6 +26,7 @@ describe("Analytics Service", () => {
     mockAnalyticsInstance.track.mockClear();
     mockAnalyticsInstance.closeAndFlush.mockClear();
     mockAnalyticsInstance.on.mockClear();
+    mockAnalyticsInstance.register.mockClear();
   });
 
   describe("initialization", () => {

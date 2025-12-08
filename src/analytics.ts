@@ -1,5 +1,6 @@
 import { Analytics } from "@segment/analytics-node";
 import { randomUUID } from "node:crypto";
+import { createValidationPlugin } from "./analytics-validation-plugin.js";
 
 /**
  * Analytics service for MCP server telemetry using Segment
@@ -36,7 +37,20 @@ export class AnalyticsService {
       this.analytics = new Analytics({
         writeKey,
       });
-      console.log("Analytics: Telemetry initialized successfully");
+
+      // Register validation plugin
+      const validationPlugin = createValidationPlugin({
+        dropInvalidEvents: false, // Log warnings but don't drop events
+        logger: (message: string, data?: any) => {
+          console.error(message, data ? JSON.stringify(data, null, 2) : "");
+        },
+        logSuccess: false, // Only log errors, not successes
+      });
+
+      this.analytics.register(validationPlugin);
+      console.log(
+        "Analytics: Telemetry initialized successfully with validation plugin",
+      );
 
       // this.analytics.on("track", (ctx) =>
       //   console.log("Analytics: track:", ctx),
