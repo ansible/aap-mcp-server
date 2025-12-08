@@ -3,7 +3,6 @@ import type { AAPMcpToolDefinition, ServiceConfig } from "./openapi-loader.js";
 export interface AapMcpConfig {
   record_api_queries?: boolean;
   "ignore-certificate-errors"?: boolean;
-  enable_ui?: boolean;
   enable_metrics?: boolean;
   allow_write_operations?: boolean;
   base_url?: string;
