@@ -274,7 +274,7 @@ const createMcpServer = (): Server => {
     const sessionId = extra?.sessionId;
 
     if (!sessionId || !sessionManager.has(sessionId)) {
-      throw new Error("Invalid or missing session ID");
+      throw new Error("Session not found");
     }
     // Get toolset from session data
     const toolset = sessionManager.getToolset(sessionId);
@@ -297,7 +297,7 @@ const createMcpServer = (): Server => {
     const sessionId = extra?.sessionId;
 
     if (!sessionId || !sessionManager.has(sessionId)) {
-      throw new Error("Invalid or missing session ID");
+      throw new Error("Session not found");
     }
 
     // Generate correlation ID for this request
@@ -583,11 +583,11 @@ const mcpPostHandler = async (
       return;
     } else {
       // Invalid request - no session ID or not initialization request
-      res.status(400).json({
+      res.status(404).json({
         jsonrpc: "2.0",
         error: {
           code: -32000,
-          message: "Bad Request: No valid session ID provided",
+          message: "Session not found",
         },
         id: null,
       });
@@ -617,7 +617,7 @@ const mcpGetHandler = async (req: express.Request, res: express.Response) => {
   const sessionId = req.headers["mcp-session-id"] as string;
 
   if (!sessionId || !sessionManager.has(sessionId)) {
-    res.status(400).send("Invalid or missing session ID");
+    res.status(404).send("Session not found");
     return;
   }
 
@@ -644,7 +644,7 @@ const mcpDeleteHandler = async (
   const sessionId = req.headers["mcp-session-id"] as string;
 
   if (!sessionId || !sessionManager.has(sessionId)) {
-    res.status(400).send("Invalid or missing session ID");
+    res.status(404).send("Session not found");
     return;
   }
 
