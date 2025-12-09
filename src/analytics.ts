@@ -40,7 +40,7 @@ export class AnalyticsService {
 
       // Register validation plugin
       const validationPlugin = createValidationPlugin({
-        dropInvalidEvents: false, // Log warnings but don't drop events
+        dropInvalidEvents: true,
         logger: (message: string, data?: any) => {
           console.error(message, data ? JSON.stringify(data, null, 2) : "");
         },
