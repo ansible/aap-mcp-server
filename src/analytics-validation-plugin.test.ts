@@ -334,6 +334,57 @@ describe("Analytics Validation Plugin", () => {
         expect(mockContext.cancel).toHaveBeenCalled();
       });
 
+      it("should drop events with extra fields when dropInvalidEvents is true", () => {
+        const plugin = createValidationPlugin({
+          logger: mockLogger,
+          dropInvalidEvents: true,
+        });
+
+        const eventWithExtraFields = {
+          ...mockContext,
+          event: {
+            event: "mcp_session_started",
+            properties: {
+              sess_id: "session-123",
+              process_id: "process-456",
+              user_unique_id: "user-789",
+              extra_field: "this should not be here",
+              another_extra_field: "neither should this",
+              numeric_extra: 123,
+            },
+          },
+        };
+
+        plugin.track!(eventWithExtraFields);
+
+        // Should log validation errors mentioning the extra fields
+        expect(mockLogger).toHaveBeenCalledWith(
+          expect.stringContaining("failed validation"),
+          expect.objectContaining({
+            errors: expect.arrayContaining([
+              expect.objectContaining({
+                field: "extra_field",
+                issue: "Unexpected field found",
+                value: "this should not be here",
+              }),
+              expect.objectContaining({
+                field: "another_extra_field",
+                issue: "Unexpected field found",
+                value: "neither should this",
+              }),
+              expect.objectContaining({
+                field: "numeric_extra",
+                issue: "Unexpected field found",
+                value: 123,
+              }),
+            ]),
+          }),
+        );
+
+        // Should drop/cancel the event due to extra fields
+        expect(mockContext.cancel).toHaveBeenCalled();
+      });
+
       it("should log success messages when configured to do so", () => {
         const plugin = createValidationPlugin({
           logger: mockLogger,
