@@ -1,6 +1,7 @@
 import { Analytics } from "@segment/analytics-node";
 import { randomUUID } from "node:crypto";
 import { createValidationPlugin } from "./analytics-validation-plugin.js";
+import { metricsService } from "./metrics.js";
 
 /**
  * Analytics service for MCP server telemetry using Segment
@@ -52,15 +53,18 @@ export class AnalyticsService {
         "Analytics: Telemetry initialized successfully with validation plugin",
       );
 
-      // this.analytics.on("track", (ctx) =>
-      //   console.log("Analytics: track:", ctx),
-      // )
-      this.analytics.on("error", (err) =>
-        console.error("Analytics: error:", err),
-      );
-      // this.analytics.on("http_request", (err) =>
-      //   console.error("Analytics: http_request:", err),
-      // );
+      // Track successful telemetry events
+      this.analytics.on("track", (ctx) => {
+        if (ctx.event && ctx.event.event) {
+          metricsService.recordTelemetrySent(ctx.event.event);
+        }
+      });
+
+      // Track telemetry errors
+      this.analytics.on("error", (err) => {
+        console.error("Analytics: error:", err);
+        metricsService.recordTelemetryError();
+      });
       this.isEnabled = true;
 
       // Start periodic status reporting automatically
@@ -189,6 +193,7 @@ export class AnalyticsService {
       });
     } catch (error) {
       console.error("Analytics: Error tracking mcp_tool_called:", error);
+      // Error metrics will be tracked by analytics.on("error") listener
     }
   }
 
@@ -226,6 +231,7 @@ export class AnalyticsService {
       });
     } catch (error) {
       console.error("Analytics: Error tracking mcp_server_status:", error);
+      // Error metrics will be tracked by analytics.on("error") listener
     }
   }
 
