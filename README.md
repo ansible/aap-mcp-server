@@ -111,14 +111,14 @@ toolsets:
 Environment variables take precedence over configuration file settings:
 
 ```bash
-# AAP Gateway Authentication token (required)
-BEARER_TOKEN_OAUTH2_AUTHENTICATION=your_aap_token_here
-
 # AAP base URL (highest priority)
 BASE_URL=https://your-aap-instance.com
 
 # MCP server port (optional, defaults to 3000)
 MCP_PORT=3000
+
+# Change this to true to get access to the write operations
+#ALLOW_WRITE_OPERATIONS=true
 ```
 
 ### Configuration Priority
@@ -289,55 +289,6 @@ The configuration system follows a hierarchical approach:
 3. **Built-in Defaults** (lowest priority)
    - Default OpenAPI specification URLs for each service
    - Standard port (3000) and base URL (https://localhost)
-
-## Container Deployment
-
-### Building the Container
-
-Build the image with:
-
-```bash
-podman build -f Containerfile . -t aap-mcp
-```
-
-### Running with Docker/Podman
-
-```bash
-# Basic run with environment variables
-podman run -d \
-  -e BASE_URL=https://your-aap-instance.com \
-  -e BEARER_TOKEN_OAUTH2_AUTHENTICATION=your_token_here \
-  -p 3000:3000 \
-  localhost/aap-mcp
-
-# Run with custom configuration file
-podman run -d \
-  -v /path/to/your/aap-mcp.yaml:/app/aap-mcp.yaml:ro \
-  -e BEARER_TOKEN_OAUTH2_AUTHENTICATION=your_token_here \
-  -p 3000:3000 \
-  localhost/aap-mcp
-```
-
-### Kubernetes Deployment
-
-The project includes a complete Kubernetes deployment configuration in `kubernetes/deployment.yaml`:
-
-```bash
-# Deploy to Kubernetes
-kubectl apply -f kubernetes/deployment.yaml
-
-# Check deployment status
-kubectl get pods -l app=aap-mcp
-kubectl logs -l app=aap-mcp
-```
-
-The Kubernetes deployment includes:
-
-- **ConfigMap**: Stores the YAML configuration
-- **Deployment**: Runs the service with health checks
-- **PersistentVolumeClaim**: Stores API query logs
-- **Service**: Internal cluster networking
-- **Route**: External access (OpenShift)
 
 ## Troubleshooting
 
