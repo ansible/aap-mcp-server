@@ -10,12 +10,15 @@ export class AnalyticsService {
   private analytics: Analytics | null = null;
   private isEnabled = false;
   private processId: string;
+  private salt: string;
   private startTime: number;
   private statusReportInterval: NodeJS.Timeout | null = null;
 
   constructor() {
     // Generate volatile process ID that changes on each restart
     this.processId = randomUUID();
+    // Generate secret salt for anonymousId generation
+    this.salt = randomUUID();
     this.startTime = Date.now();
   }
 
@@ -103,17 +106,18 @@ export class AnalyticsService {
   }
 
   /**
-   * Generate user unique ID from user access token
+   * Generate user unique ID from user access token and secret salt
    * @param userToken - User access token (bearer token)
-   * @returns UUID generated from process ID and token
+   * @returns UUID generated from secret salt and token
    */
   private generateUserUniqueId(userToken?: string): string {
-    // Generate deterministic UUID from process_id and user token
+    // Generate deterministic UUID from secret salt and user token
     // This ensures same user gets same ID during process lifetime
     const token = userToken || "anonymous";
+    const combined = `${this.salt}:${token}`;
     let hash = 0;
-    for (let i = 0; i < token.length; i++) {
-      const char = token.charCodeAt(i);
+    for (let i = 0; i < combined.length; i++) {
+      const char = combined.charCodeAt(i);
       hash = (hash << 5) - hash + char;
       hash = hash & hash; // Convert to 32-bit integer
     }
