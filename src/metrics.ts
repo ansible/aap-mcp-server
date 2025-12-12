@@ -14,6 +14,8 @@ export class MetricsService {
   public readonly mcpActiveTools: Gauge<string>;
   public readonly mcpSessionsActiveTotal: Gauge<string>;
   public readonly mcpSessionsTimeoutTotal: Counter<string>;
+  public readonly telemetrySentTotal: Counter<string>;
+  public readonly telemetryErrorTotal: Counter<string>;
 
   constructor() {
     // Enable default metrics collection (CPU, memory, GC, etc.)
@@ -68,6 +70,19 @@ export class MetricsService {
       help: "Total number of MCP sessions that have timed out",
       registers: [register],
     });
+
+    this.telemetrySentTotal = new Counter({
+      name: "telemetry_sent_total",
+      help: "Total number of telemetry events sent successfully",
+      labelNames: ["event_type"],
+      registers: [register],
+    });
+
+    this.telemetryErrorTotal = new Counter({
+      name: "telemetry_error_total",
+      help: "Total number of telemetry errors",
+      registers: [register],
+    });
   }
 
   recordToolExecution(
@@ -110,6 +125,14 @@ export class MetricsService {
 
   incrementSessionTimeouts(): void {
     this.mcpSessionsTimeoutTotal.inc();
+  }
+
+  recordTelemetrySent(eventType: string): void {
+    this.telemetrySentTotal.labels(eventType).inc();
+  }
+
+  recordTelemetryError(): void {
+    this.telemetryErrorTotal.inc();
   }
 
   getMetrics(): Promise<string> {

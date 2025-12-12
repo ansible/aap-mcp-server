@@ -105,4 +105,34 @@ describe("MetricsService", () => {
     // Verify the metrics work with zero duration
     expect(metricsService.mcpToolExecutionDuration).toBeDefined();
   });
+
+  it("should record telemetry sent events", () => {
+    metricsService.recordTelemetrySent("mcp_session_started");
+    metricsService.recordTelemetrySent("mcp_tool_called");
+    metricsService.recordTelemetrySent("mcp_server_status");
+
+    // Verify the metrics exist
+    expect(metricsService.telemetrySentTotal).toBeDefined();
+  });
+
+  it("should record telemetry error events", () => {
+    metricsService.recordTelemetryError();
+
+    // Verify the metrics exist
+    expect(metricsService.telemetryErrorTotal).toBeDefined();
+  });
+
+  it("should handle multiple telemetry events with different event types", () => {
+    // Record successful telemetry
+    metricsService.recordTelemetrySent("mcp_session_started");
+    metricsService.recordTelemetrySent("mcp_tool_called");
+    metricsService.recordTelemetrySent("mcp_tool_called");
+
+    // Record telemetry errors
+    metricsService.recordTelemetryError();
+
+    // Verify both metrics work together
+    expect(metricsService.telemetrySentTotal).toBeDefined();
+    expect(metricsService.telemetryErrorTotal).toBeDefined();
+  });
 });
