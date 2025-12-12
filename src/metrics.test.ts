@@ -15,8 +15,6 @@ describe("MetricsService", () => {
   it("should record tool executions", () => {
     metricsService.recordToolExecution(
       "test_tool",
-      "test_service",
-      "test_toolset",
       200,
       0.1, // 100ms
     );
@@ -27,19 +25,14 @@ describe("MetricsService", () => {
   });
 
   it("should record tool errors", () => {
-    metricsService.recordToolError(
-      "test_tool",
-      "test_service",
-      "test_toolset",
-      0,
-    );
+    metricsService.recordToolError("test_tool", 0);
 
     // Verify the metrics exist and can be retrieved
     expect(metricsService.mcpToolErrors).toBeDefined();
   });
 
   it("should set active tools count", () => {
-    metricsService.setActiveTools("test_service", 5);
+    metricsService.setActiveTools(5);
 
     // Verify the metrics exist and can be retrieved
     expect(metricsService.mcpActiveTools).toBeDefined();
@@ -73,20 +66,8 @@ describe("MetricsService", () => {
   });
 
   it("should handle multiple tool executions", () => {
-    metricsService.recordToolExecution(
-      "tool1",
-      "service1",
-      "toolset1",
-      200,
-      0.1,
-    );
-    metricsService.recordToolExecution(
-      "tool2",
-      "service2",
-      "toolset2",
-      500,
-      0.2,
-    );
+    metricsService.recordToolExecution("tool1", 200, 0.1);
+    metricsService.recordToolExecution("tool2", 500, 0.2);
 
     // Verify the metrics exist
     expect(metricsService.mcpToolExecutionsTotal).toBeDefined();
@@ -94,13 +75,7 @@ describe("MetricsService", () => {
   });
 
   it("should handle zero duration", () => {
-    metricsService.recordToolExecution(
-      "test_tool",
-      "test_service",
-      "test_toolset",
-      200,
-      0,
-    );
+    metricsService.recordToolExecution("test_tool", 200, 0);
 
     // Verify the metrics work with zero duration
     expect(metricsService.mcpToolExecutionDuration).toBeDefined();

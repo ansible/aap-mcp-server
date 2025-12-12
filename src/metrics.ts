@@ -33,14 +33,14 @@ export class MetricsService {
     this.mcpToolExecutionsTotal = new Counter({
       name: "mcp_tool_executions_total",
       help: "Total number of MCP tool executions",
-      labelNames: ["tool_name", "service", "toolset", "status_code"],
+      labelNames: ["tool_name", "status_code"],
       registers: [register],
     });
 
     this.mcpToolExecutionDuration = new Histogram({
       name: "mcp_tool_execution_duration_seconds",
       help: "MCP tool execution duration in seconds",
-      labelNames: ["tool_name", "service", "toolset"],
+      labelNames: ["tool_name"],
       buckets: [0.01, 0.05, 0.1, 0.5, 1, 2, 5, 10, 30],
       registers: [register],
     });
@@ -48,14 +48,13 @@ export class MetricsService {
     this.mcpToolErrors = new Counter({
       name: "mcp_tool_errors_total",
       help: "Total number of MCP tool execution errors",
-      labelNames: ["tool_name", "service", "toolset", "status_code"],
+      labelNames: ["tool_name", "status_code"],
       registers: [register],
     });
 
     this.mcpActiveTools = new Gauge({
       name: "mcp_active_tools",
       help: "Number of currently active MCP tools",
-      labelNames: ["service"],
       registers: [register],
     });
 
@@ -87,32 +86,21 @@ export class MetricsService {
 
   recordToolExecution(
     toolName: string,
-    service: string,
-    toolset: string,
     statusCode: number,
     executionTimeMs: number,
   ): void {
-    this.mcpToolExecutionsTotal
-      .labels(toolName, service, toolset, statusCode.toString())
-      .inc();
+    this.mcpToolExecutionsTotal.labels(toolName, statusCode.toString()).inc();
     this.mcpToolExecutionDuration
-      .labels(toolName, service, toolset)
+      .labels(toolName)
       .observe(executionTimeMs / 1000);
   }
 
-  recordToolError(
-    toolName: string,
-    service: string,
-    toolset: string,
-    statusCode: number,
-  ): void {
-    this.mcpToolErrors
-      .labels(toolName, service, toolset, statusCode.toString())
-      .inc();
+  recordToolError(toolName: string, statusCode: number): void {
+    this.mcpToolErrors.labels(toolName, statusCode.toString()).inc();
   }
 
-  setActiveTools(service: string, count: number): void {
-    this.mcpActiveTools.labels(service).set(count);
+  setActiveTools(count: number): void {
+    this.mcpActiveTools.set(count);
   }
 
   incrementActiveSessions(): void {
