@@ -25,9 +25,9 @@ if (args.includes("--help") || args.includes("-h")) {
 Usage: node simulate-clients.js [options]
 
 Options:
-  --num-clients <number>          Number of clients to simulate (default: 100)
+  --num-clients <number>          Number of clients to simulate (default: 20)
   --request-interval <ms>         Interval between requests in milliseconds (default: 3000)
-  --duration <seconds>            Duration to run simulation in seconds (default: 600)
+  --duration <seconds>            Duration to run simulation in seconds (default: 120)
   --token <string>                Bearer token for authentication
   --help, -h                      Show this help message
 
@@ -39,8 +39,8 @@ Examples:
   process.exit(0);
 }
 
-const NUM_CLIENTS = parseInt(getArgValue("--num-clients", "100"), 10);
-const DURATION_SECONDS = parseInt(getArgValue("--duration", "600"), 10);
+const NUM_CLIENTS = parseInt(getArgValue("--num-clients", "20"), 10);
+const DURATION_SECONDS = parseInt(getArgValue("--duration", "120"), 10);
 const BEARER_TOKEN = getArgValue("--token", "random-string");
 
 // Metrics configuration
@@ -163,6 +163,7 @@ class MCPClientSimulator {
       this.isActive = true;
       return true;
     } catch (error) {
+      errorsFound.push(error.message);
       console.error(
         `[Client ${this.id}] Initialization failed:`,
         error.message,
@@ -174,7 +175,6 @@ class MCPClientSimulator {
 
   async listTools() {
     if (!this.isActive || !this.client) {
-      console.error(`[Client ${this.id}] Not connected, skipping tools/list`);
       return false;
     }
 
@@ -202,6 +202,7 @@ class MCPClientSimulator {
         console.log(`[Client ${this.id}] Connection lost, marking inactive`);
         this.isActive = false;
         await this.cleanup();
+        errorsFound.push(error.message);
       }
       return false;
     }
@@ -307,20 +308,7 @@ class MCPClientSimulator {
     const interval = setInterval(
       async () => {
         if (!this.isActive) {
-          if (this.wasTerminatedAbruptly) {
-            console.log(
-              `🔄 [Client ${this.id}] Attempting to reconnect after abrupt randomKill...`,
-            );
-            // Reset randomKill flag for reconnection
-            this.wasTerminatedAbruptly = false;
-          } else {
-            console.log(`[Client ${this.id}] Attempting to reconnect...`);
-          }
-
-          const success = await this.initialize();
-          if (!success) {
-            return;
-          }
+          return;
         }
 
         if (this.tools.length === 0) {
@@ -348,6 +336,60 @@ class MCPClientSimulator {
 // Utility functions
 function delay(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+// Shared function to create and initialize a client
+async function createClient() {
+  const clientId = nextClientId++;
+
+  // Always use random server selection
+  const serverUrlIndex = Math.floor(Math.random() * serverUrls.length);
+  const selectedServer = serverUrls[serverUrlIndex];
+
+  // Create new client
+  const client = new MCPClientSimulator(
+    clientId,
+    selectedServer.url,
+    selectedServer.toolset,
+  );
+
+  clients.set(clientId, client);
+
+  // Always update creation stats
+  connectionCreationStats.totalCreated++;
+  connectionCreationStats.createdThisInterval++;
+  connectionCreationStats.lastCreationTime = new Date();
+
+  console.log(
+    `🆕 [Client ${clientId}] Creating new connection for toolset: ${selectedServer.toolset}`,
+  );
+
+  // Initialize client
+  const initializeClient = async () => {
+    try {
+      const success = await client.initialize();
+      if (success) {
+        // Always start periodic requests
+        client.startPeriodicRequests();
+        console.log(
+          `✅ [Client ${clientId}] Successfully connected and started`,
+        );
+        return true;
+      } else {
+        console.log(`❌ [Client ${clientId}] Failed to initialize`);
+        return false;
+      }
+    } catch (error) {
+      console.error(
+        `💥 [Client ${clientId}] Initialization error:`,
+        error.message,
+      );
+      return false;
+    }
+  };
+
+  // Always use asynchronous initialization
+  await initializeClient();
 }
 
 // Parse Prometheus format metrics
@@ -420,6 +462,7 @@ async function fetchServerMetrics() {
     return { success: true, metrics: serverMetrics, rawMetrics };
   } catch (error) {
     console.error(`❌ Failed to fetch server metrics: ${error.message}`);
+    errorsFound.push(error.message);
     return { success: false, error: error.message };
   }
 }
@@ -510,48 +553,8 @@ function startConnectionCreation() {
       connectionCreationStats.createdThisInterval = 0;
 
       for (let i = 0; i < numToCreate; i++) {
-        // Select random server/toolset
-        const serverUrlIndex = Math.floor(Math.random() * serverUrls.length);
-        const selectedServer = serverUrls[serverUrlIndex];
-
-        // Create new client with unique ID
-        const clientId = nextClientId++;
-        const client = new MCPClientSimulator(
-          clientId,
-          selectedServer.url,
-          selectedServer.toolset,
-        );
-
-        clients.set(clientId, client);
-
-        // Update creation stats
-        connectionCreationStats.totalCreated++;
-        connectionCreationStats.createdThisInterval++;
-        connectionCreationStats.lastCreationTime = new Date();
-
-        console.log(
-          `🆕 [Client ${clientId}] Creating new connection for toolset: ${selectedServer.toolset}`,
-        );
-
-        // Initialize client asynchronously
-        client
-          .initialize()
-          .then((success) => {
-            if (success) {
-              client.startPeriodicRequests();
-              console.log(
-                `✅ [Client ${clientId}] Successfully connected and started`,
-              );
-            } else {
-              console.log(`❌ [Client ${clientId}] Failed to initialize`);
-            }
-          })
-          .catch((error) => {
-            console.error(
-              `💥 [Client ${clientId}] Initialization error:`,
-              error.message,
-            );
-          });
+        // Create client using shared function
+        createClient();
       }
 
       console.log(
@@ -575,33 +578,11 @@ async function startSimulation() {
   console.log("─".repeat(60));
 
   // Create and initialize clients with staggered startup
-  for (let i = 1; i <= NUM_CLIENTS; i++) {
-    // Distribute clients across different server URLs
-    const serverUrlIndex = (i - 1) % serverUrls.length;
-    const selectedServer = serverUrls[serverUrlIndex];
+  while (nextClientId <= NUM_CLIENTS) {
+    // Create client using shared function
+    createClient();
 
-    const client = new MCPClientSimulator(
-      i,
-      selectedServer.url,
-      selectedServer.toolset,
-    );
-    clients.set(i, client);
-
-    // Update next client ID counter
-    nextClientId = Math.max(nextClientId, i + 1);
-
-    // Initialize client
-    const success = await client.initialize();
-
-    if (success) {
-      // Start periodic requests
-      client.startPeriodicRequests();
-    }
-
-    // Stagger client startup to avoid overwhelming the server
-    if (i < NUM_CLIENTS) {
-      await delay(100); // 100ms delay between client startups
-    }
+    await delay(100);
   }
 
   // Start metrics fetching if enabled
@@ -673,22 +654,28 @@ async function startSimulation() {
     await Promise.allSettled(disconnectPromises);
 
     console.log(
-      "\n📊 Test is done, waiting 35s to be sure all the sessions are properly closed before collecting the final metrics.",
+      "\n📊 Test is done, waiting 60s to be sure all the sessions are properly closed before collecting the final metrics.",
     );
-    await delay(35000);
+    await delay(60000);
 
     // Final metrics fetch
     console.log("\n📊 Final server metrics:");
     const finalMetrics = await fetchServerMetrics();
-    if (finalMetrics?.metrics?.mcpSessionsActiveTotal !== 0) {
+    if (
+      finalMetrics.metrics &&
+      finalMetrics.metrics.mcpSessionsActiveTotal > 0
+    ) {
       errorsFound.push(
-        "Some remaining sessions were found after the end of the test",
+        `Some remaining sessions were found after the end of the test ${finalMetrics.metrics.mcpSessionsActiveTotal}`,
       );
     }
     if (finalMetrics.success) {
       console.log(formatMetrics(finalMetrics.metrics));
     }
-
+    if (errorsFound.length > 0) {
+      console.log("Error founds during the run!", errorsFound);
+      process.exit(1);
+    }
     console.log("🏁 Simulation completed successfully");
     process.exit(0);
   }, DURATION_SECONDS * 1000);
