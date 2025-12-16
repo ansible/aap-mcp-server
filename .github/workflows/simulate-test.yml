@@ -1,0 +1,86 @@
+---
+name: Simulate Test
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+
+jobs:
+  simulate-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Use Node.js 20.x
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20.x"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci --include=dev
+
+      - name: Build project
+        run: npm run build --if-present
+
+      - name: Run simulate for 2 minutes
+        id: simulate
+        run: |
+          echo "Starting simulate command with 2 minute duration..."
+
+          # Start the three services with proper duration setting
+          npm run simulate:mock-aap-server &
+          MOCK_PID=$!
+
+          cp aap-mcp.sample.yaml aap-mcp.yaml
+          npm run simulate:mcp-aap-server &
+          MCP_PID=$!
+
+          # Run horde-of-clients with 2 minute duration
+          npx tsx ./scripts/simulate-clients.ts --duration 120 &
+          HORDE_PID=$!
+
+          # Wait for the horde-of-clients to finish (should take ~2 minutes)
+          wait $HORDE_PID
+          horde_exit_code=$?
+
+          # Clean up background processes
+          kill $MOCK_PID $MCP_PID 2>/dev/null || true
+          wait $MOCK_PID $MCP_PID 2>/dev/null || true
+
+          echo "Horde-of-clients finished with exit code: $horde_exit_code"
+
+          if [ $horde_exit_code -eq 0 ]; then
+            echo "simulate_result=success" >> $GITHUB_OUTPUT
+            echo "✅ Simulate ran for 2 minutes and completed successfully"
+          else
+            echo "simulate_result=error" >> $GITHUB_OUTPUT
+            echo "❌ Simulate failed with exit code: $horde_exit_code"
+            exit 1
+          fi
+
+      - name: Check simulate results
+        run: |
+          case "${{ steps.simulate.outputs.simulate_result }}" in
+            "success")
+              echo "✅ Test PASSED: Simulate ran successfully for 2 minutes"
+              ;;
+            "error")
+              echo "❌ Test FAILED: Simulate encountered an error"
+              exit 1
+              ;;
+            *)
+              echo "❌ Test FAILED: Unknown result"
+              exit 1
+              ;;
+          esac
+
+      - name: Check for any remaining processes
+        if: always()
+        run: |
+          echo "Checking for any remaining Node.js processes..."
+          pgrep -f "node|tsx|npm" || echo "No remaining processes found"
