@@ -376,4 +376,122 @@ describe("Analytics Service", () => {
       await expect(analyticsService.shutdown()).resolves.not.toThrow();
     });
   });
+
+  describe("disable parameter", () => {
+    it("should pass disable=true to Analytics constructor", async () => {
+      const getActiveSessions = () => 0;
+      const serverVersion = "1.0.0";
+      const containerVersion = "test";
+      const readOnlyMode = false;
+
+      // Get the mocked Analytics constructor
+      const { Analytics } = await import("@segment/analytics-node");
+
+      // Clear previous calls
+      vi.mocked(Analytics).mockClear();
+
+      // Initialize with disable=true
+      analyticsService.initialize(
+        "test-key",
+        getActiveSessions,
+        serverVersion,
+        containerVersion,
+        readOnlyMode,
+        true, // disable
+      );
+
+      // Verify Analytics constructor was called with disable=true
+      expect(vi.mocked(Analytics)).toHaveBeenCalledWith({
+        disable: true,
+        writeKey: "test-key",
+      });
+    });
+
+    it("should pass disable=false to Analytics constructor when explicitly set", async () => {
+      const getActiveSessions = () => 0;
+      const serverVersion = "1.0.0";
+      const containerVersion = "test";
+      const readOnlyMode = false;
+
+      // Get the mocked Analytics constructor
+      const { Analytics } = await import("@segment/analytics-node");
+
+      // Clear previous calls
+      vi.mocked(Analytics).mockClear();
+
+      // Initialize with disable=false (explicit)
+      analyticsService.initialize(
+        "test-key",
+        getActiveSessions,
+        serverVersion,
+        containerVersion,
+        readOnlyMode,
+        false, // disable
+      );
+
+      // Verify Analytics constructor was called with disable=false
+      expect(vi.mocked(Analytics)).toHaveBeenCalledWith({
+        disable: false,
+        writeKey: "test-key",
+      });
+    });
+
+    it("should default disable parameter to false when not provided", async () => {
+      const getActiveSessions = () => 0;
+      const serverVersion = "1.0.0";
+      const containerVersion = "test";
+      const readOnlyMode = false;
+
+      // Get the mocked Analytics constructor
+      const { Analytics } = await import("@segment/analytics-node");
+
+      // Clear previous calls
+      vi.mocked(Analytics).mockClear();
+
+      // Initialize without disable parameter (should default to false)
+      analyticsService.initialize(
+        "test-key",
+        getActiveSessions,
+        serverVersion,
+        containerVersion,
+        readOnlyMode,
+      );
+
+      // Verify Analytics constructor was called with disable=false (default)
+      expect(vi.mocked(Analytics)).toHaveBeenCalledWith({
+        disable: false,
+        writeKey: "test-key",
+      });
+    });
+
+    it("should initialize successfully with both writeKey and disable parameter", () => {
+      const getActiveSessions = () => 0;
+      const serverVersion = "1.0.0";
+      const containerVersion = "test";
+      const readOnlyMode = false;
+
+      // Should not throw when initialized with disable parameter
+      expect(() =>
+        analyticsService.initialize(
+          "test-key",
+          getActiveSessions,
+          serverVersion,
+          containerVersion,
+          readOnlyMode,
+          true,
+        ),
+      ).not.toThrow();
+
+      expect(() =>
+        analyticsService.initialize(
+          "test-key",
+          getActiveSessions,
+          serverVersion,
+          containerVersion,
+          readOnlyMode,
+          false,
+        ),
+      ).not.toThrow();
+    });
+  });
 });

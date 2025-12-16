@@ -29,6 +29,7 @@ export class AnalyticsService {
    * @param serverVersion - Version of the MCP server
    * @param containerVersion - Version of the container
    * @param readOnlyMode - Configuration setting for read_only mode
+   * @param disable - When true, disables sending analytics data (useful for testing or development)
    */
   initialize(
     writeKey: string,
@@ -36,9 +37,11 @@ export class AnalyticsService {
     serverVersion: string,
     containerVersion: string,
     readOnlyMode: boolean,
+    disable: boolean = false,
   ): void {
     try {
       this.analytics = new Analytics({
+        disable,
         writeKey,
       });
 

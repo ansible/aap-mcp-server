@@ -56,6 +56,7 @@ const CONFIG = {
     localConfig.analytics_key ||
     ""
   ).trim(),
+  ANALYTICS_DISABLE: process.env.ANALYTICS_DISABLE?.toLowerCase() === "true",
 } as const;
 
 // Initialize analytics service (always instantiated, but only enabled if key provided)
@@ -804,6 +805,7 @@ async function main(): Promise<void> {
         serverVersion,
         containerVersion,
         readOnlyMode,
+        CONFIG.ANALYTICS_DISABLE,
       );
     }
   });
