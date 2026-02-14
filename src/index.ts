@@ -13,6 +13,7 @@ import {
   isInitializeRequest,
 } from "@modelcontextprotocol/sdk/types.js";
 import { extractToolsFromApi } from "./extract-tools.js";
+import { validateJWT } from "./jwt-validator.js";
 import { readFileSync, writeFileSync } from "fs";
 import { basename, join } from "path";
 import * as yaml from "js-yaml";
@@ -137,6 +138,62 @@ const validateToken = async (bearerToken: string): Promise<void> => {
       `Token validation failed: ${error instanceof Error ? error.message : String(error)}`,
     );
   }
+};
+
+/**
+ * Authenticate request using JWT or Bearer token
+ * Tries JWT authentication first, then falls back to Bearer token
+ *
+ * @returns The authentication token (JWT or Bearer token) if successful
+ * @throws Error if both authentication methods fail
+ */
+const authenticateRequest = async (
+  headers: Record<string, string | string[] | undefined>,
+  authHeader: string | undefined,
+): Promise<string> => {
+  // Try JWT authentication first
+  try {
+    const jwtUser = await validateJWT(
+      headers,
+      CONFIG.BASE_URL,
+      !localConfig["ignore-certificate-errors"],
+    );
+
+    if (jwtUser) {
+      console.log(
+        `${getTimestamp()} JWT authentication successful for user: ${jwtUser.username}`,
+      );
+      // Return the JWT token
+      return jwtUser.headerValue;
+    }
+  } catch (error) {
+    console.warn(
+      `${getTimestamp()} JWT authentication failed:`,
+      error instanceof Error ? error.message : String(error),
+    );
+    // Continue to try Bearer token authentication
+  }
+
+  // Fall back to Bearer token authentication
+  const bearerToken = extractBearerToken(authHeader);
+  if (bearerToken) {
+    try {
+      await validateToken(bearerToken);
+      console.log(`${getTimestamp()} Bearer token authentication successful`);
+      return bearerToken;
+    } catch (error) {
+      console.error(
+        `${getTimestamp()} Bearer token authentication failed:`,
+        error,
+      );
+      throw error;
+    }
+  }
+
+  // No authentication method succeeded
+  throw new Error(
+    "Authentication failed: No valid JWT or Bearer token provided",
+  );
 };
 
 const storeSessionData = (
@@ -469,38 +526,17 @@ const mcpPostHandler = async (
         sessionIdGenerator: () => randomUUID(),
         onsessioninitialized: async (sessionId: string) => {
           try {
-            // Extract and validate the bearer token
-            const token = extractBearerToken(authHeader);
-            if (token) {
-              try {
-                // Validate token (no permissions extraction)
-                await validateToken(token);
-
-                // Store session data with userAgent, toolset, and transport
-                const userAgent = req.headers["user-agent"] || "unknown";
-                storeSessionData(
-                  sessionId,
-                  token,
-                  userAgent,
-                  toolset,
-                  transport,
-                );
-              } catch (error) {
-                console.error(
-                  `${getTimestamp()} Failed to validate token:`,
-                  error,
-                );
-                // Token validation failed, we cannot create the session without valid token
-                throw error;
-              }
-            } else {
-              console.warn(`${getTimestamp()} No bearer token provided`);
-            }
-          } catch (error) {
-            console.error(
-              `${getTimestamp()} Session init callback failed:`,
-              error,
+            // Authenticate using JWT or Bearer token
+            const token = await authenticateRequest(
+              req.headers as Record<string, string | string[] | undefined>,
+              authHeader,
             );
+
+            // Store session data with userAgent, toolset, and transport
+            const userAgent = req.headers["user-agent"] || "unknown";
+            storeSessionData(sessionId, token, userAgent, toolset, transport);
+          } catch (error) {
+            console.error(`${getTimestamp()} Authentication failed:`, error);
             throw error;
           }
         },
