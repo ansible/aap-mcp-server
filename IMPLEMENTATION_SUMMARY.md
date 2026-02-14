@@ -44,6 +44,7 @@ Successfully implemented JWT authentication in the TypeScript AAP MCP Server, ma
 ## Features Implemented
 
 ### 1. JWT Token Validation
+
 - ✅ Validates JWT tokens from `X-DAB-JW-TOKEN` header
 - ✅ Fetches RSA public key from AAP Gateway
 - ✅ Verifies JWT signature using RS256 algorithm
@@ -51,27 +52,32 @@ Successfully implemented JWT authentication in the TypeScript AAP MCP Server, ma
 - ✅ Extracts username from `user_data` claim
 
 ### 2. Public Key Caching
+
 - ✅ Caches public key for 600 seconds (10 minutes)
 - ✅ Stores up to 100 keys in cache
 - ✅ Automatic cache expiration
 - ✅ Cache statistics for monitoring
 
 ### 3. Dual Authentication Support
+
 - ✅ Primary: JWT authentication (`X-DAB-JW-TOKEN` header)
 - ✅ Fallback: Bearer token authentication (`Authorization: Bearer <token>`)
 - ✅ Automatic fallback if JWT auth fails or is not provided
 
 ### 4. Configuration
+
 - ✅ Respects `ignore-certificate-errors` config option
 - ✅ Works with existing configuration system
 - ✅ Compatible with environment variables
 
 ### 5. Error Handling
+
 - ✅ Clear error messages
 - ✅ Proper error propagation
 - ✅ Logging for debugging
 
 ### 6. Testing
+
 - ✅ Unit tests for core functionality
 - ✅ Cache management tests
 - ✅ Integration test framework (requires AAP Gateway)
@@ -167,6 +173,7 @@ Authentication Failed ✗
 ## Comparison with Python Implementation
 
 ### Similarities ✅
+
 - Same header name: `X-DAB-JW-TOKEN`
 - Same JWT validation parameters (RS256, aud, iss)
 - Same public key caching strategy (TTL, max size)
@@ -174,13 +181,14 @@ Authentication Failed ✗
 - Same error handling approach
 
 ### Differences
-| Feature | Python | TypeScript |
-|---------|--------|------------|
-| HTTP Library | httpx | native fetch |
-| Cache Library | cachetools | node-cache |
-| JWT Library | PyJWT | jsonwebtoken |
-| Async Pattern | async/await | async/await |
-| Type System | Python types | TypeScript |
+
+| Feature       | Python       | TypeScript   |
+| ------------- | ------------ | ------------ |
+| HTTP Library  | httpx        | native fetch |
+| Cache Library | cachetools   | node-cache   |
+| JWT Library   | PyJWT        | jsonwebtoken |
+| Async Pattern | async/await  | async/await  |
+| Type System   | Python types | TypeScript   |
 
 ## Build & Test Results
 
@@ -221,12 +229,14 @@ $ npm test
 ## Next Steps
 
 ### For Development
+
 1. Test with real AAP Gateway instance
 2. Obtain a valid JWT token from AAP
 3. Configure AAP Gateway URL in `aap-mcp.yaml` or env vars
 4. Run integration tests (uncomment in test file)
 
 ### For Production
+
 1. Ensure certificate validation is enabled
 2. Configure proper AAP Gateway URL
 3. Monitor cache statistics
@@ -235,6 +245,7 @@ $ npm test
 ## Documentation
 
 See these files for more information:
+
 - **`JWT_AUTHENTICATION.md`** - Full authentication documentation
 - **`src/jwt-validator.ts`** - Implementation with inline comments
 - **`src/__tests__/jwt-validator.test.ts`** - Test examples
@@ -253,6 +264,7 @@ See these files for more information:
 ## Support
 
 For issues or questions:
+
 1. Check `JWT_AUTHENTICATION.md` for troubleshooting
 2. Review test files for usage examples
 3. Enable debug logging in validator

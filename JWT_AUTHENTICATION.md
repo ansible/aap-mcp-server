@@ -5,6 +5,7 @@ This document describes the JWT authentication implementation in the AAP MCP Ser
 ## Overview
 
 The AAP MCP Server now supports two authentication methods:
+
 1. **JWT Authentication** (X-DAB-JW-TOKEN header) - Primary method
 2. **Bearer Token Authentication** (Authorization header) - Fallback method
 
@@ -17,6 +18,7 @@ The server tries JWT authentication first, and if that fails or is not provided,
 The JWT validator is implemented based on the Python version from `ansible-mcp-tools`:
 
 **Key Features:**
+
 - **Public Key Caching**: Fetches RSA public key from AAP Gateway and caches it for 600 seconds (10 minutes)
 - **JWT Validation**: Uses RS256 algorithm to verify JWT signatures
 - **Claims Validation**: Validates audience (`ansible-services`) and issuer (`ansible-issuer`)
@@ -24,12 +26,13 @@ The JWT validator is implemented based on the Python version from `ansible-mcp-t
 - **User Data Extraction**: Extracts username from `user_data` claim
 
 **Configuration:**
+
 ```typescript
-const AUTHENTICATION_HEADER_NAME = 'X-DAB-JW-TOKEN';  // Header to check for JWT
-const JWT_AUDIENCE = 'ansible-services';               // Expected audience
-const JWT_ISSUER = 'ansible-issuer';                  // Expected issuer
-const CACHE_TTL = 600;                                // Cache TTL in seconds (10 min)
-const CACHE_MAX_KEYS = 100;                           // Max keys in cache
+const AUTHENTICATION_HEADER_NAME = "X-DAB-JW-TOKEN"; // Header to check for JWT
+const JWT_AUDIENCE = "ansible-services"; // Expected audience
+const JWT_ISSUER = "ansible-issuer"; // Expected issuer
+const CACHE_TTL = 600; // Cache TTL in seconds (10 min)
+const CACHE_MAX_KEYS = 100; // Max keys in cache
 ```
 
 ### Authentication Flow
@@ -62,6 +65,7 @@ When a client initializes a session, the authentication flow is:
 ### Code Changes
 
 **1. New JWT Validator Module (`src/jwt-validator.ts`)**
+
 - `validateJWT()` - Main validation function
 - `getPublicKey()` - Fetches and caches public key
 - `decodeJWTToken()` - Decodes and validates JWT
@@ -69,6 +73,7 @@ When a client initializes a session, the authentication flow is:
 - `getCacheStats()` - Utility for monitoring
 
 **2. Updated Authentication in `src/index.ts`**
+
 - Added import: `import { validateJWT } from "./jwt-validator.js";`
 - New function: `authenticateRequest()` - Handles both JWT and Bearer token
 - Updated `onsessioninitialized` callback to use `authenticateRequest()`
@@ -124,11 +129,13 @@ curl -X POST http://localhost:3000/mcp \
 The JWT validator respects the `ignore-certificate-errors` configuration option:
 
 **In `aap-mcp.yaml`:**
+
 ```yaml
-ignore-certificate-errors: false  # Set to true for dev/testing with self-signed certs
+ignore-certificate-errors: false # Set to true for dev/testing with self-signed certs
 ```
 
 **Via Environment Variable:**
+
 ```bash
 export IGNORE_CERTIFICATE_ERRORS=true  # For development/testing only
 ```
@@ -165,11 +172,11 @@ curl -X POST http://localhost:3000/mcp \
 The JWT validator provides cache statistics for monitoring:
 
 ```typescript
-import { getCacheStats } from './jwt-validator.js';
+import { getCacheStats } from "./jwt-validator.js";
 
 // Get cache statistics
 const stats = getCacheStats();
-console.log('Cache stats:', stats);
+console.log("Cache stats:", stats);
 // Output: { keys: 2, stats: { hits: 45, misses: 2, ... } }
 ```
 
@@ -197,6 +204,7 @@ The TypeScript implementation matches the Python version with these minor differ
 ### JWT Validation Fails
 
 **Check:**
+
 1. JWT token format is correct (should be a valid JWT)
 2. Token is not expired
 3. Audience is `ansible-services`
@@ -204,14 +212,16 @@ The TypeScript implementation matches the Python version with these minor differ
 5. Public key can be fetched from AAP Gateway (`/api/gateway/v1/jwt_key/`)
 
 **Debug:**
+
 ```typescript
 // Enable debug logging
-console.debug('JWT validation details');
+console.debug("JWT validation details");
 ```
 
 ### Public Key Fetch Fails
 
 **Check:**
+
 1. AAP Gateway is accessible at `BASE_URL`
 2. `/api/gateway/v1/jwt_key/` endpoint is available
 3. Certificate validation settings are correct
@@ -220,8 +230,9 @@ console.debug('JWT validation details');
 ### Cache Issues
 
 **Clear cache:**
+
 ```typescript
-import { clearPublicKeyCache } from './jwt-validator.js';
+import { clearPublicKeyCache } from "./jwt-validator.js";
 clearPublicKeyCache();
 ```
 
@@ -234,6 +245,7 @@ The JWT authentication implementation requires:
 - `@types/jsonwebtoken` (^9.0.5) - TypeScript types
 
 These are installed via:
+
 ```bash
 npm install jsonwebtoken node-cache @types/jsonwebtoken
 ```
