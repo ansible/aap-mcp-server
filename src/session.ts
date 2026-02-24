@@ -88,7 +88,7 @@ export class SessionManager {
     if (session) {
       this.resetTimeout(sessionId);
       // Return session data without the timeout property
-      const { timeout, ...sessionData } = session;
+      const { timeout: _timeout, ...sessionData } = session;
       return sessionData;
     }
     return undefined;

@@ -135,6 +135,7 @@ const validateToken = async (bearerToken: string): Promise<void> => {
     console.error(`${getTimestamp()} Token validation failed:`, error);
     throw new Error(
       `Token validation failed: ${error instanceof Error ? error.message : String(error)}`,
+      { cause: error },
     );
   }
 };
@@ -325,7 +326,7 @@ const createMcpServer = (): Server => {
     // Execute the tool by making HTTP request
     let result: any;
     let response: Response | undefined;
-    let fullUrl: string = `${CONFIG.BASE_URL}${tool.pathTemplate}`;
+    let fullUrl: string;
     let requestOptions: RequestInit | undefined;
 
     try {
@@ -390,6 +391,7 @@ const createMcpServer = (): Server => {
     } catch (error) {
       throw new Error(
         `Tool execution failed: ${error instanceof Error ? error.message : String(error)}`,
+        { cause: error },
       );
     } finally {
       const executionTimeMs = Date.now() - _startTime;

@@ -19,8 +19,8 @@ vi.mock("./session.js", () => ({
 describe("mcpGetHandler", () => {
   let mockReq: Partial<Request>;
   let mockRes: Partial<Response>;
-  let statusMock: ReturnType<typeof vi.fn>;
-  let sendMock: ReturnType<typeof vi.fn>;
+  let statusMock: any;
+  let sendMock: any;
 
   beforeEach(() => {
     vi.clearAllMocks();
