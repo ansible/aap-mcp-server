@@ -11,7 +11,9 @@ const mockAnalyticsInstance = {
 
 // Mock the @segment/analytics-node module to return the same instance every time
 vi.mock("@segment/analytics-node", () => {
-  const Analytics = vi.fn(() => mockAnalyticsInstance);
+  const Analytics = vi.fn(function () {
+    return mockAnalyticsInstance;
+  });
   return { Analytics };
 });
 

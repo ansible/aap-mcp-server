@@ -4,7 +4,7 @@ A Model Context Protocol (MCP) service that provides access to Ansible Automatio
 
 ## Prerequisites
 
-- Node.js 18 or higher
+- Node.js 22 or higher
 - Access to an Ansible Automation Platform instance
 - Valid AAP authentication token
 
@@ -316,7 +316,7 @@ The configuration system follows a hierarchical approach:
 
 5. **Missing dependencies**:
    - Run `npm install` to install required packages
-   - Ensure Node.js version 18 or higher is installed
+   - Ensure Node.js version 22 or higher is installed
 
 ### Configuration Validation
 
