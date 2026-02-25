@@ -13,8 +13,45 @@ export interface AapMcpConfig {
 }
 
 /**
+ * Handle duplicate tool names within a toolset by renaming them to include
+ * the service name with a hyphen separator (e.g., "controller-settings_list").
+ *
+ * @param tools - Array of tools to process
+ * @returns Array of tools with duplicates renamed
+ */
+const handleDuplicateNames = (
+  tools: AAPMcpToolDefinition[],
+): AAPMcpToolDefinition[] => {
+  // Group tools by name
+  const nameGroups = new Map<string, AAPMcpToolDefinition[]>();
+
+  tools.forEach((tool) => {
+    const existing = nameGroups.get(tool.name) || [];
+    existing.push(tool);
+    nameGroups.set(tool.name, existing);
+  });
+
+  // Find duplicates and rename them
+  nameGroups.forEach((group, name) => {
+    if (group.length > 1) {
+      // Multiple tools with the same name - need to rename
+      group.forEach((tool) => {
+        if (tool.service) {
+          tool.name = `${tool.service}-${name}`;
+        }
+      });
+    }
+  });
+
+  return tools;
+};
+
+/**
  * Load toolsets from configuration, creating the 'all' toolset that contains
  * all tools from all configured toolsets with deduplication by tool name.
+ *
+ * When duplicate tool names are found within a toolset, they are renamed to
+ * include the service name with a hyphen (e.g., "controller-settings_list").
  *
  * @param allTools - Array of all available tools
  * @param localConfig - Configuration object containing toolsets
@@ -25,10 +62,13 @@ export const loadToolsetsFromCfg = (
   localConfig: AapMcpConfig,
 ): Record<string, AAPMcpToolDefinition[]> => {
   const entries = Object.entries(localConfig.toolsets).map(
-    ([name, cfgToolList]) => [
-      name,
-      allTools.filter((t) => cfgToolList.includes(t.fullName)),
-    ],
+    ([name, cfgToolList]) => {
+      const filteredTools = allTools.filter((t) =>
+        cfgToolList.includes(t.fullName),
+      );
+      // Handle duplicate names within this toolset
+      return [name, handleDuplicateNames(filteredTools)];
+    },
   );
 
   const allListWithDup = entries
@@ -41,8 +81,14 @@ export const loadToolsetsFromCfg = (
     return acc;
   }, [] as AAPMcpToolDefinition[]);
 
+  // Handle duplicates in the "all" toolset as well
+  const allListWithoutDuplicates = handleDuplicateNames(allList);
+
   // Inject the "all" toolset
-  const allToolsets = Object.fromEntries([...entries, ...[["all", allList]]]);
+  const allToolsets = Object.fromEntries([
+    ...entries,
+    ...[["all", allListWithoutDuplicates]],
+  ]);
 
   return allToolsets;
 };

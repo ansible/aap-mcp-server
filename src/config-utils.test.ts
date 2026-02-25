@@ -264,32 +264,213 @@ describe("loadToolsetsFromCfg", () => {
       expect(result.all[0]).toBe(result.user[0]);
     });
 
-    it("should deduplicate tools with same name in 'all' toolset", () => {
-      // Create tools with same name but different fullNames to test deduplication
+    it("should rename duplicate tool names with service prefix and hyphen", () => {
+      // Create tools with same name but different fullNames to test renaming
       const mockToolsWithDuplicateNames = [
         createMockTool({
-          name: "duplicated",
-          fullName: "eda.duplicated",
-          service: "eda",
+          name: "settings_list",
+          fullName: "controller.settings_list",
+          service: "controller",
         }),
         createMockTool({
-          name: "duplicated", // Same name as above!
-          fullName: "controller.duplicated",
-          service: "controller",
+          name: "settings_list", // Same name as above!
+          fullName: "gateway.settings_list",
+          service: "gateway",
         }),
       ];
 
       const config: AapMcpConfig = {
         toolsets: {
-          admin: ["eda.duplicated", "controller.duplicated"], // Both have same name "duplicated"
+          platform_configuration: [
+            "controller.settings_list",
+            "gateway.settings_list",
+          ], // Both have same name "settings_list"
         },
       };
 
       const result = loadToolsetsFromCfg(mockToolsWithDuplicateNames, config);
 
-      expect(result.admin).toHaveLength(2); // Both tools in admin
-      expect(result.all).toHaveLength(1); // Only one in 'all' due to deduplication by name
-      expect(result.all[0].name).toBe("duplicated");
+      expect(result.platform_configuration).toHaveLength(2); // Both tools in the toolset
+      expect(result.all).toHaveLength(2); // Both tools in 'all' with renamed names
+
+      // Verify that tools were renamed to include service name with hyphen
+      const toolNames = result.platform_configuration.map((t) => t.name);
+      expect(toolNames).toContain("controller-settings_list");
+      expect(toolNames).toContain("gateway-settings_list");
+
+      // Verify the same in 'all' toolset
+      const allToolNames = result.all.map((t) => t.name);
+      expect(allToolNames).toContain("controller-settings_list");
+      expect(allToolNames).toContain("gateway-settings_list");
+    });
+  });
+
+  describe("duplicate name handling", () => {
+    it("should handle duplicates in a single toolset", () => {
+      const mockToolsWithDuplicates = [
+        createMockTool({
+          name: "settings_list",
+          fullName: "controller.settings_list",
+          service: "controller",
+        }),
+        createMockTool({
+          name: "settings_list",
+          fullName: "gateway.settings_list",
+          service: "gateway",
+        }),
+        createMockTool({
+          name: "unique_tool",
+          fullName: "eda.unique_tool",
+          service: "eda",
+        }),
+      ];
+
+      const config: AapMcpConfig = {
+        toolsets: {
+          test: [
+            "controller.settings_list",
+            "gateway.settings_list",
+            "eda.unique_tool",
+          ],
+        },
+      };
+
+      const result = loadToolsetsFromCfg(mockToolsWithDuplicates, config);
+
+      expect(result.test).toHaveLength(3);
+
+      const toolNames = result.test.map((t) => t.name);
+      expect(toolNames).toContain("controller-settings_list");
+      expect(toolNames).toContain("gateway-settings_list");
+      expect(toolNames).toContain("unique_tool"); // Unique names should not be changed
+    });
+
+    it("should handle duplicates across multiple toolsets independently", () => {
+      const mockToolsWithDuplicates = [
+        createMockTool({
+          name: "settings_list",
+          fullName: "controller.settings_list",
+          service: "controller",
+        }),
+        createMockTool({
+          name: "settings_list",
+          fullName: "gateway.settings_list",
+          service: "gateway",
+        }),
+        createMockTool({
+          name: "other_tool",
+          fullName: "eda.other_tool",
+          service: "eda",
+        }),
+      ];
+
+      const config: AapMcpConfig = {
+        toolsets: {
+          toolset1: ["controller.settings_list", "gateway.settings_list"],
+          toolset2: ["controller.settings_list", "eda.other_tool"],
+        },
+      };
+
+      const result = loadToolsetsFromCfg(mockToolsWithDuplicates, config);
+
+      // Both toolsets should have duplicates renamed
+      const toolset1Names = result.toolset1.map((t) => t.name);
+      expect(toolset1Names).toContain("controller-settings_list");
+      expect(toolset1Names).toContain("gateway-settings_list");
+
+      // toolset2 only has one instance of settings_list, but it shares the renamed name
+      const toolset2Names = result.toolset2.map((t) => t.name);
+      expect(toolset2Names).toContain("controller-settings_list");
+      expect(toolset2Names).toContain("other_tool");
+    });
+
+    it("should handle three or more duplicates of the same name", () => {
+      const mockToolsWithMultipleDuplicates = [
+        createMockTool({
+          name: "list",
+          fullName: "controller.list",
+          service: "controller",
+        }),
+        createMockTool({
+          name: "list",
+          fullName: "gateway.list",
+          service: "gateway",
+        }),
+        createMockTool({
+          name: "list",
+          fullName: "eda.list",
+          service: "eda",
+        }),
+      ];
+
+      const config: AapMcpConfig = {
+        toolsets: {
+          multi: ["controller.list", "gateway.list", "eda.list"],
+        },
+      };
+
+      const result = loadToolsetsFromCfg(
+        mockToolsWithMultipleDuplicates,
+        config,
+      );
+
+      expect(result.multi).toHaveLength(3);
+
+      const toolNames = result.multi.map((t) => t.name);
+      expect(toolNames).toContain("controller-list");
+      expect(toolNames).toContain("gateway-list");
+      expect(toolNames).toContain("eda-list");
+    });
+
+    it("should not modify names when no duplicates exist", () => {
+      const config: AapMcpConfig = {
+        toolsets: {
+          unique: ["eda.tool1", "controller.tool2", "gateway.tool3"],
+        },
+      };
+
+      const result = loadToolsetsFromCfg(mockAllTools, config);
+
+      const toolNames = result.unique.map((t) => t.name);
+      expect(toolNames).toContain("tool1");
+      expect(toolNames).toContain("tool2");
+      expect(toolNames).toContain("tool3");
+      // Should not contain hyphenated names
+      expect(toolNames).not.toContain("eda-tool1");
+      expect(toolNames).not.toContain("controller-tool2");
+      expect(toolNames).not.toContain("gateway-tool3");
+    });
+
+    it("should handle duplicates in 'all' toolset correctly", () => {
+      const mockToolsWithDuplicates = [
+        createMockTool({
+          name: "settings_list",
+          fullName: "controller.settings_list",
+          service: "controller",
+        }),
+        createMockTool({
+          name: "settings_list",
+          fullName: "gateway.settings_list",
+          service: "gateway",
+        }),
+      ];
+
+      const config: AapMcpConfig = {
+        toolsets: {
+          platform_configuration: [
+            "controller.settings_list",
+            "gateway.settings_list",
+          ],
+        },
+      };
+
+      const result = loadToolsetsFromCfg(mockToolsWithDuplicates, config);
+
+      expect(result.all).toHaveLength(2);
+
+      const allToolNames = result.all.map((t) => t.name);
+      expect(allToolNames).toContain("controller-settings_list");
+      expect(allToolNames).toContain("gateway-settings_list");
     });
   });
 
