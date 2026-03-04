@@ -11,7 +11,7 @@ import {
 const EVENT_SCHEMAS = {
   mcp_session_started: {
     required: ["sess_id", "process_id", "user_unique_id"],
-    optional: ["user_agent", "mcp_tool_set"],
+    optional: ["user_agent", "mcp_tool_set", "is_reconnection"],
     validators: {
       sess_id: (value: any) => typeof value === "string" && value.length > 0,
       process_id: (value: any) => typeof value === "string" && value.length > 0,
@@ -21,6 +21,8 @@ const EVENT_SCHEMAS = {
         value === undefined || typeof value === "string",
       mcp_tool_set: (value: any) =>
         value === undefined || typeof value === "string",
+      is_reconnection: (value: any) =>
+        value === undefined || typeof value === "boolean",
     },
   },
   mcp_tool_called: {
