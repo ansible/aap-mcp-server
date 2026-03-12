@@ -357,6 +357,104 @@ describe("Analytics Service", () => {
     });
   });
 
+  describe("reconnection detection", () => {
+    beforeEach(() => {
+      analyticsService.initialize(
+        "test-key",
+        () => 0,
+        "1.0.0",
+        "test",
+        false,
+      );
+      mockAnalyticsInstance.track.mockClear();
+    });
+
+    it("should set is_reconnection to false for the first session of a token", () => {
+      analyticsService.trackMcpSessionStarted(
+        "session-1",
+        "agent",
+        "toolset",
+        "token-A",
+      );
+
+      expect(mockAnalyticsInstance.track).toHaveBeenCalledTimes(1);
+      const call = mockAnalyticsInstance.track.mock.calls[0][0];
+      expect(call.properties.is_reconnection).toBe(false);
+    });
+
+    it("should set is_reconnection to true for a second session with the same token", () => {
+      analyticsService.trackMcpSessionStarted(
+        "session-1",
+        "agent",
+        "toolset",
+        "token-A",
+      );
+      analyticsService.trackMcpSessionStarted(
+        "session-2",
+        "agent",
+        "toolset",
+        "token-A",
+      );
+
+      expect(mockAnalyticsInstance.track).toHaveBeenCalledTimes(2);
+      const firstCall = mockAnalyticsInstance.track.mock.calls[0][0];
+      const secondCall = mockAnalyticsInstance.track.mock.calls[1][0];
+      expect(firstCall.properties.is_reconnection).toBe(false);
+      expect(secondCall.properties.is_reconnection).toBe(true);
+    });
+
+    it("should set is_reconnection to false for different tokens", () => {
+      analyticsService.trackMcpSessionStarted(
+        "session-1",
+        "agent",
+        "toolset",
+        "token-A",
+      );
+      analyticsService.trackMcpSessionStarted(
+        "session-2",
+        "agent",
+        "toolset",
+        "token-B",
+      );
+
+      expect(mockAnalyticsInstance.track).toHaveBeenCalledTimes(2);
+      const firstCall = mockAnalyticsInstance.track.mock.calls[0][0];
+      const secondCall = mockAnalyticsInstance.track.mock.calls[1][0];
+      expect(firstCall.properties.is_reconnection).toBe(false);
+      expect(secondCall.properties.is_reconnection).toBe(false);
+    });
+
+    it("should set is_reconnection to false after the reconnection window expires", () => {
+      // Use vi.useFakeTimers to control time
+      vi.useFakeTimers();
+
+      analyticsService.trackMcpSessionStarted(
+        "session-1",
+        "agent",
+        "toolset",
+        "token-A",
+      );
+
+      // Advance time past the 1-hour reconnection window
+      vi.advanceTimersByTime(3_600_001);
+
+      analyticsService.trackMcpSessionStarted(
+        "session-2",
+        "agent",
+        "toolset",
+        "token-A",
+      );
+
+      expect(mockAnalyticsInstance.track).toHaveBeenCalledTimes(2);
+      const firstCall = mockAnalyticsInstance.track.mock.calls[0][0];
+      const secondCall = mockAnalyticsInstance.track.mock.calls[1][0];
+      expect(firstCall.properties.is_reconnection).toBe(false);
+      expect(secondCall.properties.is_reconnection).toBe(false);
+
+      vi.useRealTimers();
+    });
+  });
+
   describe("shutdown", () => {
     it("should handle shutdown gracefully", async () => {
       const getActiveSessions = () => 0;

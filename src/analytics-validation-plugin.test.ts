@@ -62,6 +62,49 @@ describe("Analytics Validation Plugin", () => {
       expect(validateSessionStartedEvent(validEvent)).toBe(true);
     });
 
+    it("should accept event with is_reconnection: true", () => {
+      const validEvent = {
+        sess_id: "session-123",
+        process_id: "process-456",
+        user_unique_id: "user-789",
+        is_reconnection: true,
+      };
+
+      expect(validateSessionStartedEvent(validEvent)).toBe(true);
+    });
+
+    it("should accept event with is_reconnection: false", () => {
+      const validEvent = {
+        sess_id: "session-123",
+        process_id: "process-456",
+        user_unique_id: "user-789",
+        is_reconnection: false,
+      };
+
+      expect(validateSessionStartedEvent(validEvent)).toBe(true);
+    });
+
+    it("should accept event without is_reconnection (optional)", () => {
+      const validEvent = {
+        sess_id: "session-123",
+        process_id: "process-456",
+        user_unique_id: "user-789",
+      };
+
+      expect(validateSessionStartedEvent(validEvent)).toBe(true);
+    });
+
+    it("should reject event with non-boolean is_reconnection", () => {
+      const invalidEvent = {
+        sess_id: "session-123",
+        process_id: "process-456",
+        user_unique_id: "user-789",
+        is_reconnection: "yes",
+      };
+
+      expect(validateSessionStartedEvent(invalidEvent)).toBe(false);
+    });
+
     it("should reject event with unexpected fields", () => {
       const invalidEvent = {
         sess_id: "session-123",

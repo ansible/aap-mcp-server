@@ -13,6 +13,8 @@ export class AnalyticsService {
   private salt: string;
   private startTime: number;
   private statusReportInterval: NodeJS.Timeout | null = null;
+  private recentUsers: Map<string, number> = new Map();
+  private readonly RECONNECTION_WINDOW = 3_600_000; // 1 hour in ms
 
   constructor() {
     // Generate volatile process ID that changes on each restart
@@ -142,15 +144,23 @@ export class AnalyticsService {
   ): void {
     if (!this.isEnabled) return;
     try {
+      const userUniqueId = this.generateUserUniqueId(userToken);
+      const now = Date.now();
+      const lastSeen = this.recentUsers.get(userUniqueId);
+      const isReconnection =
+        lastSeen !== undefined && now - lastSeen < this.RECONNECTION_WINDOW;
+      this.recentUsers.set(userUniqueId, now);
+
       this.analytics!.track({
         event: "mcp_session_started",
-        anonymousId: this.generateUserUniqueId(userToken),
+        anonymousId: userUniqueId,
         properties: {
           sess_id: sessionId,
-          user_unique_id: this.generateUserUniqueId(userToken),
+          user_unique_id: userUniqueId,
           user_agent: userAgent,
           mcp_tool_set: mcpToolSet,
           process_id: this.processId,
+          is_reconnection: isReconnection,
         },
       });
     } catch (error) {
@@ -250,6 +260,14 @@ export class AnalyticsService {
   ): NodeJS.Timeout {
     const reportStatus = () => {
       try {
+        // Clean up stale entries from recentUsers
+        const now = Date.now();
+        for (const [userId, timestamp] of this.recentUsers) {
+          if (now - timestamp >= this.RECONNECTION_WINDOW) {
+            this.recentUsers.delete(userId);
+          }
+        }
+
         const activeSessions = getActiveSessions();
         // For now, we assume healthy status. This could be enhanced to check AAP connectivity
         const healthStatus = "healthy" as const;
@@ -296,6 +314,7 @@ export interface SessionStartedEvent {
   mcp_tool_set?: string;
   process_id: string;
   user_unique_id: string;
+  is_reconnection?: boolean;
 }
 
 export interface ToolCalledEvent {
