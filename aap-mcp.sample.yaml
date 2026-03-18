@@ -23,6 +23,23 @@
 # Allow write operation (POST, DELETE and PATCH)
 # allow_write_operations: false
 
+# OIDC Authentication Configuration
+# When enabled, the server validates Bearer tokens via the configured OIDC provider
+# instead of the AAP Gateway /me/ endpoint. Follows the MCP authorization spec
+# (RFC 9728 Protected Resource Metadata, OAuth 2.1 with PKCE).
+#
+# oidc:
+#   enabled: true
+#   issuer_url: "https://sso.example.com/realms/aap"        # OIDC provider URL
+#   client_id: "aap-mcp-server"                              # Client ID for token introspection
+#   client_secret: "your-client-secret"                      # Client secret for introspection
+#   audience: "https://aap.example.com"                      # Expected audience in tokens
+#   scopes:                                                  # Scopes advertised in PRM metadata
+#     - openid
+#     - mcp:tools
+#   required_scopes:                                         # Scopes required for access
+#     - mcp:tools
+
 services:
   - name: controller
     # url: "https://custom-controller.example.com/api/v2/schema/"

@@ -24,6 +24,10 @@ import {
 import { SessionManager } from "./session.js";
 import { AnalyticsService } from "./analytics.js";
 import { AapMcpConfig, loadToolsetsFromCfg } from "./config-utils.js";
+import {
+  OidcTokenVerifier,
+  buildProtectedResourceMetadata,
+} from "./oidc.js";
 
 // Load environment variables
 config();
@@ -60,6 +64,12 @@ const CONFIG = {
 
 // Initialize analytics service (always instantiated, but only enabled if key provided)
 const analyticsService = new AnalyticsService();
+
+// OIDC configuration
+const oidcConfig = localConfig.oidc;
+const oidcEnabled =
+  oidcConfig?.enabled === true && !!oidcConfig?.issuer_url;
+let oidcVerifier: OidcTokenVerifier | null = null;
 
 // Helper function to get boolean configuration with environment variable override
 const getBooleanConfig = (
@@ -114,8 +124,10 @@ const extractBearerToken = (
     : undefined;
 };
 
-// Validate authorization token
-const validateToken = async (bearerToken: string): Promise<void> => {
+// Validate authorization token via AAP Gateway (legacy mode)
+const validateTokenViaGateway = async (
+  bearerToken: string,
+): Promise<void> => {
   try {
     const response = await fetch(`${CONFIG.BASE_URL}/api/gateway/v1/me/`, {
       headers: {
@@ -129,14 +141,32 @@ const validateToken = async (bearerToken: string): Promise<void> => {
         `Authentication failed: ${response.status} ${response.statusText}`,
       );
     }
-
-    // Token is valid, no need to extract user data
   } catch (error) {
     console.error(`${getTimestamp()} Token validation failed:`, error);
     throw new Error(
       `Token validation failed: ${error instanceof Error ? error.message : String(error)}`,
       { cause: error },
     );
+  }
+};
+
+// Validate authorization token: OIDC when configured, otherwise AAP Gateway
+const validateToken = async (bearerToken: string): Promise<void> => {
+  if (oidcEnabled && oidcVerifier) {
+    try {
+      await oidcVerifier.verifyAccessToken(bearerToken);
+    } catch (error) {
+      console.error(
+        `${getTimestamp()} OIDC token verification failed:`,
+        error,
+      );
+      throw new Error(
+        `OIDC token verification failed: ${error instanceof Error ? error.message : String(error)}`,
+        { cause: error },
+      );
+    }
+  } else {
+    await validateTokenViaGateway(bearerToken);
   }
 };
 
@@ -444,6 +474,15 @@ app.use(
   }),
 );
 
+// RFC 9728 Protected Resource Metadata endpoint (OIDC mode)
+if (oidcEnabled && oidcConfig) {
+  app.get("/.well-known/oauth-protected-resource", (_req, res) => {
+    const serverUrl = `http://localhost:${CONFIG.MCP_PORT}`;
+    const metadata = buildProtectedResourceMetadata(serverUrl, oidcConfig);
+    res.json(metadata);
+  });
+}
+
 // MCP POST endpoint handler
 const mcpPostHandler = async (
   req: express.Request,
@@ -466,45 +505,65 @@ const mcpPostHandler = async (
       // Reuse existing transport
       transport = sessionManager.getTransport(sessionId)!;
     } else if (!sessionId && isInitializeRequest(req.body)) {
-      // New initialization request
+      // Reject early if no bearer token is present (before creating transport)
+      const token = extractBearerToken(authHeader);
+      if (!token) {
+        console.warn(`${getTimestamp()} No bearer token provided`);
+        if (oidcEnabled) {
+          const prmUrl = `http://localhost:${CONFIG.MCP_PORT}/.well-known/oauth-protected-resource`;
+          res.setHeader(
+            "WWW-Authenticate",
+            `Bearer realm="aap-mcp", resource_metadata="${prmUrl}"`,
+          );
+        }
+        res.status(401).json({
+          jsonrpc: "2.0",
+          error: { code: -32000, message: "Authorization required" },
+          id: null,
+        });
+        return;
+      }
+
+      // Validate the token before creating a session
+      try {
+        await validateToken(token);
+      } catch (error) {
+        console.error(
+          `${getTimestamp()} Failed to validate token:`,
+          error,
+        );
+        if (oidcEnabled) {
+          const prmUrl = `http://localhost:${CONFIG.MCP_PORT}/.well-known/oauth-protected-resource`;
+          res.setHeader(
+            "WWW-Authenticate",
+            `Bearer realm="aap-mcp", resource_metadata="${prmUrl}"`,
+          );
+        }
+        res.status(401).json({
+          jsonrpc: "2.0",
+          error: {
+            code: -32000,
+            message: "Authentication failed",
+            data: error instanceof Error ? error.message : String(error),
+          },
+          id: null,
+        });
+        return;
+      }
+
+      // New initialization request - token already validated above
+      const validatedToken = token;
       transport = new StreamableHTTPServerTransport({
         sessionIdGenerator: () => randomUUID(),
         onsessioninitialized: async (sessionId: string) => {
-          try {
-            // Extract and validate the bearer token
-            const token = extractBearerToken(authHeader);
-            if (token) {
-              try {
-                // Validate token (no permissions extraction)
-                await validateToken(token);
-
-                // Store session data with userAgent, toolset, and transport
-                const userAgent = req.headers["user-agent"] || "unknown";
-                storeSessionData(
-                  sessionId,
-                  token,
-                  userAgent,
-                  toolset,
-                  transport,
-                );
-              } catch (error) {
-                console.error(
-                  `${getTimestamp()} Failed to validate token:`,
-                  error,
-                );
-                // Token validation failed, we cannot create the session without valid token
-                throw error;
-              }
-            } else {
-              console.warn(`${getTimestamp()} No bearer token provided`);
-            }
-          } catch (error) {
-            console.error(
-              `${getTimestamp()} Session init callback failed:`,
-              error,
-            );
-            throw error;
-          }
+          const userAgent = req.headers["user-agent"] || "unknown";
+          storeSessionData(
+            sessionId,
+            validatedToken,
+            userAgent,
+            toolset,
+            transport,
+          );
         },
       });
 
@@ -730,6 +789,26 @@ if (enableMetrics) {
 }
 
 async function main(): Promise<void> {
+  // Initialize OIDC verifier if configured
+  if (oidcEnabled && oidcConfig) {
+    const serverUrl = `http://localhost:${CONFIG.MCP_PORT}`;
+    oidcVerifier = new OidcTokenVerifier(oidcConfig, serverUrl);
+    try {
+      await oidcVerifier.initialize();
+      console.log(
+        `${getTimestamp()} OIDC authentication initialized (issuer: ${oidcConfig.issuer_url})`,
+      );
+    } catch (error) {
+      console.error(
+        `${getTimestamp()} WARNING: Failed to initialize OIDC - falling back to Gateway token validation`,
+      );
+      console.error(
+        `${getTimestamp()}   ${error instanceof Error ? error.message : String(error)}`,
+      );
+      oidcVerifier = null;
+    }
+  }
+
   // Print startup banner
   console.log("");
   console.log("═══════════════════════════════════════════════════════════");
@@ -749,6 +828,9 @@ async function main(): Promise<void> {
     `  Certificate validation: ${ignoreCertificateErrors ? "DISABLED" : "ENABLED"}`,
   );
   console.log(`  Metrics: ${enableMetrics ? "ENABLED" : "DISABLED"}`);
+  console.log(
+    `  Authentication: ${oidcEnabled && oidcVerifier ? `OIDC (${oidcConfig!.issuer_url})` : "AAP Gateway token"}`,
+  );
   console.log("");
   console.log("───────────────────────────────────────────────────────────");
 

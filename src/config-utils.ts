@@ -1,5 +1,15 @@
 import type { AAPMcpToolDefinition, ServiceConfig } from "./openapi-loader.js";
 
+export interface OidcConfig {
+  enabled: boolean;
+  issuer_url: string;
+  client_id: string;
+  client_secret?: string;
+  scopes?: string[];
+  audience?: string;
+  required_scopes?: string[];
+}
+
 export interface AapMcpConfig {
   record_api_queries?: boolean;
   "ignore-certificate-errors"?: boolean;
@@ -10,6 +20,7 @@ export interface AapMcpConfig {
   services?: ServiceConfig[];
   toolsets: Record<string, string[]>;
   analytics_key?: string;
+  oidc?: OidcConfig;
 }
 
 /**

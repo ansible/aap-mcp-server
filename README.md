@@ -163,11 +163,61 @@ The service provides several MCP endpoints:
 
 ### Authentication
 
-Include your AAP token in the Authorization header:
+The server supports two authentication modes:
+
+#### 1. AAP Gateway Token (Default)
+
+The default mode validates Bearer tokens against the AAP Gateway `/api/gateway/v1/me/` endpoint. Include your AAP token in the Authorization header:
 
 ```
 Authorization: Bearer your_aap_token_here
 ```
+
+#### 2. OIDC Authentication
+
+When OIDC is enabled, the server validates tokens via an external OIDC provider (e.g., Red Hat SSO, Keycloak, or any OpenID Connect-compliant identity provider). This follows the [MCP authorization specification](https://modelcontextprotocol.io/specification/latest/basic/authorization) with:
+
+- **RFC 9728** Protected Resource Metadata at `/.well-known/oauth-protected-resource`
+- **OAuth 2.1** with PKCE for the authorization code flow
+- **Token introspection** (RFC 7662) or JWT structure validation
+
+To enable OIDC, add the following to your `aap-mcp.yaml`:
+
+```yaml
+oidc:
+  enabled: true
+  issuer_url: "https://sso.example.com/realms/aap"
+  client_id: "aap-mcp-server"
+  client_secret: "your-client-secret"
+  audience: "http://localhost:3000"
+  scopes:
+    - openid
+    - mcp:tools
+  required_scopes:
+    - mcp:tools
+```
+
+**Configuration fields:**
+
+| Field | Required | Description |
+|-------|----------|-------------|
+| `enabled` | Yes | Set to `true` to enable OIDC authentication |
+| `issuer_url` | Yes | OIDC provider discovery URL (must support `.well-known/openid-configuration`) |
+| `client_id` | Yes | Client ID registered with the OIDC provider (used for token introspection) |
+| `client_secret` | No | Client secret for token introspection. When omitted, falls back to JWT structure validation |
+| `audience` | No | Expected `aud` claim in tokens. Tokens without a matching audience are rejected |
+| `scopes` | No | Scopes advertised in the Protected Resource Metadata document |
+| `required_scopes` | No | Scopes that must be present in the token for access to be granted |
+
+**Keycloak / Red Hat SSO setup example:**
+
+1. Start Keycloak: `docker run -p 8080:8080 -e KC_BOOTSTRAP_ADMIN_USERNAME=admin -e KC_BOOTSTRAP_ADMIN_PASSWORD=admin quay.io/keycloak/keycloak start-dev`
+2. Create a client scope `mcp:tools` with "Include in token scope" enabled
+3. Configure an audience mapper on the scope pointing to the MCP server URL
+4. Create a confidential client for the MCP server (for introspection)
+5. Enable Dynamic Client Registration if your MCP clients will use DCR
+
+When OIDC is enabled, MCP clients that support the authorization specification (e.g., VS Code, Cursor) will automatically discover the OIDC provider and initiate the OAuth flow in the browser.
 
 ### Session Management
 
@@ -219,6 +269,17 @@ claude mcp add aap-mcp-inventory -t http http://localhost:3000/mcp/inventory_man
 # Use system monitoring tools
 claude mcp add aap-mcp-monitoring -t http http://localhost:3000/mcp/system_monitoring
 ```
+
+#### Option 4: OIDC Authentication (Browser-based)
+
+With OIDC enabled, compatible MCP clients will handle the OAuth flow automatically:
+
+```bash
+# VS Code / Cursor: Add HTTP server URL - auth happens in browser
+claude mcp add aap-mcp -t http http://localhost:3000/mcp
+```
+
+The client will discover the OIDC provider via the `/.well-known/oauth-protected-resource` endpoint and redirect you to your identity provider to sign in.
 
 ## Available Tools
 
