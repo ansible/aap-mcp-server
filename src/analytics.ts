@@ -10,15 +10,12 @@ export class AnalyticsService {
   private analytics: Analytics | null = null;
   private isEnabled = false;
   private processId: string;
-  private salt: string;
   private startTime: number;
   private statusReportInterval: NodeJS.Timeout | null = null;
 
   constructor() {
     // Generate volatile process ID that changes on each restart
     this.processId = randomUUID();
-    // Generate secret salt for anonymousId generation
-    this.salt = randomUUID();
     this.startTime = Date.now();
   }
 
@@ -106,48 +103,31 @@ export class AnalyticsService {
   }
 
   /**
-   * Generate user unique ID from user access token and secret salt
-   * @param userToken - User access token (bearer token)
-   * @returns UUID generated from secret salt and token
-   */
-  private generateUserUniqueId(userToken?: string): string {
-    // Generate deterministic UUID from secret salt and user token
-    // This ensures same user gets same ID during process lifetime
-    const token = userToken || "anonymous";
-    const combined = `${this.salt}:${token}`;
-    let hash = 0;
-    for (let i = 0; i < combined.length; i++) {
-      const char = combined.charCodeAt(i);
-      hash = (hash << 5) - hash + char;
-      hash = hash & hash; // Convert to 32-bit integer
-    }
-
-    // Format as UUID-like string
-    const hex = Math.abs(hash).toString(16).padStart(8, "0");
-    return `${hex.substring(0, 8)}-${hex.substring(0, 4)}-4${hex.substring(1, 4)}-a${hex.substring(1, 4)}-${hex.padEnd(12, "0")}`;
-  }
-
-  /**
    * Track MCP session started event
    * @param sessionId - Unique session identifier (UUID)
    * @param userAgent - Client user agent string
    * @param mcpToolSet - Name of the specific MCP server instance
-   * @param userToken - User access token for generating user_unique_id
+   * @param userPseudoId - HMAC-SHA-256 pseudonymous user identifier
+   * @param userType - User type classification ("internal" | "external")
    */
   trackMcpSessionStarted(
     sessionId: string,
     userAgent?: string,
     mcpToolSet?: string,
-    userToken?: string,
+    userPseudoId: string = "anonymous",
+    userType: string = "external",
+    installerPseudoId: string = "unknown",
   ): void {
     if (!this.isEnabled) return;
     try {
       this.analytics!.track({
         event: "mcp_session_started",
-        anonymousId: this.generateUserUniqueId(userToken),
+        anonymousId: userPseudoId,
         properties: {
           sess_id: sessionId,
-          user_unique_id: this.generateUserUniqueId(userToken),
+          user_pseudo_id: userPseudoId,
+          user_type: userType,
+          installer_pseudo_id: installerPseudoId,
           user_agent: userAgent,
           mcp_tool_set: mcpToolSet,
           process_id: this.processId,
@@ -167,7 +147,8 @@ export class AnalyticsService {
    * @param parameterLength - Size in chars of the input payload
    * @param httpStatus - Return code of the http request
    * @param executionTimeMs - Tool execution time in milliseconds
-   * @param userToken - User access token for generating user_unique_id
+   * @param userPseudoId - HMAC-SHA-256 pseudonymous user identifier
+   * @param userType - User type classification ("internal" | "external")
    */
   trackMcpToolCalled(
     toolName: string,
@@ -177,17 +158,21 @@ export class AnalyticsService {
     parameterLength: number,
     httpStatus: number,
     executionTimeMs: number,
-    userToken?: string,
+    userPseudoId: string = "anonymous",
+    userType: string = "external",
+    installerPseudoId: string = "unknown",
   ): void {
     if (!this.isEnabled) return;
     try {
       this.analytics!.track({
         event: "mcp_tool_called",
-        anonymousId: this.generateUserUniqueId(userToken),
+        anonymousId: userPseudoId,
         properties: {
           tool_name: toolName,
           sess_id: sessionId,
-          user_unique_id: this.generateUserUniqueId(userToken),
+          user_pseudo_id: userPseudoId,
+          user_type: userType,
+          installer_pseudo_id: installerPseudoId,
           mcp_tool_set: mcpToolSet,
           user_agent: userAgent,
           parameter_length: parameterLength,
@@ -295,7 +280,9 @@ export interface SessionStartedEvent {
   sess_id: string;
   mcp_tool_set?: string;
   process_id: string;
-  user_unique_id: string;
+  user_pseudo_id: string;
+  user_type: string;
+  installer_pseudo_id: string;
 }
 
 export interface ToolCalledEvent {
@@ -306,7 +293,9 @@ export interface ToolCalledEvent {
   parameter_length: number;
   http_status: number;
   execution_time_ms: number;
-  user_unique_id: string;
+  user_pseudo_id: string;
+  user_type: string;
+  installer_pseudo_id: string;
 }
 
 export interface ServerStatusEvent {

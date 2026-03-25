@@ -23,6 +23,7 @@ import {
 } from "./openapi-loader.js";
 import { SessionManager } from "./session.js";
 import { AnalyticsService } from "./analytics.js";
+import { PseudoIdentityService, type UserInfo } from "./pseudo-identity.js";
 import { AapMcpConfig, loadToolsetsFromCfg } from "./config-utils.js";
 
 // Load environment variables
@@ -60,6 +61,9 @@ const CONFIG = {
 
 // Initialize analytics service (always instantiated, but only enabled if key provided)
 const analyticsService = new AnalyticsService();
+
+// Initialize user identity service for stable pseudonymous telemetry IDs
+const userIdentityService = new PseudoIdentityService();
 
 // Helper function to get boolean configuration with environment variable override
 const getBooleanConfig = (
@@ -115,7 +119,7 @@ const extractBearerToken = (
 };
 
 // Validate authorization token
-const validateToken = async (bearerToken: string): Promise<void> => {
+const validateToken = async (bearerToken: string): Promise<UserInfo> => {
   try {
     const response = await fetch(`${CONFIG.BASE_URL}/api/gateway/v1/me/`, {
       headers: {
@@ -130,7 +134,17 @@ const validateToken = async (bearerToken: string): Promise<void> => {
       );
     }
 
-    // Token is valid, no need to extract user data
+    // Extract user data for stable telemetry identifiers
+    try {
+      const data: any = await response.json();
+      const user = data.results?.[0];
+      return {
+        ansibleId: user?.summary_fields?.resource?.ansible_id,
+        email: user?.email,
+      };
+    } catch {
+      return {};
+    }
   } catch (error) {
     console.error(`${getTimestamp()} Token validation failed:`, error);
     throw new Error(
@@ -146,11 +160,30 @@ const storeSessionData = (
   userAgent: string,
   toolset: string,
   transport: StreamableHTTPServerTransport,
+  userPseudoId: string,
+  userType: string,
+  installerPseudoId: string,
 ): void => {
-  sessionManager.store(sessionId, token, userAgent, toolset, transport);
+  sessionManager.store(
+    sessionId,
+    token,
+    userAgent,
+    toolset,
+    transport,
+    userPseudoId,
+    userType,
+    installerPseudoId,
+  );
 
   // Track session started event
-  analyticsService.trackMcpSessionStarted(sessionId, userAgent, toolset, token);
+  analyticsService.trackMcpSessionStarted(
+    sessionId,
+    userAgent,
+    toolset,
+    userPseudoId,
+    userType,
+    installerPseudoId,
+  );
 };
 
 const deleteSessionData = (sessionId: string): void => {
@@ -401,6 +434,9 @@ const createMcpServer = (): Server => {
         `${getTimestamp()} [toolset:${toolToolset}] ${tool.name} → ${response && response.status} ${response && response.statusText} (${executionTimeMs}ms)`,
       );
 
+      const userPseudoId = sessionManager.getUserPseudoId(sessionId);
+      const userType = sessionManager.getUserType(sessionId);
+      const installerPseudoId = sessionManager.getInstallerPseudoId(sessionId);
       analyticsService.trackMcpToolCalled(
         tool.name,
         toolToolset,
@@ -409,7 +445,9 @@ const createMcpServer = (): Server => {
         parameterLength,
         response ? response.status : 0,
         executionTimeMs,
-        token,
+        userPseudoId,
+        userType,
+        installerPseudoId,
       );
       metricsService.recordToolExecution(
         tool.name,
@@ -475,8 +513,9 @@ const mcpPostHandler = async (
             const token = extractBearerToken(authHeader);
             if (token) {
               try {
-                // Validate token (no permissions extraction)
-                await validateToken(token);
+                // Validate token and extract user info
+                const userInfo = await validateToken(token);
+                const identity = userIdentityService.deriveIdentity(userInfo);
 
                 // Store session data with userAgent, toolset, and transport
                 const userAgent = req.headers["user-agent"] || "unknown";
@@ -486,6 +525,9 @@ const mcpPostHandler = async (
                   userAgent,
                   toolset,
                   transport,
+                  identity.userPseudoId,
+                  identity.userType,
+                  identity.installerPseudoId,
                 );
               } catch (error) {
                 console.error(
