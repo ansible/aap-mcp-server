@@ -12,6 +12,12 @@ logs/
 
 # Test coverage and results
 coverage/
+test-results/
 test-results.json
-test-results.html
 *.lcov
+
+# IDEs
+.idea/
+
+# Others
+aap-mcp.yaml
