@@ -32,6 +32,11 @@ const mockUserData = {
   is_platform_auditor: false,
   first_name: "Test",
   last_name: "User",
+  summary_fields: {
+    resource: {
+      ansible_id: "550e8400-e29b-41d4-a716-446655440000",
+    },
+  },
 };
 
 interface PaginatedResponse {

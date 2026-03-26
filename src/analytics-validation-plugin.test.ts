@@ -25,7 +25,9 @@ describe("Analytics Validation Plugin", () => {
       const validEvent = {
         sess_id: "session-123",
         process_id: "process-456",
-        user_unique_id: "user-789",
+        user_pseudo_id: "user-789",
+        user_type: "internal",
+        installer_pseudo_id: "installer-abc",
         user_agent: "TestAgent/1.0",
         mcp_tool_set: "test-toolset",
       };
@@ -36,7 +38,7 @@ describe("Analytics Validation Plugin", () => {
     it("should reject event with missing required fields", () => {
       const invalidEvent = {
         user_agent: "TestAgent/1.0",
-        // Missing sess_id, process_id, user_unique_id
+        // Missing sess_id, process_id, user_pseudo_id, user_type
       };
 
       expect(validateSessionStartedEvent(invalidEvent)).toBe(false);
@@ -46,7 +48,9 @@ describe("Analytics Validation Plugin", () => {
       const invalidEvent = {
         sess_id: 123, // Should be string
         process_id: "process-456",
-        user_unique_id: "user-789",
+        user_pseudo_id: "user-789",
+        user_type: "internal",
+        installer_pseudo_id: "installer-abc",
       };
 
       expect(validateSessionStartedEvent(invalidEvent)).toBe(false);
@@ -56,7 +60,9 @@ describe("Analytics Validation Plugin", () => {
       const validEvent = {
         sess_id: "session-123",
         process_id: "process-456",
-        user_unique_id: "user-789",
+        user_pseudo_id: "user-789",
+        user_type: "external",
+        installer_pseudo_id: "installer-abc",
       };
 
       expect(validateSessionStartedEvent(validEvent)).toBe(true);
@@ -66,8 +72,21 @@ describe("Analytics Validation Plugin", () => {
       const invalidEvent = {
         sess_id: "session-123",
         process_id: "process-456",
-        user_unique_id: "user-789",
+        user_pseudo_id: "user-789",
+        user_type: "internal",
+        installer_pseudo_id: "installer-abc",
         unexpected_field: "value",
+      };
+
+      expect(validateSessionStartedEvent(invalidEvent)).toBe(false);
+    });
+
+    it("should reject event with invalid user_type value", () => {
+      const invalidEvent = {
+        sess_id: "session-123",
+        process_id: "process-456",
+        user_pseudo_id: "user-789",
+        user_type: "admin", // Invalid value
       };
 
       expect(validateSessionStartedEvent(invalidEvent)).toBe(false);
@@ -84,7 +103,9 @@ describe("Analytics Validation Plugin", () => {
         parameter_length: 100,
         http_status: 200,
         execution_time_ms: 500,
-        user_unique_id: "user-789",
+        user_pseudo_id: "user-789",
+        user_type: "external",
+        installer_pseudo_id: "installer-abc",
       };
 
       expect(validateToolCalledEvent(validEvent)).toBe(true);
@@ -108,7 +129,9 @@ describe("Analytics Validation Plugin", () => {
         parameter_length: 100,
         http_status: 99, // Invalid HTTP status
         execution_time_ms: 500,
-        user_unique_id: "user-789",
+        user_pseudo_id: "user-789",
+        user_type: "internal",
+        installer_pseudo_id: "installer-abc",
       };
 
       expect(validateToolCalledEvent(invalidEvent)).toBe(false);
@@ -123,7 +146,9 @@ describe("Analytics Validation Plugin", () => {
         parameter_length: -10, // Invalid negative value
         http_status: 200,
         execution_time_ms: 500,
-        user_unique_id: "user-789",
+        user_pseudo_id: "user-789",
+        user_type: "internal",
+        installer_pseudo_id: "installer-abc",
       };
 
       expect(validateToolCalledEvent(invalidEvent)).toBe(false);
@@ -138,7 +163,9 @@ describe("Analytics Validation Plugin", () => {
         parameter_length: 100,
         http_status: 200,
         execution_time_ms: -100, // Invalid negative value
-        user_unique_id: "user-789",
+        user_pseudo_id: "user-789",
+        user_type: "internal",
+        installer_pseudo_id: "installer-abc",
       };
 
       expect(validateToolCalledEvent(invalidEvent)).toBe(false);
@@ -153,7 +180,9 @@ describe("Analytics Validation Plugin", () => {
         parameter_length: 0,
         http_status: 599, // Valid edge case
         execution_time_ms: 0,
-        user_unique_id: "user-789",
+        user_pseudo_id: "user-789",
+        user_type: "external",
+        installer_pseudo_id: "installer-abc",
       };
 
       expect(validateToolCalledEvent(validEvent)).toBe(true);
@@ -274,7 +303,9 @@ describe("Analytics Validation Plugin", () => {
             properties: {
               sess_id: "session-123",
               process_id: "process-456",
-              user_unique_id: "user-789",
+              user_pseudo_id: "user-789",
+              user_type: "internal",
+              installer_pseudo_id: "installer-abc",
             },
           },
         };
@@ -347,7 +378,9 @@ describe("Analytics Validation Plugin", () => {
             properties: {
               sess_id: "session-123",
               process_id: "process-456",
-              user_unique_id: "user-789",
+              user_pseudo_id: "user-789",
+              user_type: "internal",
+              installer_pseudo_id: "installer-abc",
               extra_field: "this should not be here",
               another_extra_field: "neither should this",
               numeric_extra: 123,
@@ -398,7 +431,9 @@ describe("Analytics Validation Plugin", () => {
             properties: {
               sess_id: "session-123",
               process_id: "process-456",
-              user_unique_id: "user-789",
+              user_pseudo_id: "user-789",
+              user_type: "external",
+              installer_pseudo_id: "installer-abc",
             },
           },
         };
@@ -476,7 +511,9 @@ describe("Analytics Validation Plugin", () => {
               parameter_length: "not-a-number", // Invalid type
               http_status: 200,
               execution_time_ms: 500,
-              user_unique_id: "user-789",
+              user_pseudo_id: "user-789",
+              user_type: "internal",
+              installer_pseudo_id: "installer-abc",
             },
           },
         };
@@ -653,7 +690,9 @@ describe("Analytics Validation Plugin", () => {
               parameter_length: 100,
               http_status: status,
               execution_time_ms: 500,
-              user_unique_id: "user-789",
+              user_pseudo_id: "user-789",
+              user_type: "internal",
+              installer_pseudo_id: "installer-abc",
             },
           },
         };
@@ -681,7 +720,9 @@ describe("Analytics Validation Plugin", () => {
               parameter_length: 100,
               http_status: status,
               execution_time_ms: 500,
-              user_unique_id: "user-789",
+              user_pseudo_id: "user-789",
+              user_type: "internal",
+              installer_pseudo_id: "installer-abc",
             },
           },
         };
@@ -712,7 +753,9 @@ describe("Analytics Validation Plugin", () => {
             parameter_length: 0, // Zero should be valid
             http_status: 200,
             execution_time_ms: 0, // Zero should be valid
-            user_unique_id: "user-789",
+            user_pseudo_id: "user-789",
+            user_type: "external",
+            installer_pseudo_id: "installer-abc",
           },
         },
       };
@@ -739,7 +782,9 @@ describe("Analytics Validation Plugin", () => {
             parameter_length: -1, // Invalid
             http_status: 99, // Invalid
             execution_time_ms: -1, // Invalid
-            user_unique_id: "", // Invalid
+            user_pseudo_id: "", // Invalid
+            user_type: "admin", // Invalid value
+            installer_pseudo_id: "", // Invalid
             extra_field: "should not be here", // Unexpected
           },
         },
@@ -758,15 +803,17 @@ describe("Analytics Validation Plugin", () => {
             expect.objectContaining({ field: "parameter_length" }),
             expect.objectContaining({ field: "http_status" }),
             expect.objectContaining({ field: "execution_time_ms" }),
-            expect.objectContaining({ field: "user_unique_id" }),
+            expect.objectContaining({ field: "user_pseudo_id" }),
+            expect.objectContaining({ field: "user_type" }),
+            expect.objectContaining({ field: "installer_pseudo_id" }),
             expect.objectContaining({ field: "extra_field" }),
           ]),
         }),
       );
 
-      // Should have detected 9 errors
+      // Should have detected 11 errors
       const logCall = mockLogger.mock.calls[0][1];
-      expect(logCall.errors).toHaveLength(9);
+      expect(logCall.errors).toHaveLength(11);
     });
   });
 });

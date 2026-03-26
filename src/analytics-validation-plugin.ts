@@ -10,17 +10,27 @@ import {
  */
 const EVENT_SCHEMAS = {
   mcp_session_started: {
-    required: ["sess_id", "process_id", "user_unique_id"],
+    required: [
+      "sess_id",
+      "process_id",
+      "user_pseudo_id",
+      "user_type",
+      "installer_pseudo_id",
+    ],
     optional: ["user_agent", "mcp_tool_set"],
     validators: {
       sess_id: (value: any) => typeof value === "string" && value.length > 0,
       process_id: (value: any) => typeof value === "string" && value.length > 0,
-      user_unique_id: (value: any) =>
+      user_pseudo_id: (value: any) =>
         typeof value === "string" && value.length > 0,
+      user_type: (value: any) =>
+        typeof value === "string" && ["internal", "external"].includes(value),
       user_agent: (value: any) =>
         value === undefined || typeof value === "string",
       mcp_tool_set: (value: any) =>
         value === undefined || typeof value === "string",
+      installer_pseudo_id: (value: any) =>
+        typeof value === "string" && value.length > 0,
     },
   },
   mcp_tool_called: {
@@ -32,7 +42,9 @@ const EVENT_SCHEMAS = {
       "parameter_length",
       "http_status",
       "execution_time_ms",
-      "user_unique_id",
+      "user_pseudo_id",
+      "user_type",
+      "installer_pseudo_id",
     ],
     optional: [],
     validators: {
@@ -47,7 +59,11 @@ const EVENT_SCHEMAS = {
         (value === 0 || (value >= 100 && value < 600)),
       execution_time_ms: (value: any) =>
         typeof value === "number" && value >= 0,
-      user_unique_id: (value: any) =>
+      user_pseudo_id: (value: any) =>
+        typeof value === "string" && value.length > 0,
+      user_type: (value: any) =>
+        typeof value === "string" && ["internal", "external"].includes(value),
+      installer_pseudo_id: (value: any) =>
         typeof value === "string" && value.length > 0,
     },
   },
