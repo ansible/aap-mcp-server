@@ -89,24 +89,24 @@ describe("Analytics Service", () => {
       const sessionId = "session-123";
       const userAgent = "Test-Agent/1.0";
       const mcpToolSet = "test-toolset";
-      const userToken = "test-token";
+      const userPseudoId = "abc123def456";
+      const userType = "internal";
 
       analyticsService.trackMcpSessionStarted(
         sessionId,
         userAgent,
         mcpToolSet,
-        userToken,
+        userPseudoId,
+        userType,
       );
 
-      // The actual Analytics mock assertion would verify the track method was called
-      // with correct parameters, but since we're mocking it, we just verify
-      // the method completes without error
       expect(() =>
         analyticsService.trackMcpSessionStarted(
           sessionId,
           userAgent,
           mcpToolSet,
-          userToken,
+          userPseudoId,
+          userType,
         ),
       ).not.toThrow();
     });
@@ -119,7 +119,8 @@ describe("Analytics Service", () => {
       const parameterLength = 100;
       const httpStatus = 200;
       const executionTimeMs = 500;
-      const userToken = "test-token";
+      const userPseudoId = "abc123def456";
+      const userType = "external";
 
       expect(() =>
         analyticsService.trackMcpToolCalled(
@@ -130,7 +131,8 @@ describe("Analytics Service", () => {
           parameterLength,
           httpStatus,
           executionTimeMs,
-          userToken,
+          userPseudoId,
+          userType,
         ),
       ).not.toThrow();
     });
@@ -232,128 +234,109 @@ describe("Analytics Service", () => {
     });
   });
 
-  describe("generateUserUniqueId functionality", () => {
+  describe("user_pseudo_id and user_type in events", () => {
     beforeEach(() => {
       const getActiveSessions = () => 0;
-      const serverVersion = "1.0.0";
-      const containerVersion = "test";
-      const readOnlyMode = false;
-
       analyticsService.initialize(
         "test-key",
         getActiveSessions,
-        serverVersion,
-        containerVersion,
-        readOnlyMode,
+        "1.0.0",
+        "test",
+        false,
       );
+      mockAnalyticsInstance.track.mockClear();
     });
 
-    it("should generate consistent user ID for the same token", () => {
-      const userToken = "test-token-123";
-
-      // Clear any calls from initialization (periodic status report)
-      mockAnalyticsInstance.track.mockClear();
-
-      // Track the same session twice with the same token
+    it("should use provided userPseudoId as anonymousId and in properties", () => {
+      const pseudoId = "abcdef1234567890";
       analyticsService.trackMcpSessionStarted(
         "session-1",
         "agent",
         "toolset",
-        userToken,
-      );
-      analyticsService.trackMcpSessionStarted(
-        "session-2",
-        "agent",
-        "toolset",
-        userToken,
+        pseudoId,
+        "internal",
       );
 
-      // Verify track was called twice (only our calls, not status report)
-      expect(mockAnalyticsInstance.track).toHaveBeenCalledTimes(2);
-
-      // Get the anonymousId from both calls
-      const firstCall = mockAnalyticsInstance.track.mock.calls[0][0];
-      const secondCall = mockAnalyticsInstance.track.mock.calls[1][0];
-
-      // Both calls should have the same anonymousId
-      expect(firstCall.anonymousId).toBe(secondCall.anonymousId);
-      expect(firstCall.anonymousId).toBeDefined();
-      expect(typeof firstCall.anonymousId).toBe("string");
-    });
-
-    it("should generate different user IDs for different tokens", () => {
-      const userToken1 = "test-token-123";
-      const userToken2 = "test-token-456";
-
-      // Clear any calls from initialization
-      mockAnalyticsInstance.track.mockClear();
-
-      // Track sessions with different tokens
-      analyticsService.trackMcpSessionStarted(
-        "session-1",
-        "agent",
-        "toolset",
-        userToken1,
-      );
-      analyticsService.trackMcpSessionStarted(
-        "session-2",
-        "agent",
-        "toolset",
-        userToken2,
-      );
-
-      // Verify track was called twice
-      expect(mockAnalyticsInstance.track).toHaveBeenCalledTimes(2);
-
-      // Get the anonymousId from both calls
-      const firstCall = mockAnalyticsInstance.track.mock.calls[0][0];
-      const secondCall = mockAnalyticsInstance.track.mock.calls[1][0];
-
-      // Both calls should have different anonymousIds
-      expect(firstCall.anonymousId).not.toBe(secondCall.anonymousId);
-      expect(firstCall.anonymousId).toBeDefined();
-      expect(secondCall.anonymousId).toBeDefined();
-    });
-
-    it("should generate UUID-like format for user ID", () => {
-      const userToken = "test-token-123";
-
-      // Clear any calls from initialization
-      mockAnalyticsInstance.track.mockClear();
-
-      analyticsService.trackMcpSessionStarted(
-        "session-1",
-        "agent",
-        "toolset",
-        userToken,
-      );
-
-      // Get the anonymousId from the call
-      const call = mockAnalyticsInstance.track.mock.calls[0][0];
-      const anonymousId = call.anonymousId;
-
-      // Should match UUID format: xxxxxxxx-xxxx-4xxx-axxx-xxxxxxxxxxxx
-      const uuidRegex =
-        /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-a[0-9a-f]{3}-[0-9a-f]{12}$/;
-      expect(anonymousId).toMatch(uuidRegex);
-    });
-
-    it("should handle undefined user token gracefully", () => {
-      // Clear any calls from initialization
-      mockAnalyticsInstance.track.mockClear();
-
-      analyticsService.trackMcpSessionStarted(
-        "session-1",
-        "agent",
-        "toolset",
-        undefined,
-      );
-
-      // Should still work without throwing
       expect(mockAnalyticsInstance.track).toHaveBeenCalledTimes(1);
+      const call = mockAnalyticsInstance.track.mock.calls[0][0];
+      expect(call.anonymousId).toBe(pseudoId);
+      expect(call.properties.user_pseudo_id).toBe(pseudoId);
+      expect(call.properties.user_type).toBe("internal");
+    });
+
+    it("should default to anonymous and external when not provided", () => {
+      analyticsService.trackMcpSessionStarted("session-1", "agent", "toolset");
+
+      expect(mockAnalyticsInstance.track).toHaveBeenCalledTimes(1);
+      const call = mockAnalyticsInstance.track.mock.calls[0][0];
+      expect(call.anonymousId).toBe("anonymous");
+      expect(call.properties.user_pseudo_id).toBe("anonymous");
+      expect(call.properties.user_type).toBe("external");
+    });
+
+    it("should include user_pseudo_id and user_type in tool called events", () => {
+      analyticsService.trackMcpToolCalled(
+        "tool",
+        "toolset",
+        "agent",
+        "session-1",
+        100,
+        200,
+        500,
+        "pseudo123",
+        "external",
+      );
+
+      expect(mockAnalyticsInstance.track).toHaveBeenCalledTimes(1);
+      const call = mockAnalyticsInstance.track.mock.calls[0][0];
+      expect(call.anonymousId).toBe("pseudo123");
+      expect(call.properties.user_pseudo_id).toBe("pseudo123");
+      expect(call.properties.user_type).toBe("external");
+    });
+
+    it("should include installer_pseudo_id in session event when provided", () => {
+      analyticsService.trackMcpSessionStarted(
+        "session-1",
+        "agent",
+        "toolset",
+        "pseudo123",
+        "internal",
+        "installer-pseudo-abc",
+      );
 
       const call = mockAnalyticsInstance.track.mock.calls[0][0];
-      expect(call.anonymousId).toBeDefined();
+      expect(call.properties.installer_pseudo_id).toBe("installer-pseudo-abc");
+    });
+
+    it("should default installer_pseudo_id to 'unknown' when not provided", () => {
+      analyticsService.trackMcpSessionStarted(
+        "session-1",
+        "agent",
+        "toolset",
+        "pseudo123",
+        "internal",
+      );
+
+      const call = mockAnalyticsInstance.track.mock.calls[0][0];
+      expect(call.properties.installer_pseudo_id).toBe("unknown");
+    });
+
+    it("should include installer_pseudo_id in tool called event when provided", () => {
+      analyticsService.trackMcpToolCalled(
+        "tool",
+        "toolset",
+        "agent",
+        "session-1",
+        100,
+        200,
+        500,
+        "pseudo123",
+        "external",
+        "installer-pseudo-abc",
+      );
+
+      const call = mockAnalyticsInstance.track.mock.calls[0][0];
+      expect(call.properties.installer_pseudo_id).toBe("installer-pseudo-abc");
     });
   });
 

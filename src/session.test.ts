@@ -50,7 +50,16 @@ describe("SessionManager", () => {
       const userAgent = "TestAgent/1.0";
       const toolset = "test-toolset";
 
-      sessionManager.store(sessionId, token, userAgent, toolset, mockTransport);
+      sessionManager.store(
+        sessionId,
+        token,
+        userAgent,
+        toolset,
+        mockTransport,
+        "test-pseudo-id",
+        "external",
+        "unknown",
+      );
 
       expect(sessionManager.has(sessionId)).toBe(true);
       expect(sessionManager.get(sessionId)).toEqual({
@@ -58,6 +67,9 @@ describe("SessionManager", () => {
         userAgent,
         toolset,
         transport: mockTransport,
+        userPseudoId: "test-pseudo-id",
+        userType: "external",
+        installerPseudoId: "unknown",
       });
     });
 
@@ -68,6 +80,9 @@ describe("SessionManager", () => {
         "Agent/1.0",
         "toolset1",
         mockTransport,
+        "test-pseudo-id",
+        "external",
+        "unknown",
       );
 
       expect(metricsService.incrementActiveSessions).toHaveBeenCalledTimes(1);
@@ -87,6 +102,9 @@ describe("SessionManager", () => {
         "Agent/1.0",
         "toolset1",
         mockTransport,
+        "test-pseudo-id",
+        "external",
+        "unknown",
       );
 
       expect(loggedMessage).toMatch(
@@ -103,6 +121,9 @@ describe("SessionManager", () => {
         "Agent/1.0",
         "toolset1",
         mockTransport,
+        "test-pseudo-id",
+        "external",
+        "unknown",
       );
       expect(sessionManager.getActiveCount()).toBe(1);
 
@@ -112,6 +133,9 @@ describe("SessionManager", () => {
         "Agent/2.0",
         "toolset2",
         mockTransport2,
+        "test-pseudo-id",
+        "external",
+        "unknown",
       );
       expect(sessionManager.getActiveCount()).toBe(2);
     });
@@ -126,6 +150,9 @@ describe("SessionManager", () => {
         "Agent/1.0",
         "toolset1",
         mockTransport,
+        "test-pseudo-id",
+        "external",
+        "unknown",
       );
       expect(sessionManager.getToken(sessionId)).toBe("token-1");
 
@@ -136,6 +163,9 @@ describe("SessionManager", () => {
         "Agent/2.0",
         "toolset2",
         mockTransport2,
+        "test-pseudo-id",
+        "external",
+        "unknown",
       );
       expect(sessionManager.getToken(sessionId)).toBe("token-2");
       expect(sessionManager.getToolset(sessionId)).toBe("toolset2");
@@ -150,6 +180,9 @@ describe("SessionManager", () => {
         userAgent: "Agent/1.0",
         toolset: "toolset1",
         transport: mockTransport,
+        userPseudoId: "test-pseudo-id",
+        userType: "external",
+        installerPseudoId: "unknown",
       };
 
       sessionManager.store(
@@ -158,6 +191,9 @@ describe("SessionManager", () => {
         expectedData.userAgent,
         expectedData.toolset,
         expectedData.transport,
+        "test-pseudo-id",
+        "external",
+        "unknown",
       );
 
       expect(sessionManager.get(sessionId)).toEqual(expectedData);
@@ -176,6 +212,9 @@ describe("SessionManager", () => {
         "Agent/1.0",
         "toolset1",
         mockTransport,
+        "test-pseudo-id",
+        "external",
+        "unknown",
       );
       expect(sessionManager.has("session-1")).toBe(true);
     });
@@ -198,6 +237,9 @@ describe("SessionManager", () => {
         "Agent/1.0",
         "toolset1",
         mockTransport,
+        "test-pseudo-id",
+        "external",
+        "unknown",
       );
 
       expect(sessionManager.has(sessionId)).toBe(true);
@@ -212,6 +254,9 @@ describe("SessionManager", () => {
         "Agent/1.0",
         "toolset1",
         mockTransport,
+        "test-pseudo-id",
+        "external",
+        "unknown",
       );
       sessionManager.delete("session-1");
 
@@ -228,6 +273,9 @@ describe("SessionManager", () => {
         "Agent/1.0",
         "toolset1",
         mockTransport,
+        "test-pseudo-id",
+        "external",
+        "unknown",
       );
 
       console.log = (message: string) => {
@@ -256,6 +304,9 @@ describe("SessionManager", () => {
         "Agent/1.0",
         "toolset1",
         mockTransport,
+        "test-pseudo-id",
+        "external",
+        "unknown",
       );
       sessionManager.store(
         "session-2",
@@ -263,6 +314,9 @@ describe("SessionManager", () => {
         "Agent/2.0",
         "toolset2",
         mockTransport2,
+        "test-pseudo-id",
+        "external",
+        "unknown",
       );
       expect(sessionManager.getActiveCount()).toBe(2);
 
@@ -286,6 +340,9 @@ describe("SessionManager", () => {
         "Agent/1.0",
         "toolset1",
         mockTransport,
+        "test-pseudo-id",
+        "external",
+        "unknown",
       );
       sessionManager.store(
         "session-2",
@@ -293,6 +350,9 @@ describe("SessionManager", () => {
         "Agent/2.0",
         "toolset2",
         mockTransport2,
+        "test-pseudo-id",
+        "external",
+        "unknown",
       );
 
       const sessionIds = sessionManager.getAllSessionIds();
@@ -308,6 +368,9 @@ describe("SessionManager", () => {
         "Agent/1.0",
         "toolset1",
         mockTransport,
+        "test-pseudo-id",
+        "external",
+        "unknown",
       );
       sessionManager.store(
         "session-2",
@@ -315,6 +378,9 @@ describe("SessionManager", () => {
         "Agent/2.0",
         "toolset2",
         mockTransport2,
+        "test-pseudo-id",
+        "external",
+        "unknown",
       );
 
       expect(sessionManager.getAllSessionIds()).toHaveLength(2);
@@ -340,6 +406,9 @@ describe("SessionManager", () => {
         "Agent/1.0",
         "toolset1",
         mockTransport,
+        "test-pseudo-id",
+        "external",
+        "unknown",
       );
       expect(sessionManager.getActiveCount()).toBe(1);
 
@@ -349,6 +418,9 @@ describe("SessionManager", () => {
         "Agent/2.0",
         "toolset2",
         mockTransport2,
+        "test-pseudo-id",
+        "external",
+        "unknown",
       );
       expect(sessionManager.getActiveCount()).toBe(2);
 
@@ -368,6 +440,9 @@ describe("SessionManager", () => {
         "TestAgent/1.0",
         "test-toolset",
         mockTransport,
+        "test-pseudo-id",
+        "external",
+        "unknown",
       );
     });
 
@@ -422,6 +497,9 @@ describe("SessionManager", () => {
         "Agent/1.0",
         "toolset1",
         mockTransport,
+        "test-pseudo-id",
+        "external",
+        "unknown",
       );
       sessionManager.store(
         "session-2",
@@ -429,6 +507,9 @@ describe("SessionManager", () => {
         "Agent/2.0",
         "toolset2",
         mockTransport2,
+        "test-pseudo-id",
+        "external",
+        "unknown",
       );
 
       expect(sessionManager.getActiveCount()).toBe(2);
@@ -450,6 +531,9 @@ describe("SessionManager", () => {
         "Agent/1.0",
         "toolset1",
         mockTransport,
+        "test-pseudo-id",
+        "external",
+        "unknown",
       );
 
       console.log = (message: string) => {
@@ -480,6 +564,9 @@ describe("SessionManager", () => {
         "Agent/1.0",
         "toolset1",
         errorTransport,
+        "test-pseudo-id",
+        "external",
+        "unknown",
       );
       sessionManager.store(
         "session-2",
@@ -487,6 +574,9 @@ describe("SessionManager", () => {
         "Agent/2.0",
         "toolset2",
         mockTransport,
+        "test-pseudo-id",
+        "external",
+        "unknown",
       );
 
       console.error = (message: string, error?: any) => {
@@ -537,6 +627,9 @@ describe("SessionManager", () => {
         "Agent/1.0",
         "toolset1",
         mockTransport,
+        "test-pseudo-id",
+        "external",
+        "unknown",
       );
       sessionManager.store(
         "session-2",
@@ -544,6 +637,9 @@ describe("SessionManager", () => {
         "Agent/2.0",
         "toolset2",
         mockTransport2,
+        "test-pseudo-id",
+        "external",
+        "unknown",
       );
 
       expect(sessionManager.getActiveCount()).toBe(2);
@@ -580,6 +676,9 @@ describe("SessionManager", () => {
         sessionData.userAgent,
         sessionData.toolset,
         mockTransport,
+        "test-pseudo-id",
+        "external",
+        "unknown",
       );
 
       // Verify all getters return correct data
@@ -588,6 +687,9 @@ describe("SessionManager", () => {
         userAgent: sessionData.userAgent,
         toolset: sessionData.toolset,
         transport: mockTransport,
+        userPseudoId: "test-pseudo-id",
+        userType: "external",
+        installerPseudoId: "unknown",
       });
 
       expect(sessionManager.getToken(sessionData.id)).toBe(sessionData.token);
@@ -611,6 +713,9 @@ describe("SessionManager", () => {
         "Agent/1.0",
         "toolset1",
         mockTransport,
+        "test-pseudo-id",
+        "external",
+        "unknown",
       );
 
       expect(defaultSessionManager.getActiveCount()).toBe(1);
@@ -633,6 +738,9 @@ describe("SessionManager", () => {
         "Agent/1.0",
         "toolset1",
         mockTransport,
+        "test-pseudo-id",
+        "external",
+        "unknown",
       );
 
       expect(customSessionManager.getActiveCount()).toBe(1);
@@ -660,6 +768,9 @@ describe("SessionManager", () => {
         "Agent/1.0",
         "toolset1",
         mockTransport,
+        "test-pseudo-id",
+        "external",
+        "unknown",
       );
 
       expect(sessionManager.has("session-1")).toBe(true);
@@ -685,6 +796,9 @@ describe("SessionManager", () => {
         "Agent/1.0",
         "toolset1",
         mockTransport,
+        "test-pseudo-id",
+        "external",
+        "unknown",
       );
 
       expect(sessionManager.has("session-1")).toBe(true);
@@ -704,6 +818,9 @@ describe("SessionManager", () => {
         "Agent/1.0",
         "toolset1",
         mockTransport,
+        "test-pseudo-id",
+        "external",
+        "unknown",
       );
       sessionManager.store(
         "session-2",
@@ -711,6 +828,9 @@ describe("SessionManager", () => {
         "Agent/2.0",
         "toolset2",
         mockTransport2,
+        "test-pseudo-id",
+        "external",
+        "unknown",
       );
 
       expect(sessionManager.getActiveCount()).toBe(2);
@@ -730,6 +850,9 @@ describe("SessionManager", () => {
         "Agent/1.0",
         "toolset1",
         mockTransport,
+        "test-pseudo-id",
+        "external",
+        "unknown",
       );
 
       // Wait 5 seconds
@@ -759,6 +882,9 @@ describe("SessionManager", () => {
         "Agent/1.0",
         "toolset1",
         mockTransport,
+        "test-pseudo-id",
+        "external",
+        "unknown",
       );
 
       // Wait 5 seconds
@@ -787,6 +913,9 @@ describe("SessionManager", () => {
         "Agent/1.0",
         "toolset1",
         mockTransport,
+        "test-pseudo-id",
+        "external",
+        "unknown",
       );
 
       // Wait 5 seconds
@@ -832,6 +961,9 @@ describe("SessionManager", () => {
         "Agent/1.0",
         "toolset1",
         mockTransport,
+        "test-pseudo-id",
+        "external",
+        "unknown",
       );
 
       // Manually delete session
@@ -858,6 +990,9 @@ describe("SessionManager", () => {
         "Agent/1.0",
         "toolset1",
         mockTransport,
+        "test-pseudo-id",
+        "external",
+        "unknown",
       );
 
       // Wait 5 seconds
@@ -870,6 +1005,9 @@ describe("SessionManager", () => {
         "Agent/2.0",
         "toolset2",
         mockTransport2,
+        "test-pseudo-id",
+        "external",
+        "unknown",
       );
 
       // clearTimeout should have been called for the old timeout
@@ -898,6 +1036,9 @@ describe("SessionManager", () => {
         "Agent/1.0",
         "toolset1",
         mockTransport,
+        "test-pseudo-id",
+        "external",
+        "unknown",
       );
 
       const session = sessionManager.get("session-1");
@@ -907,6 +1048,9 @@ describe("SessionManager", () => {
         userAgent: "Agent/1.0",
         toolset: "toolset1",
         transport: mockTransport,
+        userPseudoId: "test-pseudo-id",
+        userType: "external",
+        installerPseudoId: "unknown",
       });
 
       // Should not contain timeout property
@@ -920,6 +1064,9 @@ describe("SessionManager", () => {
         "Agent/1.0",
         "toolset1",
         mockTransport,
+        "test-pseudo-id",
+        "external",
+        "unknown",
       );
       sessionManager.store(
         "session-2",
@@ -927,6 +1074,9 @@ describe("SessionManager", () => {
         "Agent/2.0",
         "toolset2",
         mockTransport2,
+        "test-pseudo-id",
+        "external",
+        "unknown",
       );
 
       expect(sessionManager.getActiveCount()).toBe(2);
@@ -946,6 +1096,9 @@ describe("SessionManager", () => {
         "Agent/1.0",
         "toolset1",
         mockTransport,
+        "test-pseudo-id",
+        "external",
+        "unknown",
       );
 
       // Wait 3 seconds

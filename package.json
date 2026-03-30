@@ -23,6 +23,7 @@
     "simulate:mock-aap-server": "tsx ./scripts/mock-aap-server.ts",
     "simulate:mcp-aap-server": "BASE_URL=http://localhost:8080 ENABLE_METRICS=true SESSION_TIMEOUT=30 tsx ./src/index.ts",
     "simulate:horde-of-clients": "tsx ./scripts/simulate-clients.ts --duration 90",
+    "simulate:one-client": "concurrently npm:simulate:mock-aap-server npm:simulate:mcp-aap-server \"tsx ./scripts/simulate-clients.ts --duration 30 --num-clients 1\"",
     "simulate": "concurrently  npm:simulate:mock-aap-server npm:simulate:mcp-aap-server npm:simulate:horde-of-clients",
     "lint": "eslint src --ext .ts,.js",
     "lint:fix": "eslint src --ext .ts,.js --fix"

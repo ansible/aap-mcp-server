@@ -14,6 +14,9 @@ export interface SessionData {
     toolset: string;
     transport: StreamableHTTPServerTransport;
     timeout: NodeJS.Timeout;
+    userPseudoId: string;
+    userType: string;
+    installerPseudoId: string;
   };
 }
 
@@ -33,6 +36,9 @@ export class SessionManager {
     userAgent: string,
     toolset: string,
     transport: StreamableHTTPServerTransport,
+    userPseudoId: string,
+    userType: string,
+    installerPseudoId: string,
   ): void {
     if (this.has(sessionId)) {
       clearTimeout(this.sessions[sessionId].timeout);
@@ -55,6 +61,9 @@ export class SessionManager {
       toolset,
       transport,
       timeout,
+      userPseudoId,
+      userType,
+      installerPseudoId,
     };
     console.log(
       `${getTimestamp()} Stored session data for ${sessionId}: userAgent=${userAgent}, toolset=${toolset}, active_session(s)=${this.getActiveCount()}`,
@@ -161,6 +170,33 @@ export class SessionManager {
       return session.transport;
     }
     return undefined;
+  }
+
+  getInstallerPseudoId(sessionId: string): string {
+    const session = this.sessions[sessionId];
+    if (session) {
+      this.resetTimeout(sessionId);
+      return session.installerPseudoId;
+    }
+    return "unknown";
+  }
+
+  getUserPseudoId(sessionId: string): string {
+    const session = this.sessions[sessionId];
+    if (session) {
+      this.resetTimeout(sessionId);
+      return session.userPseudoId;
+    }
+    return "anonymous";
+  }
+
+  getUserType(sessionId: string): string {
+    const session = this.sessions[sessionId];
+    if (session) {
+      this.resetTimeout(sessionId);
+      return session.userType;
+    }
+    return "external";
   }
 
   // Close all sessions (for graceful shutdown)
