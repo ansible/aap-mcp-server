@@ -103,58 +103,21 @@ export class AnalyticsService {
   }
 
   /**
-   * Track MCP session started event
-   * @param sessionId - Unique session identifier (UUID)
-   * @param userAgent - Client user agent string
-   * @param mcpToolSet - Name of the specific MCP server instance
-   * @param userPseudoId - HMAC-SHA-256 pseudonymous user identifier
-   * @param userType - User type classification ("internal" | "external")
-   */
-  trackMcpSessionStarted(
-    sessionId: string,
-    userAgent?: string,
-    mcpToolSet?: string,
-    userPseudoId: string = "anonymous",
-    userType: string = "external",
-    installerPseudoId: string = "unknown",
-  ): void {
-    if (!this.isEnabled) return;
-    try {
-      this.analytics!.track({
-        event: "mcp_session_started",
-        anonymousId: userPseudoId,
-        properties: {
-          sess_id: sessionId,
-          user_pseudo_id: userPseudoId,
-          user_type: userType,
-          installer_pseudo_id: installerPseudoId,
-          user_agent: userAgent,
-          mcp_tool_set: mcpToolSet,
-          process_id: this.processId,
-        },
-      });
-    } catch (error) {
-      console.error("Analytics: Error tracking mcp_session_started:", error);
-    }
-  }
-
-  /**
    * Track MCP tool called event
    * @param toolName - Name of the MCP tool
    * @param mcpToolSet - Name of the specific MCP server instance
    * @param userAgent - Client user agent string
-   * @param sessionId - Session identifier (UUID)
    * @param parameterLength - Size in chars of the input payload
    * @param httpStatus - Return code of the http request
    * @param executionTimeMs - Tool execution time in milliseconds
    * @param userPseudoId - HMAC-SHA-256 pseudonymous user identifier
    * @param userType - User type classification ("internal" | "external")
+   * @param installerPseudoId - HMAC-SHA-256 pseudonymous installer identifier
    */
   trackMcpToolCalled(
     toolName: string,
     mcpToolSet: string,
     userAgent: string,
-    sessionId: string,
     parameterLength: number,
     httpStatus: number,
     executionTimeMs: number,
@@ -169,7 +132,6 @@ export class AnalyticsService {
         anonymousId: userPseudoId,
         properties: {
           tool_name: toolName,
-          sess_id: sessionId,
           user_pseudo_id: userPseudoId,
           user_type: userType,
           installer_pseudo_id: installerPseudoId,
@@ -182,7 +144,6 @@ export class AnalyticsService {
       });
     } catch (error) {
       console.error("Analytics: Error tracking mcp_tool_called:", error);
-      // Error metrics will be tracked by analytics.on("error") listener
     }
   }
 

@@ -391,7 +391,6 @@ const createMcpServer = (): Server => {
         tool.name,
         toolToolset,
         ctx.userAgent,
-        "stateless",
         parameterLength,
         response ? response.status : 0,
         executionTimeMs,
