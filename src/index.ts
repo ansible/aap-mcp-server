@@ -501,6 +501,22 @@ const mcpPostHandler = async (
     let transport: StreamableHTTPServerTransport;
 
     if (sessionId && sessionManager.has(sessionId)) {
+      // Require a valid Bearer token on every request, not just initialization
+      const token = extractBearerToken(authHeader);
+      if (!token) {
+        res.status(401).json({
+          jsonrpc: "2.0",
+          error: {
+            code: -32001,
+            message: "Unauthorized: Bearer token required on every request",
+          },
+          id: null,
+        });
+        return;
+      }
+      // Update the session token from the current request
+      sessionManager.updateToken(sessionId, token);
+
       // Reuse existing transport
       transport = sessionManager.getTransport(sessionId)!;
     } else if (!sessionId && isInitializeRequest(req.body)) {
@@ -636,7 +652,14 @@ const mcpGetHandler = async (req: express.Request, res: express.Response) => {
     return;
   }
 
-  // Note: Token updates are not supported in GET requests - tokens are validated only during session initialization
+  // Require a valid Bearer token on GET requests too
+  const authHeader = req.headers["authorization"] as string;
+  const token = extractBearerToken(authHeader);
+  if (!token) {
+    res.status(401).send("Unauthorized: Bearer token required");
+    return;
+  }
+  sessionManager.updateToken(sessionId, token);
 
   const lastEventId = req.headers["last-event-id"];
   if (lastEventId) {
