@@ -135,6 +135,15 @@ export class SessionManager {
     return Object.keys(this.sessions).length;
   }
 
+  // Update the token for an existing session (used to require auth on every request)
+  updateToken(sessionId: string, token: string): void {
+    const session = this.sessions[sessionId];
+    if (session) {
+      session.token = token;
+      this.resetTimeout(sessionId);
+    }
+  }
+
   // Convenient getters for specific properties
   getToken(sessionId: string): string | undefined {
     const session = this.sessions[sessionId];
