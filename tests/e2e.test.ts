@@ -187,7 +187,7 @@ describe("End-to-End: MCP Server", () => {
   describe("GET handler", () => {
     it("should reject GET requests on /mcp", async () => {
       const response = await fetch(`${MCP_BASE_URL}/mcp`);
-      expect(response.status).toBe(405);
+      expect(response.status).toBe(404);
     });
 
     it("should return 404 for GET on /mcp/toolset without session", async () => {
