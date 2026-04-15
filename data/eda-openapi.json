@@ -2,13 +2,13 @@
     "openapi": "3.0.3",
     "info": {
         "title": "Event Driven Ansible API",
-        "version": "1.2.0"
+        "version": "1.3.0"
     },
     "paths": {
         "/activation-instances/": {
             "get": {
                 "operationId": "activation_instances_list",
-                "description": "List all the Activation Instances",
+                "description": "List Activation Instances",
                 "parameters": [
                     {
                         "in": "query",
@@ -50,12 +50,6 @@
                 ],
                 "security": [
                     {
-                        "cookieAuth": []
-                    },
-                    {
-                        "basicAuth": []
-                    },
-                    {
                         "EDAJWTAuthentication": []
                     }
                 ],
@@ -70,13 +64,14 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "List activation instances. Returns status, queue, and start/end times. Supports filtering and pagination."
             }
         },
         "/activation-instances/{id}/logs/": {
             "get": {
                 "operationId": "activation_instances_logs_list",
-                "description": "List all logs for the Activation Instance",
+                "description": "List Activation instance logs",
                 "parameters": [
                     {
                         "in": "path",
@@ -119,12 +114,6 @@
                 ],
                 "security": [
                     {
-                        "cookieAuth": []
-                    },
-                    {
-                        "basicAuth": []
-                    },
-                    {
                         "EDAJWTAuthentication": []
                     }
                 ],
@@ -139,7 +128,8 @@
                         },
                         "description": ""
                     }
-                }
+                },
+                "x-ai-description": "List logs for an activation instance by ID. Returns log records with timestamps and levels. Supports filtering and pagination."
             }
         },
         "/activation-instances/{id}/": {
@@ -162,12 +152,6 @@
                 ],
                 "security": [
                     {
-                        "cookieAuth": []
-                    },
-                    {
-                        "basicAuth": []
-                    },
-                    {
                         "EDAJWTAuthentication": []
                     }
                 ],
@@ -188,7 +172,7 @@
         "/activations/": {
             "get": {
                 "operationId": "activations_list",
-                "description": "List all Activations",
+                "description": "List Activations",
                 "parameters": [
                     {
                         "in": "query",
@@ -226,6 +210,14 @@
                     },
                     {
                         "in": "query",
+                        "name": "project_id",
+                        "schema": {
+                            "type": "number"
+                        },
+                        "description": "Filter by project id"
+                    },
+                    {
+                        "in": "query",
                         "name": "status",
                         "schema": {
                             "type": "string"
@@ -237,12 +229,6 @@
                     "activations"
                 ],
                 "security": [
-                    {
-                        "cookieAuth": []
-                    },
-                    {
-                        "basicAuth": []
-                    },
                     {
                         "EDAJWTAuthentication": []
                     }
@@ -258,7 +244,8 @@
                         },
                         "description": "Return a list of Activations."
                     }
-                }
+                },
+                "x-ai-description": "List activations. Returns activation records. Supports filtering and pagination."
             },
             "post": {
                 "operationId": "activations_create",
@@ -287,12 +274,6 @@
                 },
                 "security": [
                     {
-                        "cookieAuth": []
-                    },
-                    {
-                        "basicAuth": []
-                    },
-                    {
                         "EDAJWTAuthentication": []
                     }
                 ],
@@ -312,11 +293,9 @@
                     },
                     "503": {
                         "description": "Dependent service issues"
-                    },
-                    "409": {
-                        "description": "Redis is unavailable."
                     }
-                }
+                },
+                "x-ai-description": "Create an activation. Returns the created activation."
             }
         },
         "/activations/{id}/instances/": {
@@ -373,12 +352,6 @@
                 ],
                 "security": [
                     {
-                        "cookieAuth": []
-                    },
-                    {
-                        "basicAuth": []
-                    },
-                    {
                         "EDAJWTAuthentication": []
                     }
                 ],
@@ -414,12 +387,6 @@
                     "activations"
                 ],
                 "security": [
-                    {
-                        "cookieAuth": []
-                    },
-                    {
-                        "basicAuth": []
-                    },
                     {
                         "EDAJWTAuthentication": []
                     }
@@ -474,12 +441,6 @@
                 },
                 "security": [
                     {
-                        "cookieAuth": []
-                    },
-                    {
-                        "basicAuth": []
-                    },
-                    {
                         "EDAJWTAuthentication": []
                     }
                 ],
@@ -500,12 +461,21 @@
                     "409": {
                         "description": "The activation is not allowed to be updated."
                     }
-                }
+                },
+                "x-ai-description": "Update an activation by ID. Returns the updated activation."
             },
             "delete": {
                 "operationId": "activations_destroy",
                 "description": "Delete an existing Activation",
                 "parameters": [
+                    {
+                        "in": "query",
+                        "name": "force",
+                        "schema": {
+                            "type": "boolean"
+                        },
+                        "description": "Force delete after worker node offline"
+                    },
                     {
                         "in": "path",
                         "name": "id",
@@ -521,12 +491,6 @@
                 ],
                 "security": [
                     {
-                        "cookieAuth": []
-                    },
-                    {
-                        "basicAuth": []
-                    },
-                    {
                         "EDAJWTAuthentication": []
                     }
                 ],
@@ -535,7 +499,7 @@
                         "description": "The Activation has been deleted."
                     },
                     "409": {
-                        "description": "Redis is unavailable."
+                        "description": "Activation blocked while Workers offline."
                     }
                 }
             }
@@ -580,12 +544,6 @@
                 },
                 "security": [
                     {
-                        "cookieAuth": []
-                    },
-                    {
-                        "basicAuth": []
-                    },
-                    {
                         "EDAJWTAuthentication": []
                     }
                 ],
@@ -612,6 +570,14 @@
                 "description": "Disable the Activation",
                 "parameters": [
                     {
+                        "in": "query",
+                        "name": "force",
+                        "schema": {
+                            "type": "boolean"
+                        },
+                        "description": "Force disable after worker node offline"
+                    },
+                    {
                         "in": "path",
                         "name": "id",
                         "schema": {
@@ -626,12 +592,6 @@
                 ],
                 "security": [
                     {
-                        "cookieAuth": []
-                    },
-                    {
-                        "basicAuth": []
-                    },
-                    {
                         "EDAJWTAuthentication": []
                     }
                 ],
@@ -640,9 +600,10 @@
                         "description": "Activation has been disabled."
                     },
                     "409": {
-                        "description": "Redis is unavailable."
+                        "description": "Activation blocked while Workers offline."
                     }
-                }
+                },
+                "x-ai-description": "Disable an activation by ID. Stops the rulebook process if running."
             }
         },
         "/activations/{id}/enable/": {
@@ -665,12 +626,6 @@
                 ],
                 "security": [
                     {
-                        "cookieAuth": []
-                    },
-                    {
-                        "basicAuth": []
-                    },
-                    {
                         "EDAJWTAuthentication": []
                     }
                 ],
@@ -684,7 +639,8 @@
                     "409": {
                         "description": "Processing of enable is disallowed."
                     }
-                }
+                },
+                "x-ai-description": "Enable an activation by ID. Starts the rulebook process if valid."
             }
         },
         "/activations/{id}/restart/": {
@@ -715,12 +671,6 @@
                 ],
                 "security": [
                     {
-                        "cookieAuth": []
-                    },
-                    {
-                        "basicAuth": []
-                    },
-                    {
                         "EDAJWTAuthentication": []
                     }
                 ],
@@ -732,7 +682,7 @@
                         "description": "Activation not enabled."
                     },
                     "409": {
-                        "description": "Redis is unavailable."
+                        "description": "Activation blocked while Workers offline."
                     }
                 }
             }
@@ -865,12 +815,6 @@
                 ],
                 "security": [
                     {
-                        "cookieAuth": []
-                    },
-                    {
-                        "basicAuth": []
-                    },
-                    {
                         "EDAJWTAuthentication": []
                     }
                 ],
@@ -885,7 +829,8 @@
                         },
                         "description": "Return a list of fired rules."
                     }
-                }
+                },
+                "x-ai-description": "List fired audit rules. Returns audit rule records. Supports filtering and pagination."
             }
         },
         "/audit-rules/{id}/actions/": {
@@ -1000,12 +945,6 @@
                     "audit-rules"
                 ],
                 "security": [
-                    {
-                        "cookieAuth": []
-                    },
-                    {
-                        "basicAuth": []
-                    },
                     {
                         "EDAJWTAuthentication": []
                     }
@@ -1129,12 +1068,6 @@
                 ],
                 "security": [
                     {
-                        "cookieAuth": []
-                    },
-                    {
-                        "basicAuth": []
-                    },
-                    {
                         "EDAJWTAuthentication": []
                     }
                 ],
@@ -1172,12 +1105,6 @@
                 ],
                 "security": [
                     {
-                        "cookieAuth": []
-                    },
-                    {
-                        "basicAuth": []
-                    },
-                    {
                         "EDAJWTAuthentication": []
                     }
                 ],
@@ -1203,12 +1130,6 @@
                     "auth"
                 ],
                 "security": [
-                    {
-                        "cookieAuth": []
-                    },
-                    {
-                        "basicAuth": []
-                    },
                     {
                         "EDAJWTAuthentication": []
                     }
@@ -1246,12 +1167,6 @@
                     "required": true
                 },
                 "security": [
-                    {
-                        "cookieAuth": []
-                    },
-                    {
-                        "basicAuth": []
-                    },
                     {
                         "EDAJWTAuthentication": []
                     }
@@ -1335,12 +1250,6 @@
                 ],
                 "security": [
                     {
-                        "cookieAuth": []
-                    },
-                    {
-                        "basicAuth": []
-                    },
-                    {
                         "EDAJWTAuthentication": []
                     }
                 ],
@@ -1403,12 +1312,6 @@
                 ],
                 "security": [
                     {
-                        "cookieAuth": []
-                    },
-                    {
-                        "basicAuth": []
-                    },
-                    {
                         "EDAJWTAuthentication": []
                     }
                 ],
@@ -1452,12 +1355,6 @@
                     "required": true
                 },
                 "security": [
-                    {
-                        "cookieAuth": []
-                    },
-                    {
-                        "basicAuth": []
-                    },
                     {
                         "EDAJWTAuthentication": []
                     }
@@ -1507,12 +1404,6 @@
                     "credential-input-sources"
                 ],
                 "security": [
-                    {
-                        "cookieAuth": []
-                    },
-                    {
-                        "basicAuth": []
-                    },
                     {
                         "EDAJWTAuthentication": []
                     }
@@ -1568,12 +1459,6 @@
                 },
                 "security": [
                     {
-                        "cookieAuth": []
-                    },
-                    {
-                        "basicAuth": []
-                    },
-                    {
                         "EDAJWTAuthentication": []
                     }
                 ],
@@ -1608,12 +1493,6 @@
                     "credential-input-sources"
                 ],
                 "security": [
-                    {
-                        "cookieAuth": []
-                    },
-                    {
-                        "basicAuth": []
-                    },
                     {
                         "EDAJWTAuthentication": []
                     }
@@ -1670,12 +1549,6 @@
                 ],
                 "security": [
                     {
-                        "cookieAuth": []
-                    },
-                    {
-                        "basicAuth": []
-                    },
-                    {
                         "EDAJWTAuthentication": []
                     }
                 ],
@@ -1720,12 +1593,6 @@
                 },
                 "security": [
                     {
-                        "cookieAuth": []
-                    },
-                    {
-                        "basicAuth": []
-                    },
-                    {
                         "EDAJWTAuthentication": []
                     }
                 ],
@@ -1762,12 +1629,6 @@
                     "credential-types"
                 ],
                 "security": [
-                    {
-                        "cookieAuth": []
-                    },
-                    {
-                        "basicAuth": []
-                    },
                     {
                         "EDAJWTAuthentication": []
                     }
@@ -1823,12 +1684,6 @@
                 },
                 "security": [
                     {
-                        "cookieAuth": []
-                    },
-                    {
-                        "basicAuth": []
-                    },
-                    {
                         "EDAJWTAuthentication": []
                     }
                 ],
@@ -1863,12 +1718,6 @@
                     "credential-types"
                 ],
                 "security": [
-                    {
-                        "cookieAuth": []
-                    },
-                    {
-                        "basicAuth": []
-                    },
                     {
                         "EDAJWTAuthentication": []
                     }
@@ -1923,12 +1772,6 @@
                 },
                 "security": [
                     {
-                        "cookieAuth": []
-                    },
-                    {
-                        "basicAuth": []
-                    },
-                    {
                         "EDAJWTAuthentication": []
                     }
                 ],
@@ -1945,7 +1788,7 @@
         "/decision-environments/": {
             "get": {
                 "operationId": "decision_environments_list",
-                "description": "List all decision environments",
+                "description": "List decision environments",
                 "parameters": [
                     {
                         "in": "query",
@@ -1979,12 +1822,6 @@
                 ],
                 "security": [
                     {
-                        "cookieAuth": []
-                    },
-                    {
-                        "basicAuth": []
-                    },
-                    {
                         "EDAJWTAuthentication": []
                     }
                 ],
@@ -1999,7 +1836,8 @@
                         },
                         "description": "Return a list of decision environment."
                     }
-                }
+                },
+                "x-ai-description": "List decision environments. Returns decision environment records. Supports filtering and pagination."
             },
             "post": {
                 "operationId": "decision_environments_create",
@@ -2029,12 +1867,6 @@
                 },
                 "security": [
                     {
-                        "cookieAuth": []
-                    },
-                    {
-                        "basicAuth": []
-                    },
-                    {
                         "EDAJWTAuthentication": []
                     }
                 ],
@@ -2049,7 +1881,8 @@
                         },
                         "description": "Return the new decision environment."
                     }
-                }
+                },
+                "x-ai-description": "Create a decision environment. Returns the created decision environment."
             }
         },
         "/decision-environments/{id}/": {
@@ -2071,12 +1904,6 @@
                     "decision-environments"
                 ],
                 "security": [
-                    {
-                        "cookieAuth": []
-                    },
-                    {
-                        "basicAuth": []
-                    },
                     {
                         "EDAJWTAuthentication": []
                     }
@@ -2132,12 +1959,6 @@
                 },
                 "security": [
                     {
-                        "cookieAuth": []
-                    },
-                    {
-                        "basicAuth": []
-                    },
-                    {
                         "EDAJWTAuthentication": []
                     }
                 ],
@@ -2152,7 +1973,8 @@
                         },
                         "description": "Update successful. Return an updated decision environment."
                     }
-                }
+                },
+                "x-ai-description": "Update a decision environment by ID. Returns the updated decision environment."
             },
             "delete": {
                 "operationId": "decision_environments_destroy",
@@ -2181,12 +2003,6 @@
                 ],
                 "security": [
                     {
-                        "cookieAuth": []
-                    },
-                    {
-                        "basicAuth": []
-                    },
-                    {
                         "EDAJWTAuthentication": []
                     }
                 ],
@@ -2212,6 +2028,30 @@
                             "type": "string"
                         },
                         "description": "Kind of CredentialType"
+                    },
+                    {
+                        "in": "query",
+                        "name": "credential_type__kind__in",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by Credential Type kind (comma-separated)."
+                    },
+                    {
+                        "in": "query",
+                        "name": "credential_type__namespace__in",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by Credential Type namespace (comma-separated)."
+                    },
+                    {
+                        "in": "query",
+                        "name": "credential_type__namespace__not_in",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Exclude Credential Type namespaces (comma-separated)."
                     },
                     {
                         "in": "query",
@@ -2252,12 +2092,6 @@
                     "eda-credentials"
                 ],
                 "security": [
-                    {
-                        "cookieAuth": []
-                    },
-                    {
-                        "basicAuth": []
-                    },
                     {
                         "EDAJWTAuthentication": []
                     }
@@ -2303,12 +2137,6 @@
                 },
                 "security": [
                     {
-                        "cookieAuth": []
-                    },
-                    {
-                        "basicAuth": []
-                    },
-                    {
                         "EDAJWTAuthentication": []
                     }
                 ],
@@ -2331,6 +2159,38 @@
                 "operationId": "eda_credentials_input_sources_list",
                 "description": "List all input_sources for the Credential",
                 "parameters": [
+                    {
+                        "in": "query",
+                        "name": "credential_type__kind",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by Credential Type kind."
+                    },
+                    {
+                        "in": "query",
+                        "name": "credential_type__kind__in",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by Credential Type kind (comma-separated)."
+                    },
+                    {
+                        "in": "query",
+                        "name": "credential_type__namespace__in",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by Credential Type namespace (comma-separated)."
+                    },
+                    {
+                        "in": "query",
+                        "name": "credential_type__namespace__not_in",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Exclude Credential Type namespaces (comma-separated)."
+                    },
                     {
                         "in": "query",
                         "name": "credential_type_id",
@@ -2380,12 +2240,6 @@
                 ],
                 "security": [
                     {
-                        "cookieAuth": []
-                    },
-                    {
-                        "basicAuth": []
-                    },
-                    {
                         "EDAJWTAuthentication": []
                     }
                 ],
@@ -2434,12 +2288,6 @@
                     "eda-credentials"
                 ],
                 "security": [
-                    {
-                        "cookieAuth": []
-                    },
-                    {
-                        "basicAuth": []
-                    },
                     {
                         "EDAJWTAuthentication": []
                     }
@@ -2495,12 +2343,6 @@
                 },
                 "security": [
                     {
-                        "cookieAuth": []
-                    },
-                    {
-                        "basicAuth": []
-                    },
-                    {
                         "EDAJWTAuthentication": []
                     }
                 ],
@@ -2543,12 +2385,6 @@
                     "eda-credentials"
                 ],
                 "security": [
-                    {
-                        "cookieAuth": []
-                    },
-                    {
-                        "basicAuth": []
-                    },
                     {
                         "EDAJWTAuthentication": []
                     }
@@ -2599,12 +2435,6 @@
                     "required": true
                 },
                 "security": [
-                    {
-                        "cookieAuth": []
-                    },
-                    {
-                        "basicAuth": []
-                    },
                     {
                         "EDAJWTAuthentication": []
                     }
@@ -2665,12 +2495,6 @@
                 },
                 "security": [
                     {
-                        "cookieAuth": []
-                    },
-                    {
-                        "basicAuth": []
-                    },
-                    {
                         "EDAJWTAuthentication": []
                     }
                 ],
@@ -2687,7 +2511,7 @@
         "/event-streams/": {
             "get": {
                 "operationId": "event_streams_list",
-                "description": "List all eventstreams",
+                "description": "List event streams",
                 "parameters": [
                     {
                         "in": "query",
@@ -2729,12 +2553,6 @@
                 ],
                 "security": [
                     {
-                        "cookieAuth": []
-                    },
-                    {
-                        "basicAuth": []
-                    },
-                    {
                         "EDAJWTAuthentication": []
                     }
                 ],
@@ -2749,7 +2567,8 @@
                         },
                         "description": "Return a list of eventstreams."
                     }
-                }
+                },
+                "x-ai-description": "List event streams. Returns event stream records. Supports filtering and pagination."
             },
             "post": {
                 "operationId": "event_streams_create",
@@ -2778,12 +2597,6 @@
                 },
                 "security": [
                     {
-                        "cookieAuth": []
-                    },
-                    {
-                        "basicAuth": []
-                    },
-                    {
                         "EDAJWTAuthentication": []
                     }
                 ],
@@ -2799,9 +2612,13 @@
                         "description": "Return the new event stream."
                     },
                     "400": {
-                        "description": "Invalid data to create event stream."
+                        "description": "Invalid data or missing credentials."
+                    },
+                    "502": {
+                        "description": "Gateway API error during certificate sync."
                     }
-                }
+                },
+                "x-ai-description": "Create an event stream. Returns the created event stream."
             }
         },
         "/event-streams/{id}/activations/": {
@@ -2854,6 +2671,14 @@
                     },
                     {
                         "in": "query",
+                        "name": "project_id",
+                        "schema": {
+                            "type": "number"
+                        },
+                        "description": "Filter by project id"
+                    },
+                    {
+                        "in": "query",
                         "name": "status",
                         "schema": {
                             "type": "string"
@@ -2865,12 +2690,6 @@
                     "event-streams"
                 ],
                 "security": [
-                    {
-                        "cookieAuth": []
-                    },
-                    {
-                        "basicAuth": []
-                    },
                     {
                         "EDAJWTAuthentication": []
                     }
@@ -2908,12 +2727,6 @@
                     "event-streams"
                 ],
                 "security": [
-                    {
-                        "cookieAuth": []
-                    },
-                    {
-                        "basicAuth": []
-                    },
                     {
                         "EDAJWTAuthentication": []
                     }
@@ -2968,12 +2781,6 @@
                 },
                 "security": [
                     {
-                        "cookieAuth": []
-                    },
-                    {
-                        "basicAuth": []
-                    },
-                    {
                         "EDAJWTAuthentication": []
                     }
                 ],
@@ -2989,7 +2796,10 @@
                         "description": "Update successful, return the new event stream."
                     },
                     "400": {
-                        "description": "Unable to update event stream."
+                        "description": "Update failed or missing credentials."
+                    },
+                    "502": {
+                        "description": "Gateway API error during certificate sync."
                     }
                 }
             },
@@ -3012,18 +2822,110 @@
                 ],
                 "security": [
                     {
-                        "cookieAuth": []
-                    },
-                    {
-                        "basicAuth": []
-                    },
-                    {
                         "EDAJWTAuthentication": []
                     }
                 ],
                 "responses": {
                     "204": {
                         "description": "Delete successful."
+                    },
+                    "400": {
+                        "description": "Missing credentials for certificate deletion."
+                    },
+                    "502": {
+                        "description": "Gateway API error during certificate deletion."
+                    }
+                }
+            }
+        },
+        "/feature_flags/states/": {
+            "get": {
+                "operationId": "feature_flags_states_list",
+                "description": "A view class for displaying feature flags states.\nTo add/update/remove a feature flag, see the instructions in\n`docs/apps/feature_flags.md`",
+                "parameters": [
+                    {
+                        "name": "page",
+                        "required": false,
+                        "in": "query",
+                        "description": "A page number within the paginated result set.",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "page_size",
+                        "required": false,
+                        "in": "query",
+                        "description": "Number of results to return per page.",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "search",
+                        "required": false,
+                        "in": "query",
+                        "description": "A search term.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "tags": [
+                    "feature_flags"
+                ],
+                "security": [
+                    {
+                        "EDAJWTAuthentication": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PaginatedFeatureFlagStatesList"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/feature_flags/states/{id}/": {
+            "get": {
+                "operationId": "feature_flags_states_retrieve",
+                "description": "A view class for displaying feature flags states.\nTo add/update/remove a feature flag, see the instructions in\n`docs/apps/feature_flags.md`",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "description": "A unique integer value identifying this aap flag.",
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "feature_flags"
+                ],
+                "security": [
+                    {
+                        "EDAJWTAuthentication": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/FeatureFlagStates"
+                                }
+                            }
+                        },
+                        "description": ""
                     }
                 }
             }
@@ -3037,18 +2939,19 @@
                 ],
                 "security": [
                     {
-                        "cookieAuth": []
-                    },
-                    {
-                        "basicAuth": []
-                    },
-                    {
                         "EDAJWTAuthentication": []
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "No response body"
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/OldFeatureFlag"
+                                }
+                            }
+                        },
+                        "description": ""
                     }
                 }
             }
@@ -3105,12 +3008,6 @@
                     "organizations"
                 ],
                 "security": [
-                    {
-                        "cookieAuth": []
-                    },
-                    {
-                        "basicAuth": []
-                    },
                     {
                         "EDAJWTAuthentication": []
                     }
@@ -3191,12 +3088,6 @@
                 ],
                 "security": [
                     {
-                        "cookieAuth": []
-                    },
-                    {
-                        "basicAuth": []
-                    },
-                    {
                         "EDAJWTAuthentication": []
                     }
                 ],
@@ -3232,12 +3123,6 @@
                     "organizations"
                 ],
                 "security": [
-                    {
-                        "cookieAuth": []
-                    },
-                    {
-                        "basicAuth": []
-                    },
                     {
                         "EDAJWTAuthentication": []
                     }
@@ -3301,12 +3186,6 @@
                 ],
                 "security": [
                     {
-                        "cookieAuth": []
-                    },
-                    {
-                        "basicAuth": []
-                    },
-                    {
                         "EDAJWTAuthentication": []
                     }
                 ],
@@ -3351,12 +3230,6 @@
                 },
                 "security": [
                     {
-                        "cookieAuth": []
-                    },
-                    {
-                        "basicAuth": []
-                    },
-                    {
                         "EDAJWTAuthentication": []
                     }
                 ],
@@ -3371,8 +3244,8 @@
                         },
                         "description": "Return a created project."
                     },
-                    "409": {
-                        "description": "Redis is unavailable."
+                    "503": {
+                        "description": "Project workers unavailable."
                     }
                 }
             }
@@ -3396,12 +3269,6 @@
                     "projects"
                 ],
                 "security": [
-                    {
-                        "cookieAuth": []
-                    },
-                    {
-                        "basicAuth": []
-                    },
                     {
                         "EDAJWTAuthentication": []
                     }
@@ -3457,12 +3324,6 @@
                 },
                 "security": [
                     {
-                        "cookieAuth": []
-                    },
-                    {
-                        "basicAuth": []
-                    },
-                    {
                         "EDAJWTAuthentication": []
                     }
                 ],
@@ -3481,7 +3342,10 @@
                         "description": "Update failed with bad request."
                     },
                     "409": {
-                        "description": "Redis is unavailable."
+                        "description": "Update failed with integrity checking."
+                    },
+                    "503": {
+                        "description": "Project workers unavailable."
                     }
                 }
             },
@@ -3503,12 +3367,6 @@
                     "projects"
                 ],
                 "security": [
-                    {
-                        "cookieAuth": []
-                    },
-                    {
-                        "basicAuth": []
-                    },
                     {
                         "EDAJWTAuthentication": []
                     }
@@ -3540,12 +3398,6 @@
                 ],
                 "security": [
                     {
-                        "cookieAuth": []
-                    },
-                    {
-                        "basicAuth": []
-                    },
-                    {
                         "EDAJWTAuthentication": []
                     }
                 ],
@@ -3561,7 +3413,10 @@
                         "description": ""
                     },
                     "409": {
-                        "description": "Redis is unavailable."
+                        "description": "Project import or sync is already running."
+                    },
+                    "503": {
+                        "description": "Project workers unavailable."
                     }
                 }
             }
@@ -3603,12 +3458,6 @@
                     "role_definitions"
                 ],
                 "security": [
-                    {
-                        "cookieAuth": []
-                    },
-                    {
-                        "basicAuth": []
-                    },
                     {
                         "EDAJWTAuthentication": []
                     }
@@ -3654,12 +3503,6 @@
                 },
                 "security": [
                     {
-                        "cookieAuth": []
-                    },
-                    {
-                        "basicAuth": []
-                    },
-                    {
                         "EDAJWTAuthentication": []
                     }
                 ],
@@ -3696,12 +3539,6 @@
                     "role_definitions"
                 ],
                 "security": [
-                    {
-                        "cookieAuth": []
-                    },
-                    {
-                        "basicAuth": []
-                    },
                     {
                         "EDAJWTAuthentication": []
                     }
@@ -3758,12 +3595,6 @@
                 },
                 "security": [
                     {
-                        "cookieAuth": []
-                    },
-                    {
-                        "basicAuth": []
-                    },
-                    {
                         "EDAJWTAuthentication": []
                     }
                 ],
@@ -3818,12 +3649,6 @@
                 },
                 "security": [
                     {
-                        "cookieAuth": []
-                    },
-                    {
-                        "basicAuth": []
-                    },
-                    {
                         "EDAJWTAuthentication": []
                     }
                 ],
@@ -3858,12 +3683,6 @@
                     "role_definitions"
                 ],
                 "security": [
-                    {
-                        "cookieAuth": []
-                    },
-                    {
-                        "basicAuth": []
-                    },
                     {
                         "EDAJWTAuthentication": []
                     }
@@ -3921,12 +3740,6 @@
                     "role_definitions"
                 ],
                 "security": [
-                    {
-                        "cookieAuth": []
-                    },
-                    {
-                        "basicAuth": []
-                    },
                     {
                         "EDAJWTAuthentication": []
                     }
@@ -3992,12 +3805,6 @@
                 ],
                 "security": [
                     {
-                        "cookieAuth": []
-                    },
-                    {
-                        "basicAuth": []
-                    },
-                    {
                         "EDAJWTAuthentication": []
                     }
                 ],
@@ -4023,12 +3830,6 @@
                     "role_metadata"
                 ],
                 "security": [
-                    {
-                        "cookieAuth": []
-                    },
-                    {
-                        "basicAuth": []
-                    },
                     {
                         "EDAJWTAuthentication": []
                     }
@@ -4094,12 +3895,6 @@
                     "role_team_access"
                 ],
                 "security": [
-                    {
-                        "cookieAuth": []
-                    },
-                    {
-                        "basicAuth": []
-                    },
                     {
                         "EDAJWTAuthentication": []
                     }
@@ -4181,12 +3976,6 @@
                 ],
                 "security": [
                     {
-                        "cookieAuth": []
-                    },
-                    {
-                        "basicAuth": []
-                    },
-                    {
                         "EDAJWTAuthentication": []
                     }
                 ],
@@ -4242,12 +4031,6 @@
                 ],
                 "security": [
                     {
-                        "cookieAuth": []
-                    },
-                    {
-                        "basicAuth": []
-                    },
-                    {
                         "EDAJWTAuthentication": []
                     }
                 ],
@@ -4292,12 +4075,6 @@
                 },
                 "security": [
                     {
-                        "cookieAuth": []
-                    },
-                    {
-                        "basicAuth": []
-                    },
-                    {
                         "EDAJWTAuthentication": []
                     }
                 ],
@@ -4335,12 +4112,6 @@
                 ],
                 "security": [
                     {
-                        "cookieAuth": []
-                    },
-                    {
-                        "basicAuth": []
-                    },
-                    {
                         "EDAJWTAuthentication": []
                     }
                 ],
@@ -4375,12 +4146,6 @@
                     "role_team_assignments"
                 ],
                 "security": [
-                    {
-                        "cookieAuth": []
-                    },
-                    {
-                        "basicAuth": []
-                    },
                     {
                         "EDAJWTAuthentication": []
                     }
@@ -4446,12 +4211,6 @@
                     "role_user_access"
                 ],
                 "security": [
-                    {
-                        "cookieAuth": []
-                    },
-                    {
-                        "basicAuth": []
-                    },
                     {
                         "EDAJWTAuthentication": []
                     }
@@ -4533,12 +4292,6 @@
                 ],
                 "security": [
                     {
-                        "cookieAuth": []
-                    },
-                    {
-                        "basicAuth": []
-                    },
-                    {
                         "EDAJWTAuthentication": []
                     }
                 ],
@@ -4559,7 +4312,6 @@
         "/role_user_assignments/": {
             "get": {
                 "operationId": "role_user_assignments_list",
-                "description": "Use this endpoint to give a user permission to a resource or an organization.\nThe needed data is the user, the role definition, and the object id.\nThe object must be of the type specified in the role definition.\nThe type given in the role definition and the provided object_id are used\nto look up the resource.\n\nAfter creation, the assignment cannot be edited, but can be deleted to\nremove those permissions.",
                 "parameters": [
                     {
                         "name": "page",
@@ -4593,12 +4345,6 @@
                     "role_user_assignments"
                 ],
                 "security": [
-                    {
-                        "cookieAuth": []
-                    },
-                    {
-                        "basicAuth": []
-                    },
                     {
                         "EDAJWTAuthentication": []
                     }
@@ -4644,12 +4390,6 @@
                 },
                 "security": [
                     {
-                        "cookieAuth": []
-                    },
-                    {
-                        "basicAuth": []
-                    },
-                    {
                         "EDAJWTAuthentication": []
                     }
                 ],
@@ -4670,7 +4410,6 @@
         "/role_user_assignments/{id}/": {
             "get": {
                 "operationId": "role_user_assignments_retrieve",
-                "description": "Use this endpoint to give a user permission to a resource or an organization.\nThe needed data is the user, the role definition, and the object id.\nThe object must be of the type specified in the role definition.\nThe type given in the role definition and the provided object_id are used\nto look up the resource.\n\nAfter creation, the assignment cannot be edited, but can be deleted to\nremove those permissions.",
                 "parameters": [
                     {
                         "in": "path",
@@ -4686,12 +4425,6 @@
                     "role_user_assignments"
                 ],
                 "security": [
-                    {
-                        "cookieAuth": []
-                    },
-                    {
-                        "basicAuth": []
-                    },
                     {
                         "EDAJWTAuthentication": []
                     }
@@ -4711,7 +4444,6 @@
             },
             "delete": {
                 "operationId": "role_user_assignments_destroy",
-                "description": "Use this endpoint to give a user permission to a resource or an organization.\nThe needed data is the user, the role definition, and the object id.\nThe object must be of the type specified in the role definition.\nThe type given in the role definition and the provided object_id are used\nto look up the resource.\n\nAfter creation, the assignment cannot be edited, but can be deleted to\nremove those permissions.",
                 "parameters": [
                     {
                         "in": "path",
@@ -4728,12 +4460,6 @@
                 ],
                 "security": [
                     {
-                        "cookieAuth": []
-                    },
-                    {
-                        "basicAuth": []
-                    },
-                    {
                         "EDAJWTAuthentication": []
                     }
                 ],
@@ -4747,7 +4473,7 @@
         "/rulebooks/": {
             "get": {
                 "operationId": "rulebooks_list",
-                "description": "List all rulebooks",
+                "description": "List rulebooks",
                 "parameters": [
                     {
                         "in": "query",
@@ -4789,12 +4515,6 @@
                 ],
                 "security": [
                     {
-                        "cookieAuth": []
-                    },
-                    {
-                        "basicAuth": []
-                    },
-                    {
                         "EDAJWTAuthentication": []
                     }
                 ],
@@ -4809,13 +4529,14 @@
                         },
                         "description": "Return a list of rulebooks."
                     }
-                }
+                },
+                "x-ai-description": "List rulebooks. Returns rulebook records. Supports filtering and pagination."
             }
         },
         "/rulebooks/{id}/sources/": {
             "get": {
                 "operationId": "rulebooks_sources_list",
-                "description": "Source list of a rulebook by its id",
+                "description": "List rulebook sources",
                 "parameters": [
                     {
                         "in": "path",
@@ -4866,12 +4587,6 @@
                 ],
                 "security": [
                     {
-                        "cookieAuth": []
-                    },
-                    {
-                        "basicAuth": []
-                    },
-                    {
                         "EDAJWTAuthentication": []
                     }
                 ],
@@ -4889,7 +4604,8 @@
                     "400": {
                         "description": "Rulebook not parseable."
                     }
-                }
+                },
+                "x-ai-description": "List sources defined in a rulebook by ID. Returns source information including name and rulebook hash."
             }
         },
         "/rulebooks/{id}/": {
@@ -4911,12 +4627,6 @@
                     "rulebooks"
                 ],
                 "security": [
-                    {
-                        "cookieAuth": []
-                    },
-                    {
-                        "basicAuth": []
-                    },
                     {
                         "EDAJWTAuthentication": []
                     }
@@ -4955,12 +4665,6 @@
                 ],
                 "security": [
                     {
-                        "cookieAuth": []
-                    },
-                    {
-                        "basicAuth": []
-                    },
-                    {
                         "EDAJWTAuthentication": []
                     }
                 ],
@@ -4987,12 +4691,6 @@
                 ],
                 "security": [
                     {
-                        "cookieAuth": []
-                    },
-                    {
-                        "basicAuth": []
-                    },
-                    {
                         "EDAJWTAuthentication": []
                     }
                 ],
@@ -5010,12 +4708,6 @@
                     "service-index"
                 ],
                 "security": [
-                    {
-                        "cookieAuth": []
-                    },
-                    {
-                        "basicAuth": []
-                    },
                     {
                         "EDAJWTAuthentication": []
                     }
@@ -5036,12 +4728,6 @@
                 ],
                 "security": [
                     {
-                        "cookieAuth": []
-                    },
-                    {
-                        "basicAuth": []
-                    },
-                    {
                         "EDAJWTAuthentication": []
                     }
                 ],
@@ -5049,7 +4735,8 @@
                     "201": {
                         "description": "No response body"
                     }
-                }
+                },
+                "x-ai-description": "Remove all role assignments for a resource indexed from connected AAP services"
             }
         },
         "/service-index/resource-types/": {
@@ -5071,12 +4758,6 @@
                     "service-index"
                 ],
                 "security": [
-                    {
-                        "cookieAuth": []
-                    },
-                    {
-                        "basicAuth": []
-                    },
                     {
                         "EDAJWTAuthentication": []
                     }
@@ -5115,12 +4796,6 @@
                 ],
                 "security": [
                     {
-                        "cookieAuth": []
-                    },
-                    {
-                        "basicAuth": []
-                    },
-                    {
                         "EDAJWTAuthentication": []
                     }
                 ],
@@ -5158,12 +4833,6 @@
                 ],
                 "security": [
                     {
-                        "cookieAuth": []
-                    },
-                    {
-                        "basicAuth": []
-                    },
-                    {
                         "EDAJWTAuthentication": []
                     }
                 ],
@@ -5200,12 +4869,6 @@
                     "service-index"
                 ],
                 "security": [
-                    {
-                        "cookieAuth": []
-                    },
-                    {
-                        "basicAuth": []
-                    },
                     {
                         "EDAJWTAuthentication": []
                     }
@@ -5251,12 +4914,6 @@
                 },
                 "security": [
                     {
-                        "cookieAuth": []
-                    },
-                    {
-                        "basicAuth": []
-                    },
-                    {
                         "EDAJWTAuthentication": []
                     }
                 ],
@@ -5294,12 +4951,6 @@
                     "service-index"
                 ],
                 "security": [
-                    {
-                        "cookieAuth": []
-                    },
-                    {
-                        "basicAuth": []
-                    },
                     {
                         "EDAJWTAuthentication": []
                     }
@@ -5357,12 +5008,6 @@
                 },
                 "security": [
                     {
-                        "cookieAuth": []
-                    },
-                    {
-                        "basicAuth": []
-                    },
-                    {
                         "EDAJWTAuthentication": []
                     }
                 ],
@@ -5418,12 +5063,6 @@
                 },
                 "security": [
                     {
-                        "cookieAuth": []
-                    },
-                    {
-                        "basicAuth": []
-                    },
-                    {
                         "EDAJWTAuthentication": []
                     }
                 ],
@@ -5459,12 +5098,6 @@
                     "service-index"
                 ],
                 "security": [
-                    {
-                        "cookieAuth": []
-                    },
-                    {
-                        "basicAuth": []
-                    },
                     {
                         "EDAJWTAuthentication": []
                     }
@@ -5513,12 +5146,6 @@
                     "service-index"
                 ],
                 "security": [
-                    {
-                        "cookieAuth": []
-                    },
-                    {
-                        "basicAuth": []
-                    },
                     {
                         "EDAJWTAuthentication": []
                     }
@@ -5575,12 +5202,6 @@
                 ],
                 "security": [
                     {
-                        "cookieAuth": []
-                    },
-                    {
-                        "basicAuth": []
-                    },
-                    {
                         "EDAJWTAuthentication": []
                     }
                 ],
@@ -5627,12 +5248,6 @@
                 },
                 "security": [
                     {
-                        "cookieAuth": []
-                    },
-                    {
-                        "basicAuth": []
-                    },
-                    {
                         "EDAJWTAuthentication": []
                     }
                 ],
@@ -5678,12 +5293,6 @@
                     "required": true
                 },
                 "security": [
-                    {
-                        "cookieAuth": []
-                    },
-                    {
-                        "basicAuth": []
-                    },
                     {
                         "EDAJWTAuthentication": []
                     }
@@ -5740,12 +5349,6 @@
                 ],
                 "security": [
                     {
-                        "cookieAuth": []
-                    },
-                    {
-                        "basicAuth": []
-                    },
-                    {
                         "EDAJWTAuthentication": []
                     }
                 ],
@@ -5801,12 +5404,6 @@
                 ],
                 "security": [
                     {
-                        "cookieAuth": []
-                    },
-                    {
-                        "basicAuth": []
-                    },
-                    {
                         "EDAJWTAuthentication": []
                     }
                 ],
@@ -5852,12 +5449,6 @@
                     "required": true
                 },
                 "security": [
-                    {
-                        "cookieAuth": []
-                    },
-                    {
-                        "basicAuth": []
-                    },
                     {
                         "EDAJWTAuthentication": []
                     }
@@ -5905,12 +5496,6 @@
                 },
                 "security": [
                     {
-                        "cookieAuth": []
-                    },
-                    {
-                        "basicAuth": []
-                    },
-                    {
                         "EDAJWTAuthentication": []
                     }
                 ],
@@ -5936,12 +5521,6 @@
                     "status"
                 ],
                 "security": [
-                    {
-                        "cookieAuth": []
-                    },
-                    {
-                        "basicAuth": []
-                    },
                     {
                         "EDAJWTAuthentication": []
                     },
@@ -6032,12 +5611,6 @@
                 ],
                 "security": [
                     {
-                        "cookieAuth": []
-                    },
-                    {
-                        "basicAuth": []
-                    },
-                    {
                         "EDAJWTAuthentication": []
                     }
                 ],
@@ -6074,12 +5647,6 @@
                     "teams"
                 ],
                 "security": [
-                    {
-                        "cookieAuth": []
-                    },
-                    {
-                        "basicAuth": []
-                    },
                     {
                         "EDAJWTAuthentication": []
                     }
@@ -6158,12 +5725,6 @@
                 ],
                 "security": [
                     {
-                        "cookieAuth": []
-                    },
-                    {
-                        "basicAuth": []
-                    },
-                    {
                         "EDAJWTAuthentication": []
                     }
                 ],
@@ -6200,12 +5761,6 @@
                     "users"
                 ],
                 "security": [
-                    {
-                        "cookieAuth": []
-                    },
-                    {
-                        "basicAuth": []
-                    },
                     {
                         "EDAJWTAuthentication": []
                     }
@@ -6261,12 +5816,6 @@
                 },
                 "security": [
                     {
-                        "cookieAuth": []
-                    },
-                    {
-                        "basicAuth": []
-                    },
-                    {
                         "EDAJWTAuthentication": []
                     }
                 ],
@@ -6295,12 +5844,6 @@
                     "users"
                 ],
                 "security": [
-                    {
-                        "cookieAuth": []
-                    },
-                    {
-                        "basicAuth": []
-                    },
                     {
                         "EDAJWTAuthentication": []
                     }
@@ -6357,12 +5900,6 @@
                 ],
                 "security": [
                     {
-                        "cookieAuth": []
-                    },
-                    {
-                        "basicAuth": []
-                    },
-                    {
                         "EDAJWTAuthentication": []
                     }
                 ],
@@ -6407,12 +5944,6 @@
                 },
                 "security": [
                     {
-                        "cookieAuth": []
-                    },
-                    {
-                        "basicAuth": []
-                    },
-                    {
                         "EDAJWTAuthentication": []
                     }
                 ],
@@ -6450,12 +5981,6 @@
                 ],
                 "security": [
                     {
-                        "cookieAuth": []
-                    },
-                    {
-                        "basicAuth": []
-                    },
-                    {
                         "EDAJWTAuthentication": []
                     }
                 ],
@@ -6490,12 +6015,6 @@
                     "users"
                 ],
                 "security": [
-                    {
-                        "cookieAuth": []
-                    },
-                    {
-                        "basicAuth": []
-                    },
                     {
                         "EDAJWTAuthentication": []
                     }
@@ -6533,6 +6052,10 @@
                     },
                     "is_enabled": {
                         "type": "boolean"
+                    },
+                    "restart_on_project_update": {
+                        "type": "boolean",
+                        "description": "Auto-restart when rulebook changes after project sync"
                     },
                     "decision_environment_id": {
                         "type": "integer"
@@ -6574,6 +6097,14 @@
                     "skip_audit_events": {
                         "type": "boolean",
                         "description": "Skip audit events for activation"
+                    },
+                    "enable_persistence": {
+                        "type": "boolean",
+                        "description": "Enable persistence for activation"
+                    },
+                    "rule_engine_credential_id": {
+                        "type": "integer",
+                        "nullable": true
                     }
                 },
                 "required": [
@@ -6691,6 +6222,10 @@
                     "status": {
                         "$ref": "#/components/schemas/StatusEnum"
                     },
+                    "restart_on_project_update": {
+                        "type": "boolean",
+                        "description": "Auto-restart when rulebook changes after project sync"
+                    },
                     "extra_var": {
                         "type": "string",
                         "nullable": true
@@ -6699,6 +6234,14 @@
                         "type": "integer",
                         "nullable": true,
                         "readOnly": true
+                    },
+                    "project": {
+                        "allOf": [
+                            {
+                                "$ref": "#/components/schemas/ProjectRef"
+                            }
+                        ],
+                        "nullable": true
                     },
                     "project_id": {
                         "type": "integer",
@@ -6844,6 +6387,16 @@
                     "log_tracking_id": {
                         "type": "string",
                         "readOnly": true
+                    },
+                    "enable_persistence": {
+                        "type": "boolean",
+                        "description": "Enable persistence for activation"
+                    },
+                    "rule_engine_credential_id": {
+                        "type": "integer",
+                        "nullable": true,
+                        "description": "The Rule Engine Credential to use, if empty use the default system rule engine credential.",
+                        "readOnly": true
                     }
                 },
                 "required": [
@@ -6859,6 +6412,7 @@
                     "name",
                     "organization_id",
                     "project_id",
+                    "rule_engine_credential_id",
                     "rulebook_id",
                     "rulebook_name",
                     "rules_count",
@@ -6895,6 +6449,10 @@
                     },
                     "git_hash": {
                         "type": "string"
+                    },
+                    "restart_on_project_update": {
+                        "type": "boolean",
+                        "description": "Auto-restart when rulebook changes after project sync"
                     },
                     "project": {
                         "allOf": [
@@ -7065,6 +6623,24 @@
                         "type": "string",
                         "nullable": true,
                         "description": "Log tracking ID of the activation"
+                    },
+                    "enable_persistence": {
+                        "type": "boolean",
+                        "description": "Enable persistence for activation"
+                    },
+                    "rule_engine_credential_id": {
+                        "type": "integer",
+                        "nullable": true,
+                        "description": "The Rule Engine Credential to use, if empty use the default system rule engine credential.",
+                        "readOnly": true
+                    },
+                    "rule_engine_credential": {
+                        "allOf": [
+                            {
+                                "$ref": "#/components/schemas/EdaCredential"
+                            }
+                        ],
+                        "nullable": true
                     }
                 },
                 "required": [
@@ -7078,6 +6654,7 @@
                     "modified_by",
                     "name",
                     "organization",
+                    "rule_engine_credential_id",
                     "rulebook_name",
                     "rules_count",
                     "rules_fired_count",
@@ -7499,10 +7076,7 @@
                     "description": {
                         "type": "string"
                     },
-                    "metadata": {
-                        "type": "object",
-                        "additionalProperties": true
-                    },
+                    "metadata": {},
                     "target_credential": {
                         "type": "integer"
                     },
@@ -7541,14 +7115,8 @@
                     "description": {
                         "type": "string"
                     },
-                    "inputs": {
-                        "type": "object",
-                        "additionalProperties": true
-                    },
-                    "injectors": {
-                        "type": "object",
-                        "additionalProperties": true
-                    },
+                    "inputs": {},
+                    "injectors": {},
                     "id": {
                         "type": "integer",
                         "readOnly": true
@@ -7586,13 +7154,9 @@
                         "type": "string"
                     },
                     "inputs": {
-                        "type": "object",
-                        "additionalProperties": true,
                         "description": "Inputs of the credential type"
                     },
                     "injectors": {
-                        "type": "object",
-                        "additionalProperties": true,
                         "description": "Injectors of the credential type"
                     }
                 },
@@ -7627,13 +7191,9 @@
                 "type": "object",
                 "properties": {
                     "inputs": {
-                        "type": "object",
-                        "additionalProperties": true,
                         "description": "Inputs of the credential type for test"
                     },
                     "metadata": {
-                        "type": "object",
-                        "additionalProperties": true,
                         "description": "Metadata of the credential type for testing"
                     }
                 },
@@ -8083,10 +7643,7 @@
                     "description": {
                         "type": "string"
                     },
-                    "inputs": {
-                        "type": "object",
-                        "additionalProperties": true
-                    },
+                    "inputs": {},
                     "credential_type_id": {
                         "type": "integer"
                     },
@@ -8174,8 +7731,6 @@
                 "description": "Serializer for the Credential Test.",
                 "properties": {
                     "metadata": {
-                        "type": "object",
-                        "additionalProperties": true,
                         "description": "Metadata of the credential for testing"
                     }
                 }
@@ -8349,6 +7904,25 @@
                     "url"
                 ]
             },
+            "FeatureFlagStates": {
+                "type": "object",
+                "description": "Serialize list of feature flags",
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "description": "The name of the feature flag. Must follow the format of FEATURE_<flag-name>_ENABLED.",
+                        "maxLength": 64
+                    },
+                    "state": {
+                        "type": "string",
+                        "readOnly": true
+                    }
+                },
+                "required": [
+                    "name",
+                    "state"
+                ]
+            },
             "ImportStateEnum": {
                 "enum": [
                     "pending",
@@ -8392,6 +7966,138 @@
                 "required": [
                     "password",
                     "username"
+                ]
+            },
+            "OldFeatureFlag": {
+                "type": "object",
+                "description": "Serialize list of feature flags",
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "readOnly": true
+                    },
+                    "url": {
+                        "type": "string",
+                        "readOnly": true
+                    },
+                    "related": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "type": "string"
+                        },
+                        "readOnly": true
+                    },
+                    "summary_fields": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "type": "object",
+                            "additionalProperties": true
+                        },
+                        "readOnly": true
+                    },
+                    "created": {
+                        "type": "string",
+                        "format": "date-time",
+                        "readOnly": true,
+                        "description": "The date/time this resource was created."
+                    },
+                    "created_by": {
+                        "type": "integer",
+                        "readOnly": true,
+                        "nullable": true,
+                        "description": "The user who created this resource."
+                    },
+                    "modified": {
+                        "type": "string",
+                        "format": "date-time",
+                        "readOnly": true,
+                        "description": "The date/time this resource was created."
+                    },
+                    "modified_by": {
+                        "type": "integer",
+                        "readOnly": true,
+                        "nullable": true,
+                        "description": "The user who last modified this resource."
+                    },
+                    "name": {
+                        "type": "string",
+                        "readOnly": true,
+                        "description": "The name of the feature flag. Must follow the format of FEATURE_<flag-name>_ENABLED."
+                    },
+                    "ui_name": {
+                        "type": "string",
+                        "description": "The pretty name to display in the application User Interface",
+                        "maxLength": 64
+                    },
+                    "condition": {
+                        "type": "string",
+                        "readOnly": true,
+                        "default": "boolean",
+                        "description": "Used to specify a condition, which if met, will enable the feature flag."
+                    },
+                    "value": {
+                        "type": "string",
+                        "description": "The value used to evaluate the conditional specified.",
+                        "maxLength": 127
+                    },
+                    "required": {
+                        "type": "boolean",
+                        "readOnly": true,
+                        "description": "If multiple conditions are required to be met to enable a feature flag, 'required' can be used to specify the necessary conditionals."
+                    },
+                    "support_level": {
+                        "type": "string",
+                        "readOnly": true,
+                        "description": "The support criteria for the feature flag. Must be one of (DEVELOPER_PREVIEW or TECHNOLOGY_PREVIEW)."
+                    },
+                    "visibility": {
+                        "type": "boolean",
+                        "readOnly": true,
+                        "description": "Controls whether the feature is visible in the UI."
+                    },
+                    "toggle_type": {
+                        "allOf": [
+                            {
+                                "$ref": "#/components/schemas/ToggleTypeEnum"
+                            }
+                        ],
+                        "readOnly": true,
+                        "description": "Details whether a flag is toggle-able at run-time or install-time. (Default: 'run-time').\n\n* `install-time` - install-time\n* `run-time` - run-time"
+                    },
+                    "description": {
+                        "type": "string",
+                        "readOnly": true,
+                        "description": "A detailed description giving an overview of the feature flag."
+                    },
+                    "support_url": {
+                        "type": "string",
+                        "description": "A link to the documentation support URL for the feature",
+                        "maxLength": 250
+                    },
+                    "labels": {
+                        "readOnly": true,
+                        "nullable": true,
+                        "description": "A list of labels for the feature flag."
+                    }
+                },
+                "required": [
+                    "condition",
+                    "created",
+                    "created_by",
+                    "description",
+                    "id",
+                    "labels",
+                    "modified",
+                    "modified_by",
+                    "name",
+                    "related",
+                    "required",
+                    "summary_fields",
+                    "support_level",
+                    "toggle_type",
+                    "ui_name",
+                    "url",
+                    "visibility"
                 ]
             },
             "Organization": {
@@ -8986,6 +8692,43 @@
                         "type": "array",
                         "items": {
                             "$ref": "#/components/schemas/EventStreamOut"
+                        }
+                    }
+                }
+            },
+            "PaginatedFeatureFlagStatesList": {
+                "type": "object",
+                "properties": {
+                    "count": {
+                        "type": "integer",
+                        "example": 123
+                    },
+                    "next": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uri",
+                        "example": "/eda/api/v1/example/?page=51&page_size=100"
+                    },
+                    "previous": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uri",
+                        "example": "/eda/api/v1/example/?page=49&page_size=100"
+                    },
+                    "page_size": {
+                        "type": "integer",
+                        "nullable": true,
+                        "example": 100
+                    },
+                    "page": {
+                        "type": "integer",
+                        "nullable": true,
+                        "example": 50
+                    },
+                    "results": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/FeatureFlagStates"
                         }
                     }
                 }
@@ -9620,6 +9363,10 @@
                     "is_enabled": {
                         "type": "boolean"
                     },
+                    "restart_on_project_update": {
+                        "type": "boolean",
+                        "description": "Auto-restart when rulebook changes after project sync"
+                    },
                     "decision_environment_id": {
                         "type": "integer"
                     },
@@ -9664,6 +9411,14 @@
                     "skip_audit_events": {
                         "type": "boolean",
                         "description": "Skip audit events for activation"
+                    },
+                    "enable_persistence": {
+                        "type": "boolean",
+                        "description": "Enable persistence for activation"
+                    },
+                    "rule_engine_credential_id": {
+                        "type": "integer",
+                        "nullable": true
                     }
                 }
             },
@@ -9674,10 +9429,7 @@
                     "description": {
                         "type": "string"
                     },
-                    "metadata": {
-                        "type": "object",
-                        "additionalProperties": true
-                    },
+                    "metadata": {},
                     "organization_id": {
                         "type": "integer"
                     },
@@ -9707,13 +9459,9 @@
                         "type": "string"
                     },
                     "inputs": {
-                        "type": "object",
-                        "additionalProperties": true,
                         "description": "Inputs of the credential type"
                     },
                     "injectors": {
-                        "type": "object",
-                        "additionalProperties": true,
                         "description": "Injectors of the credential type"
                     }
                 }
@@ -9757,10 +9505,7 @@
                     "description": {
                         "type": "string"
                     },
-                    "inputs": {
-                        "type": "object",
-                        "additionalProperties": true
-                    },
+                    "inputs": {},
                     "organization_id": {
                         "type": "integer"
                     }
@@ -9841,6 +9586,16 @@
                         "type": "string",
                         "nullable": true,
                         "description": "Source control repository URL."
+                    },
+                    "update_revision_on_launch": {
+                        "type": "boolean",
+                        "description": "Enable automatic project sync on activation launch"
+                    },
+                    "scm_update_cache_timeout": {
+                        "type": "integer",
+                        "maximum": 86400,
+                        "minimum": 0,
+                        "description": "Cache timeout in seconds for project updates (0 = no cache, max 86400)"
                     }
                 }
             },
@@ -9879,10 +9634,7 @@
                         "type": "boolean",
                         "readOnly": true
                     },
-                    "resource_data": {
-                        "type": "object",
-                        "additionalProperties": true
-                    },
+                    "resource_data": {},
                     "url": {
                         "type": "string",
                         "readOnly": true
@@ -10014,6 +9766,22 @@
                     "proxy": {
                         "type": "string",
                         "readOnly": true
+                    },
+                    "update_revision_on_launch": {
+                        "type": "boolean",
+                        "description": "Enable automatic project sync on activation launch"
+                    },
+                    "scm_update_cache_timeout": {
+                        "type": "integer",
+                        "maximum": 2147483647,
+                        "minimum": -2147483648,
+                        "description": "Cache timeout in seconds for project updates (0 = always update, max 86400)"
+                    },
+                    "last_synced_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true,
+                        "description": "Timestamp of the last successful project sync"
                     },
                     "created_by": {
                         "type": "object",
@@ -10152,6 +9920,18 @@
                         "type": "string",
                         "nullable": true,
                         "description": "For git projects, an additional refspec to fetch."
+                    },
+                    "update_revision_on_launch": {
+                        "type": "boolean",
+                        "default": false,
+                        "description": "Enable automatic project sync on activation launch"
+                    },
+                    "scm_update_cache_timeout": {
+                        "type": "integer",
+                        "maximum": 86400,
+                        "minimum": 0,
+                        "default": 0,
+                        "description": "Cache timeout in seconds for project updates (0 = no cache, max 86400)"
                     }
                 },
                 "required": [
@@ -10201,6 +9981,22 @@
                     "proxy": {
                         "type": "string",
                         "readOnly": true
+                    },
+                    "update_revision_on_launch": {
+                        "type": "boolean",
+                        "description": "Enable automatic project sync on activation launch"
+                    },
+                    "scm_update_cache_timeout": {
+                        "type": "integer",
+                        "maximum": 2147483647,
+                        "minimum": -2147483648,
+                        "description": "Cache timeout in seconds for project updates (0 = always update, max 86400)"
+                    },
+                    "last_synced_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true,
+                        "description": "Timestamp of the last successful project sync"
                     },
                     "created_by": {
                         "type": "object",
@@ -10321,6 +10117,16 @@
                     "organization_id": {
                         "type": "integer",
                         "readOnly": true
+                    },
+                    "update_revision_on_launch": {
+                        "type": "boolean",
+                        "description": "Enable automatic project sync on activation launch"
+                    },
+                    "scm_update_cache_timeout": {
+                        "type": "integer",
+                        "maximum": 2147483647,
+                        "minimum": -2147483648,
+                        "description": "Cache timeout in seconds for project updates (0 = always update, max 86400)"
                     }
                 },
                 "required": [
@@ -10386,10 +10192,7 @@
                         "type": "boolean",
                         "readOnly": true
                     },
-                    "resource_data": {
-                        "type": "object",
-                        "additionalProperties": true
-                    },
+                    "resource_data": {},
                     "url": {
                         "type": "string",
                         "readOnly": true
@@ -10444,8 +10247,6 @@
                         "readOnly": true
                     },
                     "resource_data": {
-                        "type": "object",
-                        "additionalProperties": true,
                         "writeOnly": true
                     },
                     "url": {
@@ -10682,7 +10483,8 @@
                         "description": "The role definition which defines permissions conveyed by this assignment."
                     },
                     "team": {
-                        "type": "integer"
+                        "type": "integer",
+                        "nullable": true
                     },
                     "team_ansible_id": {
                         "type": "string",
@@ -10721,7 +10523,8 @@
                         "description": "The role definition which defines permissions conveyed by this assignment."
                     },
                     "team": {
-                        "type": "integer"
+                        "type": "integer",
+                        "nullable": true
                     },
                     "team_ansible_id": {
                         "type": "string",
@@ -10793,7 +10596,8 @@
                         "description": "The role definition which defines permissions conveyed by this assignment."
                     },
                     "user": {
-                        "type": "integer"
+                        "type": "integer",
+                        "nullable": true
                     },
                     "user_ansible_id": {
                         "type": "string",
@@ -10832,7 +10636,8 @@
                         "description": "The role definition which defines permissions conveyed by this assignment."
                     },
                     "user": {
-                        "type": "integer"
+                        "type": "integer",
+                        "nullable": true
                     },
                     "user_ansible_id": {
                         "type": "string",
@@ -11183,7 +10988,8 @@
                         "description": "The role definition which defines permissions conveyed by this assignment."
                     },
                     "team": {
-                        "type": "integer"
+                        "type": "integer",
+                        "nullable": true
                     },
                     "team_ansible_id": {
                         "type": "string",
@@ -11304,6 +11110,14 @@
                     "resource"
                 ]
             },
+            "ToggleTypeEnum": {
+                "enum": [
+                    "install-time",
+                    "run-time"
+                ],
+                "type": "string",
+                "description": "* `install-time` - install-time\n* `run-time` - run-time"
+            },
             "UserAccessAssignment": {
                 "type": "object",
                 "properties": {
@@ -11363,7 +11177,8 @@
                         "description": "The role definition which defines permissions conveyed by this assignment."
                     },
                     "user": {
-                        "type": "integer"
+                        "type": "integer",
+                        "nullable": true
                     },
                     "user_ansible_id": {
                         "type": "string",
@@ -11536,10 +11351,6 @@
                 "type": "apiKey",
                 "name": "X-DAB-JW-TOKEN",
                 "in": "header"
-            },
-            "basicAuth": {
-                "type": "http",
-                "scheme": "basic"
             },
             "cookieAuth": {
                 "type": "apiKey",

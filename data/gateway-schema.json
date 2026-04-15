@@ -4342,14 +4342,6 @@
                     },
                     {
                         "in": "query",
-                        "name": "use_controller_password",
-                        "schema": {
-                            "type": "string"
-                        },
-                        "description": "Filter by use_controller_password (exact match)"
-                    },
-                    {
-                        "in": "query",
                         "name": "username",
                         "schema": {
                             "type": "string"
@@ -4391,7 +4383,7 @@
                         "description": ""
                     }
                 },
-                "x-ai-description": "List all users for an authenticator"
+                "x-ai-description": "List authenticated platform users with permissions assigned directly or via team membership"
             }
         },
         "/api/gateway/v1/ca_certificates/": {
@@ -5055,6 +5047,7 @@
                                 "tr",
                                 "tt",
                                 "udm",
+                                "ug",
                                 "uk",
                                 "ur",
                                 "uz",
@@ -5114,6 +5107,935 @@
                 "x-ai-description": "Retrieve single docs schema"
             }
         },
+        "/api/gateway/v1/feature_flags/": {
+            "get": {
+                "operationId": "feature_flags_list",
+                "description": "API endpoint that allows feature flags to be viewed or edited.",
+                "parameters": [
+                    {
+                        "in": "query",
+                        "name": "condition",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by condition (exact match)"
+                    },
+                    {
+                        "in": "query",
+                        "name": "condition__icontains",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by condition (case-insensitive partial match)"
+                    },
+                    {
+                        "in": "query",
+                        "name": "created",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by created (exact match)"
+                    },
+                    {
+                        "in": "query",
+                        "name": "created__gt",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by created (gt)"
+                    },
+                    {
+                        "in": "query",
+                        "name": "created__gte",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by created (gte)"
+                    },
+                    {
+                        "in": "query",
+                        "name": "created__lt",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by created (lt)"
+                    },
+                    {
+                        "in": "query",
+                        "name": "created__lte",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by created (lte)"
+                    },
+                    {
+                        "in": "query",
+                        "name": "created_by",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by created_by (exact match)"
+                    },
+                    {
+                        "in": "query",
+                        "name": "description",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by description (exact match)"
+                    },
+                    {
+                        "in": "query",
+                        "name": "description__icontains",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by description (case-insensitive partial match)"
+                    },
+                    {
+                        "in": "query",
+                        "name": "id",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by id (exact match)"
+                    },
+                    {
+                        "in": "query",
+                        "name": "id__gt",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by id (gt)"
+                    },
+                    {
+                        "in": "query",
+                        "name": "id__gte",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by id (gte)"
+                    },
+                    {
+                        "in": "query",
+                        "name": "id__lt",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by id (lt)"
+                    },
+                    {
+                        "in": "query",
+                        "name": "id__lte",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by id (lte)"
+                    },
+                    {
+                        "in": "query",
+                        "name": "labels",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by labels (exact match)"
+                    },
+                    {
+                        "in": "query",
+                        "name": "modified",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by modified (exact match)"
+                    },
+                    {
+                        "in": "query",
+                        "name": "modified__gt",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by modified (gt)"
+                    },
+                    {
+                        "in": "query",
+                        "name": "modified__gte",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by modified (gte)"
+                    },
+                    {
+                        "in": "query",
+                        "name": "modified__lt",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by modified (lt)"
+                    },
+                    {
+                        "in": "query",
+                        "name": "modified__lte",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by modified (lte)"
+                    },
+                    {
+                        "in": "query",
+                        "name": "modified_by",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by modified_by (exact match)"
+                    },
+                    {
+                        "in": "query",
+                        "name": "name",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by name (exact match)"
+                    },
+                    {
+                        "in": "query",
+                        "name": "name__icontains",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by name (case-insensitive partial match)"
+                    },
+                    {
+                        "in": "query",
+                        "name": "order",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Order results by field name. Prefix with '-' for descending order. Supports comma-separated values for multiple fields."
+                    },
+                    {
+                        "in": "query",
+                        "name": "order_by",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Order results by field name. Prefix with '-' for descending order. Supports comma-separated values for multiple fields."
+                    },
+                    {
+                        "name": "page",
+                        "required": false,
+                        "in": "query",
+                        "description": "A page number within the paginated result set.",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "page_size",
+                        "required": false,
+                        "in": "query",
+                        "description": "Number of results to return per page.",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "required",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by required (exact match)"
+                    },
+                    {
+                        "in": "query",
+                        "name": "resource",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by resource (exact match)"
+                    },
+                    {
+                        "in": "query",
+                        "name": "role_level",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by role level for RBAC"
+                    },
+                    {
+                        "name": "search",
+                        "required": false,
+                        "in": "query",
+                        "description": "A search term.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "support_level",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by support_level (exact match)"
+                    },
+                    {
+                        "in": "query",
+                        "name": "support_level__icontains",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by support_level (case-insensitive partial match)"
+                    },
+                    {
+                        "in": "query",
+                        "name": "support_url",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by support_url (exact match)"
+                    },
+                    {
+                        "in": "query",
+                        "name": "support_url__icontains",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by support_url (case-insensitive partial match)"
+                    },
+                    {
+                        "in": "query",
+                        "name": "toggle_type",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by toggle_type (exact match)"
+                    },
+                    {
+                        "in": "query",
+                        "name": "toggle_type__icontains",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by toggle_type (case-insensitive partial match)"
+                    },
+                    {
+                        "in": "query",
+                        "name": "type",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by object type. Supports comma-separated values for multiple types."
+                    },
+                    {
+                        "in": "query",
+                        "name": "ui_name",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by ui_name (exact match)"
+                    },
+                    {
+                        "in": "query",
+                        "name": "ui_name__icontains",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by ui_name (case-insensitive partial match)"
+                    },
+                    {
+                        "in": "query",
+                        "name": "value",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by value (exact match)"
+                    },
+                    {
+                        "in": "query",
+                        "name": "value__icontains",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by value (case-insensitive partial match)"
+                    },
+                    {
+                        "in": "query",
+                        "name": "visibility",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by visibility (exact match)"
+                    }
+                ],
+                "tags": [
+                    "feature_flags"
+                ],
+                "security": [
+                    {
+                        "OAuth2_Authentication": []
+                    },
+                    {
+                        "SessionAuthentication": []
+                    },
+                    {
+                        "Basic_Authentication": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PaginatedFeatureFlagList"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                },
+                "x-ai-description": "List all feature flags"
+            }
+        },
+        "/api/gateway/v1/feature_flags/{id}/": {
+            "get": {
+                "operationId": "feature_flags_retrieve",
+                "description": "API endpoint that allows feature flags to be viewed or edited.",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "description": "A unique integer value identifying this aap flag.",
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "feature_flags"
+                ],
+                "security": [
+                    {
+                        "OAuth2_Authentication": []
+                    },
+                    {
+                        "SessionAuthentication": []
+                    },
+                    {
+                        "Basic_Authentication": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/FeatureFlag"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                },
+                "x-ai-description": "Retrieve single feature flag"
+            },
+            "patch": {
+                "operationId": "feature_flags_partial_update",
+                "description": "Handle PATCH requests to update feature flag values.",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "description": "A unique integer value identifying this aap flag.",
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "feature_flags"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PatchedFeatureFlagPatch"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PatchedFeatureFlagPatch"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PatchedFeatureFlagPatch"
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "OAuth2_Authentication": []
+                    },
+                    {
+                        "SessionAuthentication": []
+                    },
+                    {
+                        "Basic_Authentication": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/FeatureFlagPatch"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                },
+                "x-ai-description": "Partially update existing feature flag"
+            }
+        },
+        "/api/gateway/v1/feature_flags/states/": {
+            "get": {
+                "operationId": "feature_flags_states_list",
+                "description": "A view class for displaying feature flags states.\nTo add/update/remove a feature flag, see the instructions in\n`docs/apps/feature_flags.md`",
+                "parameters": [
+                    {
+                        "in": "query",
+                        "name": "condition",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by condition (exact match)"
+                    },
+                    {
+                        "in": "query",
+                        "name": "condition__icontains",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by condition (case-insensitive partial match)"
+                    },
+                    {
+                        "in": "query",
+                        "name": "created",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by created (exact match)"
+                    },
+                    {
+                        "in": "query",
+                        "name": "created__gt",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by created (gt)"
+                    },
+                    {
+                        "in": "query",
+                        "name": "created__gte",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by created (gte)"
+                    },
+                    {
+                        "in": "query",
+                        "name": "created__lt",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by created (lt)"
+                    },
+                    {
+                        "in": "query",
+                        "name": "created__lte",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by created (lte)"
+                    },
+                    {
+                        "in": "query",
+                        "name": "created_by",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by created_by (exact match)"
+                    },
+                    {
+                        "in": "query",
+                        "name": "description",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by description (exact match)"
+                    },
+                    {
+                        "in": "query",
+                        "name": "description__icontains",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by description (case-insensitive partial match)"
+                    },
+                    {
+                        "in": "query",
+                        "name": "id",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by id (exact match)"
+                    },
+                    {
+                        "in": "query",
+                        "name": "id__gt",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by id (gt)"
+                    },
+                    {
+                        "in": "query",
+                        "name": "id__gte",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by id (gte)"
+                    },
+                    {
+                        "in": "query",
+                        "name": "id__lt",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by id (lt)"
+                    },
+                    {
+                        "in": "query",
+                        "name": "id__lte",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by id (lte)"
+                    },
+                    {
+                        "in": "query",
+                        "name": "labels",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by labels (exact match)"
+                    },
+                    {
+                        "in": "query",
+                        "name": "modified",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by modified (exact match)"
+                    },
+                    {
+                        "in": "query",
+                        "name": "modified__gt",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by modified (gt)"
+                    },
+                    {
+                        "in": "query",
+                        "name": "modified__gte",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by modified (gte)"
+                    },
+                    {
+                        "in": "query",
+                        "name": "modified__lt",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by modified (lt)"
+                    },
+                    {
+                        "in": "query",
+                        "name": "modified__lte",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by modified (lte)"
+                    },
+                    {
+                        "in": "query",
+                        "name": "modified_by",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by modified_by (exact match)"
+                    },
+                    {
+                        "in": "query",
+                        "name": "name",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by name (exact match)"
+                    },
+                    {
+                        "in": "query",
+                        "name": "name__icontains",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by name (case-insensitive partial match)"
+                    },
+                    {
+                        "in": "query",
+                        "name": "order",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Order results by field name. Prefix with '-' for descending order. Supports comma-separated values for multiple fields."
+                    },
+                    {
+                        "in": "query",
+                        "name": "order_by",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Order results by field name. Prefix with '-' for descending order. Supports comma-separated values for multiple fields."
+                    },
+                    {
+                        "name": "page",
+                        "required": false,
+                        "in": "query",
+                        "description": "A page number within the paginated result set.",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "page_size",
+                        "required": false,
+                        "in": "query",
+                        "description": "Number of results to return per page.",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "required",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by required (exact match)"
+                    },
+                    {
+                        "in": "query",
+                        "name": "resource",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by resource (exact match)"
+                    },
+                    {
+                        "in": "query",
+                        "name": "role_level",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by role level for RBAC"
+                    },
+                    {
+                        "name": "search",
+                        "required": false,
+                        "in": "query",
+                        "description": "A search term.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "support_level",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by support_level (exact match)"
+                    },
+                    {
+                        "in": "query",
+                        "name": "support_level__icontains",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by support_level (case-insensitive partial match)"
+                    },
+                    {
+                        "in": "query",
+                        "name": "support_url",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by support_url (exact match)"
+                    },
+                    {
+                        "in": "query",
+                        "name": "support_url__icontains",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by support_url (case-insensitive partial match)"
+                    },
+                    {
+                        "in": "query",
+                        "name": "toggle_type",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by toggle_type (exact match)"
+                    },
+                    {
+                        "in": "query",
+                        "name": "toggle_type__icontains",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by toggle_type (case-insensitive partial match)"
+                    },
+                    {
+                        "in": "query",
+                        "name": "type",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by object type. Supports comma-separated values for multiple types."
+                    },
+                    {
+                        "in": "query",
+                        "name": "ui_name",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by ui_name (exact match)"
+                    },
+                    {
+                        "in": "query",
+                        "name": "ui_name__icontains",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by ui_name (case-insensitive partial match)"
+                    },
+                    {
+                        "in": "query",
+                        "name": "value",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by value (exact match)"
+                    },
+                    {
+                        "in": "query",
+                        "name": "value__icontains",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by value (case-insensitive partial match)"
+                    },
+                    {
+                        "in": "query",
+                        "name": "visibility",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by visibility (exact match)"
+                    }
+                ],
+                "tags": [
+                    "feature_flags"
+                ],
+                "security": [
+                    {
+                        "OAuth2_Authentication": []
+                    },
+                    {
+                        "SessionAuthentication": []
+                    },
+                    {
+                        "Basic_Authentication": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PaginatedFeatureFlagStatesList"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                },
+                "x-ai-description": "List all feature flags states"
+            }
+        },
+        "/api/gateway/v1/feature_flags/states/{id}/": {
+            "get": {
+                "operationId": "feature_flags_states_retrieve",
+                "description": "A view class for displaying feature flags states.\nTo add/update/remove a feature flag, see the instructions in\n`docs/apps/feature_flags.md`",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "schema": {
+                            "type": "integer"
+                        },
+                        "description": "A unique integer value identifying this aap flag.",
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "feature_flags"
+                ],
+                "security": [
+                    {
+                        "OAuth2_Authentication": []
+                    },
+                    {
+                        "SessionAuthentication": []
+                    },
+                    {
+                        "Basic_Authentication": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/FeatureFlagStates"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                },
+                "x-ai-description": "Retrieve single feature flags state"
+            }
+        },
         "/api/gateway/v1/feature_flags_state/": {
             "get": {
                 "operationId": "feature_flags_state_retrieve",
@@ -5154,7 +6076,7 @@
                         "description": ""
                     }
                 },
-                "x-ai-description": "Retrieve a feature flag configuration for controlling platform capabilities"
+                "x-ai-description": "Retrieve single feature flags state"
             }
         },
         "/api/gateway/v1/http_ports/": {
@@ -5904,6 +6826,46 @@
                     },
                     {
                         "in": "query",
+                        "name": "idle_timeout_seconds",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by idle_timeout_seconds (exact match)"
+                    },
+                    {
+                        "in": "query",
+                        "name": "idle_timeout_seconds__gt",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by idle_timeout_seconds (gt)"
+                    },
+                    {
+                        "in": "query",
+                        "name": "idle_timeout_seconds__gte",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by idle_timeout_seconds (gte)"
+                    },
+                    {
+                        "in": "query",
+                        "name": "idle_timeout_seconds__lt",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by idle_timeout_seconds (lt)"
+                    },
+                    {
+                        "in": "query",
+                        "name": "idle_timeout_seconds__lte",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by idle_timeout_seconds (lte)"
+                    },
+                    {
+                        "in": "query",
                         "name": "is_internal_route",
                         "schema": {
                             "type": "string"
@@ -6063,6 +7025,46 @@
                         "schema": {
                             "type": "integer"
                         }
+                    },
+                    {
+                        "in": "query",
+                        "name": "request_timeout_seconds",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by request_timeout_seconds (exact match)"
+                    },
+                    {
+                        "in": "query",
+                        "name": "request_timeout_seconds__gt",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by request_timeout_seconds (gt)"
+                    },
+                    {
+                        "in": "query",
+                        "name": "request_timeout_seconds__gte",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by request_timeout_seconds (gte)"
+                    },
+                    {
+                        "in": "query",
+                        "name": "request_timeout_seconds__lt",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by request_timeout_seconds (lt)"
+                    },
+                    {
+                        "in": "query",
+                        "name": "request_timeout_seconds__lte",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by request_timeout_seconds (lte)"
                     },
                     {
                         "in": "query",
@@ -6496,7 +7498,7 @@
                         "description": ""
                     }
                 },
-                "x-ai-description": "List all me"
+                "x-ai-description": "Retrieve details about the current authenticated user"
             }
         },
         "/api/gateway/v1/organizations/": {
@@ -6774,7 +7776,7 @@
                         "description": ""
                     }
                 },
-                "x-ai-description": "List all organizations"
+                "x-ai-description": "List logical collection of users, teams, and resources for organizing access control"
             },
             "post": {
                 "operationId": "organizations_create",
@@ -6825,7 +7827,7 @@
                         "description": ""
                     }
                 },
-                "x-ai-description": "Create new organization"
+                "x-ai-description": "Create a logical collection of users, teams, and resource for organizing access control"
             }
         },
         "/api/gateway/v1/organizations/{id}/": {
@@ -6869,7 +7871,7 @@
                         "description": ""
                     }
                 },
-                "x-ai-description": "Retrieve single organization"
+                "x-ai-description": "Retrieve a logical collection of users, teams, and resource for organizing access control"
             },
             "put": {
                 "operationId": "organizations_update",
@@ -6931,7 +7933,7 @@
                         "description": ""
                     }
                 },
-                "x-ai-description": "Update existing organization"
+                "x-ai-description": "Update a logical collection of users, teams, and resource for organizing access control"
             },
             "patch": {
                 "operationId": "organizations_partial_update",
@@ -6992,7 +7994,7 @@
                         "description": ""
                     }
                 },
-                "x-ai-description": "Partially update existing organization"
+                "x-ai-description": "Update a logical collection of users, teams, and resource for organizing access control"
             },
             "delete": {
                 "operationId": "organizations_destroy",
@@ -7027,7 +8029,7 @@
                         "description": "No response body"
                     }
                 },
-                "x-ai-description": "Delete existing organization"
+                "x-ai-description": "Delete a logical collection of users, teams, and resource for organizing access control"
             }
         },
         "/api/gateway/v1/organizations/{id}/admins/": {
@@ -7430,14 +8432,6 @@
                             "type": "string"
                         },
                         "description": "Filter by object type. Supports comma-separated values for multiple types."
-                    },
-                    {
-                        "in": "query",
-                        "name": "use_controller_password",
-                        "schema": {
-                            "type": "string"
-                        },
-                        "description": "Filter by use_controller_password (exact match)"
                     },
                     {
                         "in": "query",
@@ -7900,7 +8894,7 @@
                         "description": ""
                     }
                 },
-                "x-ai-description": "List all teams for an organization"
+                "x-ai-description": "List organization subdivisions that group users for bulk permission assignment and role-based access control"
             }
         },
         "/api/gateway/v1/organizations/{id}/users/": {
@@ -8303,14 +9297,6 @@
                             "type": "string"
                         },
                         "description": "Filter by object type. Supports comma-separated values for multiple types."
-                    },
-                    {
-                        "in": "query",
-                        "name": "use_controller_password",
-                        "schema": {
-                            "type": "string"
-                        },
-                        "description": "Filter by use_controller_password (exact match)"
                     },
                     {
                         "in": "query",
@@ -10371,6 +11357,46 @@
                     },
                     {
                         "in": "query",
+                        "name": "idle_timeout_seconds",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by idle_timeout_seconds (exact match)"
+                    },
+                    {
+                        "in": "query",
+                        "name": "idle_timeout_seconds__gt",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by idle_timeout_seconds (gt)"
+                    },
+                    {
+                        "in": "query",
+                        "name": "idle_timeout_seconds__gte",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by idle_timeout_seconds (gte)"
+                    },
+                    {
+                        "in": "query",
+                        "name": "idle_timeout_seconds__lt",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by idle_timeout_seconds (lt)"
+                    },
+                    {
+                        "in": "query",
+                        "name": "idle_timeout_seconds__lte",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by idle_timeout_seconds (lte)"
+                    },
+                    {
+                        "in": "query",
                         "name": "is_internal_route",
                         "schema": {
                             "type": "string"
@@ -10530,6 +11556,46 @@
                         "schema": {
                             "type": "integer"
                         }
+                    },
+                    {
+                        "in": "query",
+                        "name": "request_timeout_seconds",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by request_timeout_seconds (exact match)"
+                    },
+                    {
+                        "in": "query",
+                        "name": "request_timeout_seconds__gt",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by request_timeout_seconds (gt)"
+                    },
+                    {
+                        "in": "query",
+                        "name": "request_timeout_seconds__gte",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by request_timeout_seconds (gte)"
+                    },
+                    {
+                        "in": "query",
+                        "name": "request_timeout_seconds__lt",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by request_timeout_seconds (lt)"
+                    },
+                    {
+                        "in": "query",
+                        "name": "request_timeout_seconds__lte",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by request_timeout_seconds (lte)"
                     },
                     {
                         "in": "query",
@@ -14195,6 +15261,46 @@
                     },
                     {
                         "in": "query",
+                        "name": "idle_timeout_seconds",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by idle_timeout_seconds (exact match)"
+                    },
+                    {
+                        "in": "query",
+                        "name": "idle_timeout_seconds__gt",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by idle_timeout_seconds (gt)"
+                    },
+                    {
+                        "in": "query",
+                        "name": "idle_timeout_seconds__gte",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by idle_timeout_seconds (gte)"
+                    },
+                    {
+                        "in": "query",
+                        "name": "idle_timeout_seconds__lt",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by idle_timeout_seconds (lt)"
+                    },
+                    {
+                        "in": "query",
+                        "name": "idle_timeout_seconds__lte",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by idle_timeout_seconds (lte)"
+                    },
+                    {
+                        "in": "query",
                         "name": "is_internal_route",
                         "schema": {
                             "type": "string"
@@ -14354,6 +15460,46 @@
                         "schema": {
                             "type": "integer"
                         }
+                    },
+                    {
+                        "in": "query",
+                        "name": "request_timeout_seconds",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by request_timeout_seconds (exact match)"
+                    },
+                    {
+                        "in": "query",
+                        "name": "request_timeout_seconds__gt",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by request_timeout_seconds (gt)"
+                    },
+                    {
+                        "in": "query",
+                        "name": "request_timeout_seconds__gte",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by request_timeout_seconds (gte)"
+                    },
+                    {
+                        "in": "query",
+                        "name": "request_timeout_seconds__lt",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by request_timeout_seconds (lt)"
+                    },
+                    {
+                        "in": "query",
+                        "name": "request_timeout_seconds__lte",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by request_timeout_seconds (lte)"
                     },
                     {
                         "in": "query",
@@ -17903,6 +19049,46 @@
                     },
                     {
                         "in": "query",
+                        "name": "idle_timeout_seconds",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by idle_timeout_seconds (exact match)"
+                    },
+                    {
+                        "in": "query",
+                        "name": "idle_timeout_seconds__gt",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by idle_timeout_seconds (gt)"
+                    },
+                    {
+                        "in": "query",
+                        "name": "idle_timeout_seconds__gte",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by idle_timeout_seconds (gte)"
+                    },
+                    {
+                        "in": "query",
+                        "name": "idle_timeout_seconds__lt",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by idle_timeout_seconds (lt)"
+                    },
+                    {
+                        "in": "query",
+                        "name": "idle_timeout_seconds__lte",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by idle_timeout_seconds (lte)"
+                    },
+                    {
+                        "in": "query",
                         "name": "is_internal_route",
                         "schema": {
                             "type": "string"
@@ -18062,6 +19248,46 @@
                         "schema": {
                             "type": "integer"
                         }
+                    },
+                    {
+                        "in": "query",
+                        "name": "request_timeout_seconds",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by request_timeout_seconds (exact match)"
+                    },
+                    {
+                        "in": "query",
+                        "name": "request_timeout_seconds__gt",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by request_timeout_seconds (gt)"
+                    },
+                    {
+                        "in": "query",
+                        "name": "request_timeout_seconds__gte",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by request_timeout_seconds (gte)"
+                    },
+                    {
+                        "in": "query",
+                        "name": "request_timeout_seconds__lt",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by request_timeout_seconds (lt)"
+                    },
+                    {
+                        "in": "query",
+                        "name": "request_timeout_seconds__lte",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by request_timeout_seconds (lte)"
                     },
                     {
                         "in": "query",
@@ -18565,7 +19791,7 @@
                         "description": ""
                     }
                 },
-                "x-ai-description": "List all settings"
+                "x-ai-description": "List setting categories grouping related Gateway configuration preferences"
             }
         },
         "/api/gateway/v1/settings/{category_slug}/": {
@@ -18609,7 +19835,7 @@
                         "description": ""
                     }
                 },
-                "x-ai-description": "Getter a group of settings for a specific category"
+                "x-ai-description": "Get Gateway preferences for a category, or 'all' for all categories"
             },
             "put": {
                 "operationId": "settings_update",
@@ -18670,7 +19896,7 @@
                         "description": ""
                     }
                 },
-                "x-ai-description": "Update existing setting"
+                "x-ai-description": "Update Gateway preferences within a category"
             },
             "delete": {
                 "operationId": "settings_destroyer",
@@ -18705,7 +19931,7 @@
                         "description": "No response body"
                     }
                 },
-                "x-ai-description": "Destroyer Revert all preferences in the current category to their default values except for read_only or encrypted settings"
+                "x-ai-description": "Revert Gateway category preferences to defaults, excluding read-only and encrypted settings"
             }
         },
         "/api/gateway/v1/settings/{category_slug}/{preference_name}/": {
@@ -18758,7 +19984,7 @@
                         "description": ""
                     }
                 },
-                "x-ai-description": "Retrieve single setting"
+                "x-ai-description": "Get a single Gateway preference by category and name"
             },
             "delete": {
                 "operationId": "settings_destroy",
@@ -18802,7 +20028,7 @@
                         "description": "No response body"
                     }
                 },
-                "x-ai-description": "Delete existing setting"
+                "x-ai-description": "Revert a single Gateway preference to default, excluding read-only and encrypted settings"
             }
         },
         "/api/gateway/v1/status/": {
@@ -19123,7 +20349,7 @@
                         "description": ""
                     }
                 },
-                "x-ai-description": "List all teams"
+                "x-ai-description": "List organization subdivisions that group users for bulk permission assignment and role-based access control"
             },
             "post": {
                 "operationId": "teams_create",
@@ -19174,7 +20400,7 @@
                         "description": ""
                     }
                 },
-                "x-ai-description": "Create new team"
+                "x-ai-description": "Create a organization subdivisions that group user for bulk permission assignment and role-based access control"
             }
         },
         "/api/gateway/v1/teams/{id}/": {
@@ -19218,7 +20444,7 @@
                         "description": ""
                     }
                 },
-                "x-ai-description": "Retrieve single team"
+                "x-ai-description": "Retrieve a organization subdivisions that group user for bulk permission assignment and role-based access control"
             },
             "put": {
                 "operationId": "teams_update",
@@ -19280,7 +20506,7 @@
                         "description": ""
                     }
                 },
-                "x-ai-description": "Update existing team"
+                "x-ai-description": "Update a organization subdivisions that group user for bulk permission assignment and role-based access control"
             },
             "patch": {
                 "operationId": "teams_partial_update",
@@ -19341,7 +20567,7 @@
                         "description": ""
                     }
                 },
-                "x-ai-description": "Partially update existing team"
+                "x-ai-description": "Update a organization subdivisions that group user for bulk permission assignment and role-based access control"
             },
             "delete": {
                 "operationId": "teams_destroy",
@@ -19376,7 +20602,7 @@
                         "description": "No response body"
                     }
                 },
-                "x-ai-description": "Delete existing team"
+                "x-ai-description": "Delete a organization subdivisions that group user for bulk permission assignment and role-based access control"
             }
         },
         "/api/gateway/v1/teams/{id}/admins/": {
@@ -19779,14 +21005,6 @@
                             "type": "string"
                         },
                         "description": "Filter by object type. Supports comma-separated values for multiple types."
-                    },
-                    {
-                        "in": "query",
-                        "name": "use_controller_password",
-                        "schema": {
-                            "type": "string"
-                        },
-                        "description": "Filter by use_controller_password (exact match)"
                     },
                     {
                         "in": "query",
@@ -20365,14 +21583,6 @@
                             "type": "string"
                         },
                         "description": "Filter by object type. Supports comma-separated values for multiple types."
-                    },
-                    {
-                        "in": "query",
-                        "name": "use_controller_password",
-                        "schema": {
-                            "type": "string"
-                        },
-                        "description": "Filter by use_controller_password (exact match)"
                     },
                     {
                         "in": "query",
@@ -21408,6 +22618,46 @@
                     },
                     {
                         "in": "query",
+                        "name": "idle_timeout_seconds",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by idle_timeout_seconds (exact match)"
+                    },
+                    {
+                        "in": "query",
+                        "name": "idle_timeout_seconds__gt",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by idle_timeout_seconds (gt)"
+                    },
+                    {
+                        "in": "query",
+                        "name": "idle_timeout_seconds__gte",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by idle_timeout_seconds (gte)"
+                    },
+                    {
+                        "in": "query",
+                        "name": "idle_timeout_seconds__lt",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by idle_timeout_seconds (lt)"
+                    },
+                    {
+                        "in": "query",
+                        "name": "idle_timeout_seconds__lte",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by idle_timeout_seconds (lte)"
+                    },
+                    {
+                        "in": "query",
                         "name": "is_internal_route",
                         "schema": {
                             "type": "string"
@@ -21567,6 +22817,46 @@
                         "schema": {
                             "type": "integer"
                         }
+                    },
+                    {
+                        "in": "query",
+                        "name": "request_timeout_seconds",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by request_timeout_seconds (exact match)"
+                    },
+                    {
+                        "in": "query",
+                        "name": "request_timeout_seconds__gt",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by request_timeout_seconds (gt)"
+                    },
+                    {
+                        "in": "query",
+                        "name": "request_timeout_seconds__gte",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by request_timeout_seconds (gte)"
+                    },
+                    {
+                        "in": "query",
+                        "name": "request_timeout_seconds__lt",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by request_timeout_seconds (lt)"
+                    },
+                    {
+                        "in": "query",
+                        "name": "request_timeout_seconds__lte",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by request_timeout_seconds (lte)"
                     },
                     {
                         "in": "query",
@@ -22358,14 +23648,6 @@
                     },
                     {
                         "in": "query",
-                        "name": "use_controller_password",
-                        "schema": {
-                            "type": "string"
-                        },
-                        "description": "Filter by use_controller_password (exact match)"
-                    },
-                    {
-                        "in": "query",
                         "name": "username",
                         "schema": {
                             "type": "string"
@@ -22407,7 +23689,7 @@
                         "description": ""
                     }
                 },
-                "x-ai-description": "List all users"
+                "x-ai-description": "List authenticated platform users with permissions assigned directly or via team membership"
             },
             "post": {
                 "operationId": "users_create",
@@ -22458,7 +23740,7 @@
                         "description": ""
                     }
                 },
-                "x-ai-description": "Create new user"
+                "x-ai-description": "Create a authenticated platform user with permissions assigned directly or via team membership"
             }
         },
         "/api/gateway/v1/users/{id}/": {
@@ -22502,7 +23784,7 @@
                         "description": ""
                     }
                 },
-                "x-ai-description": "Retrieve single user"
+                "x-ai-description": "Retrieve a authenticated platform user with permissions assigned directly or via team membership"
             },
             "put": {
                 "operationId": "users_update",
@@ -22564,7 +23846,7 @@
                         "description": ""
                     }
                 },
-                "x-ai-description": "Update existing user"
+                "x-ai-description": "Update a authenticated platform user with permissions assigned directly or via team membership"
             },
             "patch": {
                 "operationId": "users_partial_update",
@@ -22625,7 +23907,7 @@
                         "description": ""
                     }
                 },
-                "x-ai-description": "Partially update existing user"
+                "x-ai-description": "Update a authenticated platform user with permissions assigned directly or via team membership"
             },
             "delete": {
                 "operationId": "users_destroy",
@@ -22660,7 +23942,7 @@
                         "description": "No response body"
                     }
                 },
-                "x-ai-description": "Delete existing user"
+                "x-ai-description": "Delete a authenticated platform user with permissions assigned directly or via team membership"
             }
         },
         "/api/gateway/v1/users/{id}/authenticators/": {
@@ -22704,7 +23986,7 @@
                         "description": ""
                     }
                 },
-                "x-ai-description": "Retrieve single authenticator for an user"
+                "x-ai-description": "Retrieve a authenticated platform user with permissions assigned directly or via team membership"
             }
         },
         "/api/gateway/v1/users/{id}/authorized_tokens/": {
@@ -23044,33 +24326,7 @@
                         "description": ""
                     }
                 },
-                "x-ai-description": "Retrieve single token for an user"
-            }
-        },
-        "/o/": {
-            "get": {
-                "operationId": "o_retrieve",
-                "tags": [
-                    "o"
-                ],
-                "security": [
-                    {
-                        "OAuth2_Authentication": []
-                    },
-                    {
-                        "SessionAuthentication": []
-                    },
-                    {
-                        "Basic_Authentication": []
-                    },
-                    {}
-                ],
-                "responses": {
-                    "200": {
-                        "description": "No response body"
-                    }
-                },
-                "x-ai-description": "Retrieve single o"
+                "x-ai-description": "Retrieve a authenticated platform user with permissions assigned directly or via team membership"
             }
         },
         "/role_metadata/": {
@@ -23111,7 +24367,7 @@
         "schemas": {
             "AdditionalRoute": {
                 "type": "object",
-                "description": "Base serializer for route models.\n\nProvides common validation logic for routes including:\n- Gateway authentication validation for internal routes\n- Mutual TLS (mTLS) validation with gateway authentication\n- Gateway path normalization (collapsing consecutive slashes)\n- Node tags normalization\n\nSubclasses can override validate() and call super().validate()\nto add their own validation logic.",
+                "description": "Base serializer for route models.\n\nProvides common validation logic for routes including:\n- Gateway authentication validation for internal routes\n- Mutual TLS (mTLS) validation with gateway authentication\n- Gateway path normalization (collapsing consecutive slashes)\n- Node tags normalization\n- Timeout floor enforcement (request_timeout_seconds & idle_timeout_seconds)\n\nSubclasses can override validate() and call super().validate()\nto add their own validation logic.",
                 "properties": {
                     "id": {
                         "type": "integer",
@@ -23164,6 +24420,30 @@
                         "type": "string",
                         "description": "The name of this resource.",
                         "maxLength": 512
+                    },
+                    "request_timeout_seconds": {
+                        "type": "integer",
+                        "maximum": 604800,
+                        "minimum": 0,
+                        "nullable": true,
+                        "description": "The request timeout in seconds for this route. Values below the global proxy request_timeout setting are rejected. Leave null to use the global proxy timeout setting. See effective_timeout_seconds for the computed value applied to the route."
+                    },
+                    "idle_timeout_seconds": {
+                        "type": "integer",
+                        "maximum": 86400,
+                        "minimum": 0,
+                        "nullable": true,
+                        "description": "The idle timeout in seconds for this route. Connections with no data transmitted within this period are closed. Values below the global proxy idle_timeout setting are rejected. Leave null to use the global proxy idle timeout setting. See effective_idle_timeout_seconds for the computed value applied to the route."
+                    },
+                    "effective_timeout_seconds": {
+                        "type": "string",
+                        "readOnly": true,
+                        "description": "Read-only. The effective request timeout: max(request_timeout_seconds, global request_timeout setting)."
+                    },
+                    "effective_idle_timeout_seconds": {
+                        "type": "string",
+                        "readOnly": true,
+                        "description": "Read-only. The effective idle timeout: max(idle_timeout_seconds, global idle_timeout setting)."
                     },
                     "http_port": {
                         "type": "integer",
@@ -23394,30 +24674,29 @@
                         "description": "When a user authenticates from this source should they be removed from any other groups they were previously added to."
                     },
                     "configuration": {
-                        "type": "object",
-                        "additionalProperties": {},
                         "description": "The required configuration for this source."
                     },
                     "type": {
                         "enum": [
-                            "ansible_base.authentication.authenticator_plugins.azuread",
-                            "ansible_base.authentication.authenticator_plugins.github",
-                            "ansible_base.authentication.authenticator_plugins.github_enterprise",
-                            "ansible_base.authentication.authenticator_plugins.github_enterprise_org",
-                            "ansible_base.authentication.authenticator_plugins.github_enterprise_team",
-                            "ansible_base.authentication.authenticator_plugins.github_org",
-                            "ansible_base.authentication.authenticator_plugins.github_team",
-                            "ansible_base.authentication.authenticator_plugins.google_oauth2",
-                            "ansible_base.authentication.authenticator_plugins.keycloak",
                             "ansible_base.authentication.authenticator_plugins.ldap",
-                            "ansible_base.authentication.authenticator_plugins.local",
-                            "ansible_base.authentication.authenticator_plugins.oidc",
+                            "ansible_base.authentication.authenticator_plugins.keycloak",
+                            "ansible_base.authentication.authenticator_plugins.google_oauth2",
                             "ansible_base.authentication.authenticator_plugins.radius",
+                            "ansible_base.authentication.authenticator_plugins.local",
+                            "ansible_base.authentication.authenticator_plugins.github",
+                            "ansible_base.authentication.authenticator_plugins.github_team",
+                            "ansible_base.authentication.authenticator_plugins.azuread",
+                            "ansible_base.authentication.authenticator_plugins.oidc",
+                            "ansible_base.authentication.authenticator_plugins.tacacs",
+                            "ansible_base.authentication.authenticator_plugins.github_enterprise_org",
+                            "ansible_base.authentication.authenticator_plugins.github_enterprise",
                             "ansible_base.authentication.authenticator_plugins.saml",
-                            "ansible_base.authentication.authenticator_plugins.tacacs"
+                            "ansible_base.authentication.authenticator_plugins.github_org",
+                            "ansible_base.authentication.authenticator_plugins.github_enterprise_team"
                         ],
                         "type": "string",
-                        "description": "* `ansible_base.authentication.authenticator_plugins.azuread` - ansible_base.authentication.authenticator_plugins.azuread\n* `ansible_base.authentication.authenticator_plugins.github` - ansible_base.authentication.authenticator_plugins.github\n* `ansible_base.authentication.authenticator_plugins.github_enterprise` - ansible_base.authentication.authenticator_plugins.github_enterprise\n* `ansible_base.authentication.authenticator_plugins.github_enterprise_org` - ansible_base.authentication.authenticator_plugins.github_enterprise_org\n* `ansible_base.authentication.authenticator_plugins.github_enterprise_team` - ansible_base.authentication.authenticator_plugins.github_enterprise_team\n* `ansible_base.authentication.authenticator_plugins.github_org` - ansible_base.authentication.authenticator_plugins.github_org\n* `ansible_base.authentication.authenticator_plugins.github_team` - ansible_base.authentication.authenticator_plugins.github_team\n* `ansible_base.authentication.authenticator_plugins.google_oauth2` - ansible_base.authentication.authenticator_plugins.google_oauth2\n* `ansible_base.authentication.authenticator_plugins.keycloak` - ansible_base.authentication.authenticator_plugins.keycloak\n* `ansible_base.authentication.authenticator_plugins.ldap` - ansible_base.authentication.authenticator_plugins.ldap\n* `ansible_base.authentication.authenticator_plugins.local` - ansible_base.authentication.authenticator_plugins.local\n* `ansible_base.authentication.authenticator_plugins.oidc` - ansible_base.authentication.authenticator_plugins.oidc\n* `ansible_base.authentication.authenticator_plugins.radius` - ansible_base.authentication.authenticator_plugins.radius\n* `ansible_base.authentication.authenticator_plugins.saml` - ansible_base.authentication.authenticator_plugins.saml\n* `ansible_base.authentication.authenticator_plugins.tacacs` - ansible_base.authentication.authenticator_plugins.tacacs"
+                        "description": "* `ansible_base.authentication.authenticator_plugins.ldap` - ansible_base.authentication.authenticator_plugins.ldap\n* `ansible_base.authentication.authenticator_plugins.keycloak` - ansible_base.authentication.authenticator_plugins.keycloak\n* `ansible_base.authentication.authenticator_plugins.google_oauth2` - ansible_base.authentication.authenticator_plugins.google_oauth2\n* `ansible_base.authentication.authenticator_plugins.radius` - ansible_base.authentication.authenticator_plugins.radius\n* `ansible_base.authentication.authenticator_plugins.local` - ansible_base.authentication.authenticator_plugins.local\n* `ansible_base.authentication.authenticator_plugins.github` - ansible_base.authentication.authenticator_plugins.github\n* `ansible_base.authentication.authenticator_plugins.github_team` - ansible_base.authentication.authenticator_plugins.github_team\n* `ansible_base.authentication.authenticator_plugins.azuread` - ansible_base.authentication.authenticator_plugins.azuread\n* `ansible_base.authentication.authenticator_plugins.oidc` - ansible_base.authentication.authenticator_plugins.oidc\n* `ansible_base.authentication.authenticator_plugins.tacacs` - ansible_base.authentication.authenticator_plugins.tacacs\n* `ansible_base.authentication.authenticator_plugins.github_enterprise_org` - ansible_base.authentication.authenticator_plugins.github_enterprise_org\n* `ansible_base.authentication.authenticator_plugins.github_enterprise` - ansible_base.authentication.authenticator_plugins.github_enterprise\n* `ansible_base.authentication.authenticator_plugins.saml` - ansible_base.authentication.authenticator_plugins.saml\n* `ansible_base.authentication.authenticator_plugins.github_org` - ansible_base.authentication.authenticator_plugins.github_org\n* `ansible_base.authentication.authenticator_plugins.github_enterprise_team` - ansible_base.authentication.authenticator_plugins.github_enterprise_team",
+                        "x-spec-enum-id": "ac765e9996806d56"
                     },
                     "order": {
                         "type": "integer",
@@ -23542,6 +24821,7 @@
                             "team"
                         ],
                         "type": "string",
+                        "x-spec-enum-id": "4064e71cef1ae1e7",
                         "description": "What will the map grant the user? System access (allow) a team or organization membership, the superuser flag or a role in the system.\n\n* `allow` - allow\n* `is_superuser` - is_superuser\n* `role` - role\n* `organization` - organization\n* `team` - team"
                     },
                     "role": {
@@ -23567,8 +24847,6 @@
                         "description": "Revoke the permission if a user does not meet this rule."
                     },
                     "triggers": {
-                        "type": "object",
-                        "additionalProperties": {},
                         "description": "Required. Trigger conditions dictionary that determines when this map applies. See /trigger_definition/ for structure details. Only one top-level key per request."
                     },
                     "order": {
@@ -23653,31 +24931,30 @@
                         "description": "When a user authenticates from this source should they be removed from any other groups they were previously added to."
                     },
                     "configuration": {
-                        "type": "object",
-                        "additionalProperties": {},
                         "description": "The required configuration for this source."
                     },
                     "type": {
                         "enum": [
-                            "ansible_base.authentication.authenticator_plugins.azuread",
-                            "ansible_base.authentication.authenticator_plugins.github",
-                            "ansible_base.authentication.authenticator_plugins.github_enterprise",
-                            "ansible_base.authentication.authenticator_plugins.github_enterprise_org",
-                            "ansible_base.authentication.authenticator_plugins.github_enterprise_team",
-                            "ansible_base.authentication.authenticator_plugins.github_org",
-                            "ansible_base.authentication.authenticator_plugins.github_team",
-                            "ansible_base.authentication.authenticator_plugins.google_oauth2",
-                            "ansible_base.authentication.authenticator_plugins.keycloak",
                             "ansible_base.authentication.authenticator_plugins.ldap",
-                            "ansible_base.authentication.authenticator_plugins.local",
-                            "ansible_base.authentication.authenticator_plugins.oidc",
+                            "ansible_base.authentication.authenticator_plugins.keycloak",
+                            "ansible_base.authentication.authenticator_plugins.google_oauth2",
                             "ansible_base.authentication.authenticator_plugins.radius",
+                            "ansible_base.authentication.authenticator_plugins.local",
+                            "ansible_base.authentication.authenticator_plugins.github",
+                            "ansible_base.authentication.authenticator_plugins.github_team",
+                            "ansible_base.authentication.authenticator_plugins.azuread",
+                            "ansible_base.authentication.authenticator_plugins.oidc",
+                            "ansible_base.authentication.authenticator_plugins.tacacs",
+                            "ansible_base.authentication.authenticator_plugins.github_enterprise_org",
+                            "ansible_base.authentication.authenticator_plugins.github_enterprise",
                             "ansible_base.authentication.authenticator_plugins.saml",
-                            "ansible_base.authentication.authenticator_plugins.tacacs"
+                            "ansible_base.authentication.authenticator_plugins.github_org",
+                            "ansible_base.authentication.authenticator_plugins.github_enterprise_team"
                         ],
                         "type": "string",
+                        "x-spec-enum-id": "ac765e9996806d56",
                         "readOnly": true,
-                        "description": "The type of authentication service this is.\n\n* `ansible_base.authentication.authenticator_plugins.azuread` - ansible_base.authentication.authenticator_plugins.azuread\n* `ansible_base.authentication.authenticator_plugins.github` - ansible_base.authentication.authenticator_plugins.github\n* `ansible_base.authentication.authenticator_plugins.github_enterprise` - ansible_base.authentication.authenticator_plugins.github_enterprise\n* `ansible_base.authentication.authenticator_plugins.github_enterprise_org` - ansible_base.authentication.authenticator_plugins.github_enterprise_org\n* `ansible_base.authentication.authenticator_plugins.github_enterprise_team` - ansible_base.authentication.authenticator_plugins.github_enterprise_team\n* `ansible_base.authentication.authenticator_plugins.github_org` - ansible_base.authentication.authenticator_plugins.github_org\n* `ansible_base.authentication.authenticator_plugins.github_team` - ansible_base.authentication.authenticator_plugins.github_team\n* `ansible_base.authentication.authenticator_plugins.google_oauth2` - ansible_base.authentication.authenticator_plugins.google_oauth2\n* `ansible_base.authentication.authenticator_plugins.keycloak` - ansible_base.authentication.authenticator_plugins.keycloak\n* `ansible_base.authentication.authenticator_plugins.ldap` - ansible_base.authentication.authenticator_plugins.ldap\n* `ansible_base.authentication.authenticator_plugins.local` - ansible_base.authentication.authenticator_plugins.local\n* `ansible_base.authentication.authenticator_plugins.oidc` - ansible_base.authentication.authenticator_plugins.oidc\n* `ansible_base.authentication.authenticator_plugins.radius` - ansible_base.authentication.authenticator_plugins.radius\n* `ansible_base.authentication.authenticator_plugins.saml` - ansible_base.authentication.authenticator_plugins.saml\n* `ansible_base.authentication.authenticator_plugins.tacacs` - ansible_base.authentication.authenticator_plugins.tacacs"
+                        "description": "The type of authentication service this is.\n\n* `ansible_base.authentication.authenticator_plugins.ldap` - ansible_base.authentication.authenticator_plugins.ldap\n* `ansible_base.authentication.authenticator_plugins.keycloak` - ansible_base.authentication.authenticator_plugins.keycloak\n* `ansible_base.authentication.authenticator_plugins.google_oauth2` - ansible_base.authentication.authenticator_plugins.google_oauth2\n* `ansible_base.authentication.authenticator_plugins.radius` - ansible_base.authentication.authenticator_plugins.radius\n* `ansible_base.authentication.authenticator_plugins.local` - ansible_base.authentication.authenticator_plugins.local\n* `ansible_base.authentication.authenticator_plugins.github` - ansible_base.authentication.authenticator_plugins.github\n* `ansible_base.authentication.authenticator_plugins.github_team` - ansible_base.authentication.authenticator_plugins.github_team\n* `ansible_base.authentication.authenticator_plugins.azuread` - ansible_base.authentication.authenticator_plugins.azuread\n* `ansible_base.authentication.authenticator_plugins.oidc` - ansible_base.authentication.authenticator_plugins.oidc\n* `ansible_base.authentication.authenticator_plugins.tacacs` - ansible_base.authentication.authenticator_plugins.tacacs\n* `ansible_base.authentication.authenticator_plugins.github_enterprise_org` - ansible_base.authentication.authenticator_plugins.github_enterprise_org\n* `ansible_base.authentication.authenticator_plugins.github_enterprise` - ansible_base.authentication.authenticator_plugins.github_enterprise\n* `ansible_base.authentication.authenticator_plugins.saml` - ansible_base.authentication.authenticator_plugins.saml\n* `ansible_base.authentication.authenticator_plugins.github_org` - ansible_base.authentication.authenticator_plugins.github_org\n* `ansible_base.authentication.authenticator_plugins.github_enterprise_team` - ansible_base.authentication.authenticator_plugins.github_enterprise_team"
                     },
                     "order": {
                         "type": "integer",
@@ -23736,13 +25013,9 @@
                         "description": "The local DB user related to this authenticator user."
                     },
                     "claims": {
-                        "type": "object",
-                        "additionalProperties": {},
                         "description": "The claims for the user as generated by the authenticator maps on their last login."
                     },
                     "last_login_map_results": {
-                        "type": "object",
-                        "additionalProperties": {},
                         "description": "A data structure indicating how the authenticator maps were evaluated for the last login attempt."
                     },
                     "access_allowed": {
@@ -24046,6 +25319,7 @@
                             "disassociate"
                         ],
                         "type": "string",
+                        "x-spec-enum-id": "9d2b7b6e53dc82e9",
                         "description": "The type of change recorded by the entry (i.e. create/update/delete/etc).\n\n* `create` - Entity created\n* `update` - Entity updated\n* `delete` - Entity deleted\n* `associate` - Entity was associated with another entity\n* `disassociate` - Entity was disassociated with another entity"
                     },
                     "changes": {
@@ -24091,6 +25365,152 @@
                 "required": [
                     "content_type",
                     "operation"
+                ]
+            },
+            "FeatureFlag": {
+                "type": "object",
+                "description": "Serialize list of feature flags",
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "readOnly": true
+                    },
+                    "url": {
+                        "type": "string",
+                        "readOnly": true
+                    },
+                    "related": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "type": "string"
+                        },
+                        "readOnly": true
+                    },
+                    "summary_fields": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "type": "object",
+                            "additionalProperties": {}
+                        },
+                        "readOnly": true
+                    },
+                    "created": {
+                        "type": "string",
+                        "format": "date-time",
+                        "readOnly": true,
+                        "description": "The date/time this resource was created."
+                    },
+                    "created_by": {
+                        "type": "integer",
+                        "readOnly": true,
+                        "nullable": true,
+                        "description": "The user who created this resource."
+                    },
+                    "modified": {
+                        "type": "string",
+                        "format": "date-time",
+                        "readOnly": true,
+                        "description": "The date/time this resource was created."
+                    },
+                    "modified_by": {
+                        "type": "integer",
+                        "readOnly": true,
+                        "nullable": true,
+                        "description": "The user who last modified this resource."
+                    },
+                    "name": {
+                        "type": "string",
+                        "readOnly": true,
+                        "description": "The name of the feature flag. Must follow the format of FEATURE_<flag-name>_ENABLED."
+                    },
+                    "ui_name": {
+                        "type": "string",
+                        "readOnly": true,
+                        "description": "The pretty name to display in the application User Interface"
+                    },
+                    "condition": {
+                        "type": "string",
+                        "readOnly": true,
+                        "default": "boolean",
+                        "description": "Used to specify a condition, which if met, will enable the feature flag."
+                    },
+                    "value": {
+                        "type": "string",
+                        "description": "The value used to evaluate the conditional specified.",
+                        "maxLength": 127
+                    },
+                    "required": {
+                        "type": "boolean",
+                        "readOnly": true,
+                        "description": "If multiple conditions are required to be met to enable a feature flag, 'required' can be used to specify the necessary conditionals."
+                    },
+                    "support_level": {
+                        "type": "string",
+                        "readOnly": true,
+                        "description": "The support criteria for the feature flag. Must be one of (DEVELOPER_PREVIEW or TECHNOLOGY_PREVIEW)."
+                    },
+                    "visibility": {
+                        "type": "boolean",
+                        "readOnly": true,
+                        "description": "Controls whether the feature is visible in the UI."
+                    },
+                    "toggle_type": {
+                        "enum": [
+                            "install-time",
+                            "run-time"
+                        ],
+                        "type": "string",
+                        "x-spec-enum-id": "3b0623ea623c0ae1",
+                        "readOnly": true,
+                        "description": "Details whether a flag is toggle-able at run-time or install-time. (Default: 'run-time').\n\n* `install-time` - install-time\n* `run-time` - run-time"
+                    },
+                    "description": {
+                        "type": "string",
+                        "readOnly": true,
+                        "description": "A detailed description giving an overview of the feature flag."
+                    },
+                    "support_url": {
+                        "type": "string",
+                        "readOnly": true,
+                        "description": "A link to the documentation support URL for the feature"
+                    },
+                    "labels": {
+                        "readOnly": true,
+                        "nullable": true,
+                        "description": "A list of labels for the feature flag."
+                    },
+                    "state": {
+                        "type": "string",
+                        "readOnly": true
+                    }
+                }
+            },
+            "FeatureFlagPatch": {
+                "type": "object",
+                "properties": {
+                    "value": {
+                        "type": "string",
+                        "description": "The value used to evaluate the conditional specified.",
+                        "maxLength": 127
+                    }
+                }
+            },
+            "FeatureFlagStates": {
+                "type": "object",
+                "description": "Serialize list of feature flags",
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "description": "The name of the feature flag. Must follow the format of FEATURE_<flag-name>_ENABLED.",
+                        "maxLength": 64
+                    },
+                    "state": {
+                        "type": "string",
+                        "readOnly": true
+                    }
+                },
+                "required": [
+                    "name"
                 ]
             },
             "GatewayRoleDefinition": {
@@ -24177,7 +25597,7 @@
             },
             "GatewayRoleTeamAssignment": {
                 "type": "object",
-                "description": "Custom serializer with Galaxy-specific validation for team role assignments\n\nTeams can only be assigned roles where all permissions are in the 'galaxy' service.",
+                "description": "Custom serializer with Galaxy-specific validation for team role assignments\n\nTeams can only be assigned roles where all permissions are in the 'galaxy' service.\nGateway overrides actor queryset so team visibility is enforced here\nrather than in DAB, since users/teams are owned by the resource provider.",
                 "properties": {
                     "id": {
                         "type": "integer",
@@ -24235,7 +25655,8 @@
                         "description": "The role definition which defines permissions conveyed by this assignment."
                     },
                     "team": {
-                        "type": "integer"
+                        "type": "integer",
+                        "nullable": true
                     },
                     "team_ansible_id": {
                         "type": "string",
@@ -24394,11 +25815,11 @@
                         "enum": [
                             "",
                             "RS256",
-                            "HS256",
-                            ""
+                            "HS256"
                         ],
                         "type": "string",
-                        "description": "* `` - No OIDC support\n* `RS256` - RSA with SHA-2 256\n* `HS256` - HMAC with SHA-2 256"
+                        "description": "* `` - No OIDC support\n* `RS256` - RSA with SHA-2 256\n* `HS256` - HMAC with SHA-2 256",
+                        "x-spec-enum-id": "efb8c99632a46c3d"
                     },
                     "user": {
                         "type": "integer",
@@ -24432,6 +25853,7 @@
                             "public"
                         ],
                         "type": "string",
+                        "x-spec-enum-id": "6de8a18fd0ba1b55",
                         "description": "Set to Public or Confidential depending on how secure the client device is.\n\n* `confidential` - Confidential\n* `public` - Public"
                     },
                     "skip_authorization": {
@@ -24444,6 +25866,7 @@
                             "password"
                         ],
                         "type": "string",
+                        "x-spec-enum-id": "97829bf36e0a77bf",
                         "description": "The Grant type the user must use for acquire tokens for this application.\n\n* `authorization-code` - Authorization code\n* `password` - Resource owner password-based"
                     }
                 },
@@ -24532,8 +25955,8 @@
                     },
                     "scope": {
                         "type": "string",
-                        "description": "Allowed scopes, further restricts user permissions. Must be a simple space-separated string with allowed scopes ['read', 'write'].",
-                        "maxLength": 32
+                        "description": "Allowed scopes, further restricts user permissions. Must be a simple space-separated string with allowed scopes ['read', 'write', 'openid', 'roles'].",
+                        "maxLength": 128
                     },
                     "token": {
                         "type": "string",
@@ -24891,6 +26314,68 @@
                         "type": "array",
                         "items": {
                             "$ref": "#/components/schemas/Entry"
+                        }
+                    }
+                }
+            },
+            "PaginatedFeatureFlagList": {
+                "type": "object",
+                "required": [
+                    "count",
+                    "results"
+                ],
+                "properties": {
+                    "count": {
+                        "type": "integer",
+                        "example": 123
+                    },
+                    "next": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uri",
+                        "example": "http://api.example.org/accounts/?page=4"
+                    },
+                    "previous": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uri",
+                        "example": "http://api.example.org/accounts/?page=2"
+                    },
+                    "results": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/FeatureFlag"
+                        }
+                    }
+                }
+            },
+            "PaginatedFeatureFlagStatesList": {
+                "type": "object",
+                "required": [
+                    "count",
+                    "results"
+                ],
+                "properties": {
+                    "count": {
+                        "type": "integer",
+                        "example": 123
+                    },
+                    "next": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uri",
+                        "example": "http://api.example.org/accounts/?page=4"
+                    },
+                    "previous": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uri",
+                        "example": "http://api.example.org/accounts/?page=2"
+                    },
+                    "results": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/FeatureFlagStates"
                         }
                     }
                 }
@@ -25651,7 +27136,7 @@
             },
             "PatchedAdditionalRoute": {
                 "type": "object",
-                "description": "Base serializer for route models.\n\nProvides common validation logic for routes including:\n- Gateway authentication validation for internal routes\n- Mutual TLS (mTLS) validation with gateway authentication\n- Gateway path normalization (collapsing consecutive slashes)\n- Node tags normalization\n\nSubclasses can override validate() and call super().validate()\nto add their own validation logic.",
+                "description": "Base serializer for route models.\n\nProvides common validation logic for routes including:\n- Gateway authentication validation for internal routes\n- Mutual TLS (mTLS) validation with gateway authentication\n- Gateway path normalization (collapsing consecutive slashes)\n- Node tags normalization\n- Timeout floor enforcement (request_timeout_seconds & idle_timeout_seconds)\n\nSubclasses can override validate() and call super().validate()\nto add their own validation logic.",
                 "properties": {
                     "id": {
                         "type": "integer",
@@ -25704,6 +27189,30 @@
                         "type": "string",
                         "description": "The name of this resource.",
                         "maxLength": 512
+                    },
+                    "request_timeout_seconds": {
+                        "type": "integer",
+                        "maximum": 604800,
+                        "minimum": 0,
+                        "nullable": true,
+                        "description": "The request timeout in seconds for this route. Values below the global proxy request_timeout setting are rejected. Leave null to use the global proxy timeout setting. See effective_timeout_seconds for the computed value applied to the route."
+                    },
+                    "idle_timeout_seconds": {
+                        "type": "integer",
+                        "maximum": 86400,
+                        "minimum": 0,
+                        "nullable": true,
+                        "description": "The idle timeout in seconds for this route. Connections with no data transmitted within this period are closed. Values below the global proxy idle_timeout setting are rejected. Leave null to use the global proxy idle timeout setting. See effective_idle_timeout_seconds for the computed value applied to the route."
+                    },
+                    "effective_timeout_seconds": {
+                        "type": "string",
+                        "readOnly": true,
+                        "description": "Read-only. The effective request timeout: max(request_timeout_seconds, global request_timeout setting)."
+                    },
+                    "effective_idle_timeout_seconds": {
+                        "type": "string",
+                        "readOnly": true,
+                        "description": "Read-only. The effective idle timeout: max(idle_timeout_seconds, global idle_timeout setting)."
                     },
                     "http_port": {
                         "type": "integer",
@@ -25826,6 +27335,7 @@
                             "team"
                         ],
                         "type": "string",
+                        "x-spec-enum-id": "4064e71cef1ae1e7",
                         "description": "What will the map grant the user? System access (allow) a team or organization membership, the superuser flag or a role in the system.\n\n* `allow` - allow\n* `is_superuser` - is_superuser\n* `role` - role\n* `organization` - organization\n* `team` - team"
                     },
                     "role": {
@@ -25851,8 +27361,6 @@
                         "description": "Revoke the permission if a user does not meet this rule."
                     },
                     "triggers": {
-                        "type": "object",
-                        "additionalProperties": {},
                         "description": "Required. Trigger conditions dictionary that determines when this map applies. See /trigger_definition/ for structure details. Only one top-level key per request."
                     },
                     "order": {
@@ -25932,31 +27440,30 @@
                         "description": "When a user authenticates from this source should they be removed from any other groups they were previously added to."
                     },
                     "configuration": {
-                        "type": "object",
-                        "additionalProperties": {},
                         "description": "The required configuration for this source."
                     },
                     "type": {
                         "enum": [
-                            "ansible_base.authentication.authenticator_plugins.azuread",
-                            "ansible_base.authentication.authenticator_plugins.github",
-                            "ansible_base.authentication.authenticator_plugins.github_enterprise",
-                            "ansible_base.authentication.authenticator_plugins.github_enterprise_org",
-                            "ansible_base.authentication.authenticator_plugins.github_enterprise_team",
-                            "ansible_base.authentication.authenticator_plugins.github_org",
-                            "ansible_base.authentication.authenticator_plugins.github_team",
-                            "ansible_base.authentication.authenticator_plugins.google_oauth2",
-                            "ansible_base.authentication.authenticator_plugins.keycloak",
                             "ansible_base.authentication.authenticator_plugins.ldap",
-                            "ansible_base.authentication.authenticator_plugins.local",
-                            "ansible_base.authentication.authenticator_plugins.oidc",
+                            "ansible_base.authentication.authenticator_plugins.keycloak",
+                            "ansible_base.authentication.authenticator_plugins.google_oauth2",
                             "ansible_base.authentication.authenticator_plugins.radius",
+                            "ansible_base.authentication.authenticator_plugins.local",
+                            "ansible_base.authentication.authenticator_plugins.github",
+                            "ansible_base.authentication.authenticator_plugins.github_team",
+                            "ansible_base.authentication.authenticator_plugins.azuread",
+                            "ansible_base.authentication.authenticator_plugins.oidc",
+                            "ansible_base.authentication.authenticator_plugins.tacacs",
+                            "ansible_base.authentication.authenticator_plugins.github_enterprise_org",
+                            "ansible_base.authentication.authenticator_plugins.github_enterprise",
                             "ansible_base.authentication.authenticator_plugins.saml",
-                            "ansible_base.authentication.authenticator_plugins.tacacs"
+                            "ansible_base.authentication.authenticator_plugins.github_org",
+                            "ansible_base.authentication.authenticator_plugins.github_enterprise_team"
                         ],
                         "type": "string",
+                        "x-spec-enum-id": "ac765e9996806d56",
                         "readOnly": true,
-                        "description": "The type of authentication service this is.\n\n* `ansible_base.authentication.authenticator_plugins.azuread` - ansible_base.authentication.authenticator_plugins.azuread\n* `ansible_base.authentication.authenticator_plugins.github` - ansible_base.authentication.authenticator_plugins.github\n* `ansible_base.authentication.authenticator_plugins.github_enterprise` - ansible_base.authentication.authenticator_plugins.github_enterprise\n* `ansible_base.authentication.authenticator_plugins.github_enterprise_org` - ansible_base.authentication.authenticator_plugins.github_enterprise_org\n* `ansible_base.authentication.authenticator_plugins.github_enterprise_team` - ansible_base.authentication.authenticator_plugins.github_enterprise_team\n* `ansible_base.authentication.authenticator_plugins.github_org` - ansible_base.authentication.authenticator_plugins.github_org\n* `ansible_base.authentication.authenticator_plugins.github_team` - ansible_base.authentication.authenticator_plugins.github_team\n* `ansible_base.authentication.authenticator_plugins.google_oauth2` - ansible_base.authentication.authenticator_plugins.google_oauth2\n* `ansible_base.authentication.authenticator_plugins.keycloak` - ansible_base.authentication.authenticator_plugins.keycloak\n* `ansible_base.authentication.authenticator_plugins.ldap` - ansible_base.authentication.authenticator_plugins.ldap\n* `ansible_base.authentication.authenticator_plugins.local` - ansible_base.authentication.authenticator_plugins.local\n* `ansible_base.authentication.authenticator_plugins.oidc` - ansible_base.authentication.authenticator_plugins.oidc\n* `ansible_base.authentication.authenticator_plugins.radius` - ansible_base.authentication.authenticator_plugins.radius\n* `ansible_base.authentication.authenticator_plugins.saml` - ansible_base.authentication.authenticator_plugins.saml\n* `ansible_base.authentication.authenticator_plugins.tacacs` - ansible_base.authentication.authenticator_plugins.tacacs"
+                        "description": "The type of authentication service this is.\n\n* `ansible_base.authentication.authenticator_plugins.ldap` - ansible_base.authentication.authenticator_plugins.ldap\n* `ansible_base.authentication.authenticator_plugins.keycloak` - ansible_base.authentication.authenticator_plugins.keycloak\n* `ansible_base.authentication.authenticator_plugins.google_oauth2` - ansible_base.authentication.authenticator_plugins.google_oauth2\n* `ansible_base.authentication.authenticator_plugins.radius` - ansible_base.authentication.authenticator_plugins.radius\n* `ansible_base.authentication.authenticator_plugins.local` - ansible_base.authentication.authenticator_plugins.local\n* `ansible_base.authentication.authenticator_plugins.github` - ansible_base.authentication.authenticator_plugins.github\n* `ansible_base.authentication.authenticator_plugins.github_team` - ansible_base.authentication.authenticator_plugins.github_team\n* `ansible_base.authentication.authenticator_plugins.azuread` - ansible_base.authentication.authenticator_plugins.azuread\n* `ansible_base.authentication.authenticator_plugins.oidc` - ansible_base.authentication.authenticator_plugins.oidc\n* `ansible_base.authentication.authenticator_plugins.tacacs` - ansible_base.authentication.authenticator_plugins.tacacs\n* `ansible_base.authentication.authenticator_plugins.github_enterprise_org` - ansible_base.authentication.authenticator_plugins.github_enterprise_org\n* `ansible_base.authentication.authenticator_plugins.github_enterprise` - ansible_base.authentication.authenticator_plugins.github_enterprise\n* `ansible_base.authentication.authenticator_plugins.saml` - ansible_base.authentication.authenticator_plugins.saml\n* `ansible_base.authentication.authenticator_plugins.github_org` - ansible_base.authentication.authenticator_plugins.github_org\n* `ansible_base.authentication.authenticator_plugins.github_enterprise_team` - ansible_base.authentication.authenticator_plugins.github_enterprise_team"
                     },
                     "order": {
                         "type": "integer",
@@ -26041,6 +27548,16 @@
                         "type": "string",
                         "description": "Reference to an object that is related to this CA.",
                         "maxLength": 64
+                    }
+                }
+            },
+            "PatchedFeatureFlagPatch": {
+                "type": "object",
+                "properties": {
+                    "value": {
+                        "type": "string",
+                        "description": "The value used to evaluate the conditional specified.",
+                        "maxLength": 127
                     }
                 }
             },
@@ -26264,11 +27781,11 @@
                         "enum": [
                             "",
                             "RS256",
-                            "HS256",
-                            ""
+                            "HS256"
                         ],
                         "type": "string",
-                        "description": "* `` - No OIDC support\n* `RS256` - RSA with SHA-2 256\n* `HS256` - HMAC with SHA-2 256"
+                        "description": "* `` - No OIDC support\n* `RS256` - RSA with SHA-2 256\n* `HS256` - HMAC with SHA-2 256",
+                        "x-spec-enum-id": "efb8c99632a46c3d"
                     },
                     "user": {
                         "type": "integer",
@@ -26302,6 +27819,7 @@
                             "public"
                         ],
                         "type": "string",
+                        "x-spec-enum-id": "6de8a18fd0ba1b55",
                         "description": "Set to Public or Confidential depending on how secure the client device is.\n\n* `confidential` - Confidential\n* `public` - Public"
                     },
                     "skip_authorization": {
@@ -26314,6 +27832,7 @@
                             "password"
                         ],
                         "type": "string",
+                        "x-spec-enum-id": "97829bf36e0a77bf",
                         "description": "The Grant type the user must use for acquire tokens for this application.\n\n* `authorization-code` - Authorization code\n* `password` - Resource owner password-based"
                     }
                 }
@@ -26396,8 +27915,8 @@
                     },
                     "scope": {
                         "type": "string",
-                        "description": "Allowed scopes, further restricts user permissions. Must be a simple space-separated string with allowed scopes ['read', 'write'].",
-                        "maxLength": 32
+                        "description": "Allowed scopes, further restricts user permissions. Must be a simple space-separated string with allowed scopes ['read', 'write', 'openid', 'roles'].",
+                        "maxLength": 128
                     },
                     "token": {
                         "type": "string",
@@ -26512,10 +28031,7 @@
                         "type": "boolean",
                         "readOnly": true
                     },
-                    "resource_data": {
-                        "type": "object",
-                        "additionalProperties": {}
-                    },
+                    "resource_data": {},
                     "url": {
                         "type": "string",
                         "readOnly": true
@@ -26528,7 +28044,7 @@
             },
             "PatchedServiceAPIRoute": {
                 "type": "object",
-                "description": "Base serializer for route models.\n\nProvides common validation logic for routes including:\n- Gateway authentication validation for internal routes\n- Mutual TLS (mTLS) validation with gateway authentication\n- Gateway path normalization (collapsing consecutive slashes)\n- Node tags normalization\n\nSubclasses can override validate() and call super().validate()\nto add their own validation logic.",
+                "description": "Base serializer for route models.\n\nProvides common validation logic for routes including:\n- Gateway authentication validation for internal routes\n- Mutual TLS (mTLS) validation with gateway authentication\n- Gateway path normalization (collapsing consecutive slashes)\n- Node tags normalization\n- Timeout floor enforcement (request_timeout_seconds & idle_timeout_seconds)\n\nSubclasses can override validate() and call super().validate()\nto add their own validation logic.",
                 "properties": {
                     "id": {
                         "type": "integer",
@@ -26581,6 +28097,30 @@
                         "type": "string",
                         "description": "The name of this resource.",
                         "maxLength": 512
+                    },
+                    "request_timeout_seconds": {
+                        "type": "integer",
+                        "maximum": 604800,
+                        "minimum": 0,
+                        "nullable": true,
+                        "description": "The request timeout in seconds for this route. Values below the global proxy request_timeout setting are rejected. Leave null to use the global proxy timeout setting. See effective_timeout_seconds for the computed value applied to the route."
+                    },
+                    "idle_timeout_seconds": {
+                        "type": "integer",
+                        "maximum": 86400,
+                        "minimum": 0,
+                        "nullable": true,
+                        "description": "The idle timeout in seconds for this route. Connections with no data transmitted within this period are closed. Values below the global proxy idle_timeout setting are rejected. Leave null to use the global proxy idle timeout setting. See effective_idle_timeout_seconds for the computed value applied to the route."
+                    },
+                    "effective_timeout_seconds": {
+                        "type": "string",
+                        "readOnly": true,
+                        "description": "Read-only. The effective request timeout: max(request_timeout_seconds, global request_timeout setting)."
+                    },
+                    "effective_idle_timeout_seconds": {
+                        "type": "string",
+                        "readOnly": true,
+                        "description": "Read-only. The effective idle timeout: max(idle_timeout_seconds, global idle_timeout setting)."
                     },
                     "http_port": {
                         "type": "integer",
@@ -26720,6 +28260,7 @@
                             "TOKEN"
                         ],
                         "type": "string",
+                        "x-spec-enum-id": "e24087e68e36b686",
                         "description": "The authorization type for this service.\n\n* `JWT` - JWT\n* `BASIC` - Basic auth\n* `TOKEN` - Bearer token"
                     },
                     "upstream_hostname": {
@@ -26733,6 +28274,7 @@
                             "STRICT_DNS"
                         ],
                         "type": "string",
+                        "x-spec-enum-id": "47856b6b6c25790f",
                         "description": "The DNS service discovery type for this service.\n\n* `LOGICAL_DNS` - Logical DNS\n* `STRICT_DNS` - Strict DNS"
                     },
                     "dns_lookup_family": {
@@ -26744,6 +28286,7 @@
                             "V4_PREFERRED"
                         ],
                         "type": "string",
+                        "x-spec-enum-id": "65c5f314f2d8baed",
                         "description": "DNS lookup type for this service.\n\n* `V4_ONLY` - IPv4 only\n* `V6_ONLY` - IPv6 only\n* `AUTO` - Auto (IPv6 preferred)\n* `ALL` - All IPv4 and IPv6 addresses\n* `V4_PREFERRED` - IPv4 preferred"
                     },
                     "outlier_detection_enabled": {
@@ -26807,6 +28350,11 @@
                         "maximum": 100,
                         "minimum": 0,
                         "description": "The percentage of failed hosts when the proxy will panic and start routing traffic to all nodes. Set to 0 to disable this."
+                    },
+                    "effective_health_check_timeout_seconds": {
+                        "type": "string",
+                        "readOnly": true,
+                        "description": "The effective health check timeout Envoy will use, computed as the maximum of the cluster's health_check_timeout_seconds, the highest route request_timeout_seconds, and the global request_timeout preference."
                     }
                 }
             },
@@ -26882,6 +28430,7 @@
                         ],
                         "type": "string",
                         "description": "* `HS256` - HMAC with SHA256\n* `HS384` - HMAC with SHA384\n* `HS512` - HMAC with SHA512",
+                        "x-spec-enum-id": "3ba520121d72bd56",
                         "default": "HS256"
                     },
                     "secret_length": {
@@ -27123,6 +28672,7 @@
             },
             "PatchedUIPluginRoute": {
                 "type": "object",
+                "description": "Base serializer for route models.\n\nProvides common validation logic for routes including:\n- Gateway authentication validation for internal routes\n- Mutual TLS (mTLS) validation with gateway authentication\n- Gateway path normalization (collapsing consecutive slashes)\n- Node tags normalization\n- Timeout floor enforcement (request_timeout_seconds & idle_timeout_seconds)\n\nSubclasses can override validate() and call super().validate()\nto add their own validation logic.",
                 "properties": {
                     "id": {
                         "type": "integer",
@@ -27175,6 +28725,30 @@
                         "type": "string",
                         "description": "The name of this resource.",
                         "maxLength": 512
+                    },
+                    "request_timeout_seconds": {
+                        "type": "integer",
+                        "maximum": 604800,
+                        "minimum": 0,
+                        "nullable": true,
+                        "description": "The request timeout in seconds for this route. Values below the global proxy request_timeout setting are rejected. Leave null to use the global proxy timeout setting. See effective_timeout_seconds for the computed value applied to the route."
+                    },
+                    "idle_timeout_seconds": {
+                        "type": "integer",
+                        "maximum": 86400,
+                        "minimum": 0,
+                        "nullable": true,
+                        "description": "The idle timeout in seconds for this route. Connections with no data transmitted within this period are closed. Values below the global proxy idle_timeout setting are rejected. Leave null to use the global proxy idle timeout setting. See effective_idle_timeout_seconds for the computed value applied to the route."
+                    },
+                    "effective_timeout_seconds": {
+                        "type": "string",
+                        "readOnly": true,
+                        "description": "Read-only. The effective request timeout: max(request_timeout_seconds, global request_timeout setting)."
+                    },
+                    "effective_idle_timeout_seconds": {
+                        "type": "string",
+                        "readOnly": true,
+                        "description": "Read-only. The effective idle timeout: max(idle_timeout_seconds, global idle_timeout setting)."
                     },
                     "http_port": {
                         "type": "integer",
@@ -27320,16 +28894,10 @@
                     "authenticators": {
                         "type": "array",
                         "items": {
-                            "enum": [
-                                1,
-                                "",
-                                null
-                            ],
-                            "type": "integer",
-                            "description": "* `1` - Local Database Authenticator"
+                            "type": "integer"
                         },
-                        "writeOnly": true,
                         "nullable": true,
+                        "writeOnly": true,
                         "description": "DEPRECATED: This field is deprecated and will be removed in a future version. Please use 'associated_authenticators' instead.",
                         "deprecated": true
                     },
@@ -27341,17 +28909,23 @@
                     },
                     "associated_authenticators": {
                         "type": "object",
-                        "additionalProperties": {},
+                        "additionalProperties": {
+                            "type": "object",
+                            "properties": {
+                                "uid": {
+                                    "type": "string"
+                                },
+                                "email": {
+                                    "type": "string"
+                                }
+                            }
+                        },
                         "writeOnly": true
                     },
                     "managed": {
                         "type": "boolean",
                         "readOnly": true,
                         "description": "Indicates if this user is managed by the system. It cannot be modified once created."
-                    },
-                    "use_controller_password": {
-                        "type": "boolean",
-                        "readOnly": true
                     }
                 }
             },
@@ -27365,7 +28939,8 @@
                             "failed"
                         ],
                         "type": "string",
-                        "description": "* `good` - good\n* `degraded` - degraded\n* `failed` - failed"
+                        "description": "* `good` - good\n* `degraded` - degraded\n* `failed` - failed",
+                        "x-spec-enum-id": "8f053d7a7629b617"
                     },
                     "version": {
                         "type": "string"
@@ -27401,7 +28976,8 @@
                             "failed"
                         ],
                         "type": "string",
-                        "description": "* `good` - good\n* `degraded` - degraded\n* `failed` - failed"
+                        "description": "* `good` - good\n* `degraded` - degraded\n* `failed` - failed",
+                        "x-spec-enum-id": "8f053d7a7629b617"
                     },
                     "mode": {
                         "enum": [
@@ -27410,7 +28986,8 @@
                             "Unknown"
                         ],
                         "type": "string",
-                        "description": "* `cluster` - cluster\n* `standalone` - standalone\n* `Unknown` - Unknown"
+                        "description": "* `cluster` - cluster\n* `standalone` - standalone\n* `Unknown` - Unknown",
+                        "x-spec-enum-id": "108317a9f228ac79"
                     },
                     "ping": {
                         "type": "boolean"
@@ -27455,10 +29032,7 @@
                         "type": "boolean",
                         "readOnly": true
                     },
-                    "resource_data": {
-                        "type": "object",
-                        "additionalProperties": {}
-                    },
+                    "resource_data": {},
                     "url": {
                         "type": "string",
                         "readOnly": true
@@ -27508,8 +29082,6 @@
                         "readOnly": true
                     },
                     "resource_data": {
-                        "type": "object",
-                        "additionalProperties": {},
                         "writeOnly": true
                     },
                     "url": {
@@ -27704,7 +29276,8 @@
                         "description": "The role definition which defines permissions conveyed by this assignment."
                     },
                     "user": {
-                        "type": "integer"
+                        "type": "integer",
+                        "nullable": true
                     },
                     "user_ansible_id": {
                         "type": "string",
@@ -27738,7 +29311,7 @@
             },
             "ServiceAPIRoute": {
                 "type": "object",
-                "description": "Base serializer for route models.\n\nProvides common validation logic for routes including:\n- Gateway authentication validation for internal routes\n- Mutual TLS (mTLS) validation with gateway authentication\n- Gateway path normalization (collapsing consecutive slashes)\n- Node tags normalization\n\nSubclasses can override validate() and call super().validate()\nto add their own validation logic.",
+                "description": "Base serializer for route models.\n\nProvides common validation logic for routes including:\n- Gateway authentication validation for internal routes\n- Mutual TLS (mTLS) validation with gateway authentication\n- Gateway path normalization (collapsing consecutive slashes)\n- Node tags normalization\n- Timeout floor enforcement (request_timeout_seconds & idle_timeout_seconds)\n\nSubclasses can override validate() and call super().validate()\nto add their own validation logic.",
                 "properties": {
                     "id": {
                         "type": "integer",
@@ -27791,6 +29364,30 @@
                         "type": "string",
                         "description": "The name of this resource.",
                         "maxLength": 512
+                    },
+                    "request_timeout_seconds": {
+                        "type": "integer",
+                        "maximum": 604800,
+                        "minimum": 0,
+                        "nullable": true,
+                        "description": "The request timeout in seconds for this route. Values below the global proxy request_timeout setting are rejected. Leave null to use the global proxy timeout setting. See effective_timeout_seconds for the computed value applied to the route."
+                    },
+                    "idle_timeout_seconds": {
+                        "type": "integer",
+                        "maximum": 86400,
+                        "minimum": 0,
+                        "nullable": true,
+                        "description": "The idle timeout in seconds for this route. Connections with no data transmitted within this period are closed. Values below the global proxy idle_timeout setting are rejected. Leave null to use the global proxy idle timeout setting. See effective_idle_timeout_seconds for the computed value applied to the route."
+                    },
+                    "effective_timeout_seconds": {
+                        "type": "string",
+                        "readOnly": true,
+                        "description": "Read-only. The effective request timeout: max(request_timeout_seconds, global request_timeout setting)."
+                    },
+                    "effective_idle_timeout_seconds": {
+                        "type": "string",
+                        "readOnly": true,
+                        "description": "Read-only. The effective idle timeout: max(idle_timeout_seconds, global idle_timeout setting)."
                     },
                     "http_port": {
                         "type": "integer",
@@ -27939,6 +29536,7 @@
                             "TOKEN"
                         ],
                         "type": "string",
+                        "x-spec-enum-id": "e24087e68e36b686",
                         "description": "The authorization type for this service.\n\n* `JWT` - JWT\n* `BASIC` - Basic auth\n* `TOKEN` - Bearer token"
                     },
                     "upstream_hostname": {
@@ -27952,6 +29550,7 @@
                             "STRICT_DNS"
                         ],
                         "type": "string",
+                        "x-spec-enum-id": "47856b6b6c25790f",
                         "description": "The DNS service discovery type for this service.\n\n* `LOGICAL_DNS` - Logical DNS\n* `STRICT_DNS` - Strict DNS"
                     },
                     "dns_lookup_family": {
@@ -27963,6 +29562,7 @@
                             "V4_PREFERRED"
                         ],
                         "type": "string",
+                        "x-spec-enum-id": "65c5f314f2d8baed",
                         "description": "DNS lookup type for this service.\n\n* `V4_ONLY` - IPv4 only\n* `V6_ONLY` - IPv6 only\n* `AUTO` - Auto (IPv6 preferred)\n* `ALL` - All IPv4 and IPv6 addresses\n* `V4_PREFERRED` - IPv4 preferred"
                     },
                     "outlier_detection_enabled": {
@@ -28026,6 +29626,11 @@
                         "maximum": 100,
                         "minimum": 0,
                         "description": "The percentage of failed hosts when the proxy will panic and start routing traffic to all nodes. Set to 0 to disable this."
+                    },
+                    "effective_health_check_timeout_seconds": {
+                        "type": "string",
+                        "readOnly": true,
+                        "description": "The effective health check timeout Envoy will use, computed as the maximum of the cluster's health_check_timeout_seconds, the highest route request_timeout_seconds, and the global request_timeout preference."
                     }
                 },
                 "required": [
@@ -28105,6 +29710,7 @@
                         ],
                         "type": "string",
                         "description": "* `HS256` - HMAC with SHA256\n* `HS384` - HMAC with SHA384\n* `HS512` - HMAC with SHA512",
+                        "x-spec-enum-id": "3ba520121d72bd56",
                         "default": "HS256"
                     },
                     "secret_length": {
@@ -28139,7 +29745,8 @@
                             "failed"
                         ],
                         "type": "string",
-                        "description": "* `good` - good\n* `degraded` - degraded\n* `failed` - failed"
+                        "description": "* `good` - good\n* `degraded` - degraded\n* `failed` - failed",
+                        "x-spec-enum-id": "8f053d7a7629b617"
                     },
                     "time": {
                         "type": "string",
@@ -28522,16 +30129,10 @@
                         "default": 30,
                         "description": "The timeout (in seconds) before the proxy will report a timeout and generate a 504."
                     },
-                    "stream_idle_timeout": {
+                    "idle_timeout": {
                         "type": "integer",
-                        "default": 60,
-                        "description": "Timeout in seconds for idle streaming connections (e.g., AAP Lightspeed chatbot). Stream is closed if no data is transmitted within this period."
-                    },
-                    "max_stream_duration": {
-                        "type": "integer",
-                        "default": 3600,
-                        "title": "Maximum Stream Duration",
-                        "description": "Maximum total duration in seconds for streaming connections (e.g., AAP Lightspeed chatbot). Stream is closed after this time regardless of activity."
+                        "default": 15,
+                        "description": "The idle timeout in seconds for proxied connections. Connections with no data transmitted within this period are closed. Individual routes may extend this value but cannot reduce it."
                     },
                     "trusted_header_timeout": {
                         "type": "integer",
@@ -28645,8 +30246,8 @@
                     "ORG_ADMINS_CAN_SEE_ALL_USERS": {
                         "type": "boolean",
                         "default": true,
-                        "title": "All Users Visible to Organization Admins",
-                        "description": "Controls whether any Organization Admin can view all users and teams, even those not associated with their Organization. When enabled, organization admins can view all users, even users not associated with their organizations. When disabled, organization admins can only see users from their own organizations, "
+                        "title": "All Teams and Users Visible to Organization Admins",
+                        "description": "Controls whether any Organization Admin can view all users and teams, even those not associated with their Organization. When enabled, organization admins can view all users and teams, even users and teams not associated with their organizations. When disabled, organization admins can only see users and teams from their own organizations."
                     },
                     "ALLOW_OAUTH2_FOR_EXTERNAL_USERS": {
                         "type": "boolean",
@@ -28707,6 +30308,20 @@
                         "type": "boolean",
                         "default": true,
                         "description": "Enable or disable user notifications"
+                    },
+                    "RUNTIME_FEATURE_FLAGS": {
+                        "type": "boolean",
+                        "readOnly": true,
+                        "default": false,
+                        "title": "Runtime Feature Flag Toggling",
+                        "description": "Controls whether toggling of runtime flags is allowed. This is currently set through settings. If you'd like to change this please update the RUNTIME_FEATURE_FLAGS setting in your configuration."
+                    },
+                    "RUNTIME_FEATURE_FLAGS_UI": {
+                        "type": "boolean",
+                        "readOnly": true,
+                        "default": false,
+                        "title": "Feature Flags UI Page",
+                        "description": "Controls whether the feature flags UI page is displayed. This is currently set through settings. If you'd like to change this please update the RUNTIME_FEATURE_FLAGS_UI setting in your configuration."
                     }
                 }
             },
@@ -28734,7 +30349,8 @@
                             "failed"
                         ],
                         "type": "string",
-                        "description": "* `good` - good\n* `degraded` - degraded\n* `failed` - failed"
+                        "description": "* `good` - good\n* `degraded` - degraded\n* `failed` - failed",
+                        "x-spec-enum-id": "8f053d7a7629b617"
                     },
                     "time": {
                         "type": "string",
@@ -28762,7 +30378,8 @@
                             "failed"
                         ],
                         "type": "string",
-                        "description": "* `good` - good\n* `degraded` - degraded\n* `failed` - failed"
+                        "description": "* `good` - good\n* `degraded` - degraded\n* `failed` - failed",
+                        "x-spec-enum-id": "8f053d7a7629b617"
                     },
                     "url": {
                         "type": "string"
@@ -28840,7 +30457,8 @@
                             "failed"
                         ],
                         "type": "string",
-                        "description": "* `good` - good\n* `degraded` - degraded\n* `failed` - failed"
+                        "description": "* `good` - good\n* `degraded` - degraded\n* `failed` - failed",
+                        "x-spec-enum-id": "8f053d7a7629b617"
                     },
                     "service_name": {
                         "type": "string"
@@ -28988,7 +30606,8 @@
                         "description": "The role definition which defines permissions conveyed by this assignment."
                     },
                     "team": {
-                        "type": "integer"
+                        "type": "integer",
+                        "nullable": true
                     },
                     "team_ansible_id": {
                         "type": "string",
@@ -29080,6 +30699,7 @@
             },
             "UIPluginRoute": {
                 "type": "object",
+                "description": "Base serializer for route models.\n\nProvides common validation logic for routes including:\n- Gateway authentication validation for internal routes\n- Mutual TLS (mTLS) validation with gateway authentication\n- Gateway path normalization (collapsing consecutive slashes)\n- Node tags normalization\n- Timeout floor enforcement (request_timeout_seconds & idle_timeout_seconds)\n\nSubclasses can override validate() and call super().validate()\nto add their own validation logic.",
                 "properties": {
                     "id": {
                         "type": "integer",
@@ -29132,6 +30752,30 @@
                         "type": "string",
                         "description": "The name of this resource.",
                         "maxLength": 512
+                    },
+                    "request_timeout_seconds": {
+                        "type": "integer",
+                        "maximum": 604800,
+                        "minimum": 0,
+                        "nullable": true,
+                        "description": "The request timeout in seconds for this route. Values below the global proxy request_timeout setting are rejected. Leave null to use the global proxy timeout setting. See effective_timeout_seconds for the computed value applied to the route."
+                    },
+                    "idle_timeout_seconds": {
+                        "type": "integer",
+                        "maximum": 86400,
+                        "minimum": 0,
+                        "nullable": true,
+                        "description": "The idle timeout in seconds for this route. Connections with no data transmitted within this period are closed. Values below the global proxy idle_timeout setting are rejected. Leave null to use the global proxy idle timeout setting. See effective_idle_timeout_seconds for the computed value applied to the route."
+                    },
+                    "effective_timeout_seconds": {
+                        "type": "string",
+                        "readOnly": true,
+                        "description": "Read-only. The effective request timeout: max(request_timeout_seconds, global request_timeout setting)."
+                    },
+                    "effective_idle_timeout_seconds": {
+                        "type": "string",
+                        "readOnly": true,
+                        "description": "Read-only. The effective idle timeout: max(idle_timeout_seconds, global idle_timeout setting)."
                     },
                     "http_port": {
                         "type": "integer",
@@ -29285,16 +30929,10 @@
                     "authenticators": {
                         "type": "array",
                         "items": {
-                            "enum": [
-                                1,
-                                "",
-                                null
-                            ],
-                            "type": "integer",
-                            "description": "* `1` - Local Database Authenticator"
+                            "type": "integer"
                         },
-                        "writeOnly": true,
                         "nullable": true,
+                        "writeOnly": true,
                         "description": "DEPRECATED: This field is deprecated and will be removed in a future version. Please use 'associated_authenticators' instead.",
                         "deprecated": true
                     },
@@ -29306,17 +30944,23 @@
                     },
                     "associated_authenticators": {
                         "type": "object",
-                        "additionalProperties": {},
+                        "additionalProperties": {
+                            "type": "object",
+                            "properties": {
+                                "uid": {
+                                    "type": "string"
+                                },
+                                "email": {
+                                    "type": "string"
+                                }
+                            }
+                        },
                         "writeOnly": true
                     },
                     "managed": {
                         "type": "boolean",
                         "readOnly": true,
                         "description": "Indicates if this user is managed by the system. It cannot be modified once created."
-                    },
-                    "use_controller_password": {
-                        "type": "boolean",
-                        "readOnly": true
                     }
                 },
                 "required": [
@@ -29382,7 +31026,8 @@
                         "description": "The role definition which defines permissions conveyed by this assignment."
                     },
                     "user": {
-                        "type": "integer"
+                        "type": "integer",
+                        "nullable": true
                     },
                     "user_ansible_id": {
                         "type": "string",
@@ -29564,15 +31209,29 @@
                 "scheme": "basic"
             },
             "OAuth2_Authentication": {
-                "type": "apiKey",
-                "in": "header",
-                "name": "Authorization",
-                "description": "Token-based authentication with format \"Bearer &lt;base64token&gt;\""
+                "type": "oauth2",
+                "flows": {
+                    "authorizationCode": {
+                        "authorizationUrl": "/o/authorize/",
+                        "tokenUrl": "/o/token/",
+                        "scopes": {
+                            "read": "Read access to resources",
+                            "write": "Write access to resources (includes read)"
+                        }
+                    },
+                    "password": {
+                        "tokenUrl": "/o/token/",
+                        "scopes": {
+                            "read": "Read access to resources",
+                            "write": "Write access to resources (includes read)"
+                        }
+                    }
+                }
             },
             "SessionAuthentication": {
                 "type": "apiKey",
                 "in": "cookie",
-                "name": "gateway_sessionid44926"
+                "name": "gateway_sessionid"
             }
         }
     }
