@@ -472,6 +472,32 @@ const sessionManager = new SessionManager(CONFIG.SESSION_TIMEOUT);
 
 const app = express();
 
+// Security: Check authorization BEFORE parsing request body
+// This prevents unauthenticated DoS via resource exhaustion (AAP-70224)
+app.use((req, res, next) => {
+  // Only apply to POST requests to MCP endpoints
+  if (req.method === "POST" && req.path.includes("/mcp")) {
+    const sessionId = req.headers["mcp-session-id"];
+    const authHeader = req.headers["authorization"];
+
+    // Reject requests without session ID or Authorization header immediately
+    // This prevents expensive JSON parsing and session creation for unauthenticated requests
+    if (!sessionId && !authHeader) {
+      res.status(401).json({
+        jsonrpc: "2.0",
+        error: {
+          code: -32000,
+          message: "Unauthorized: Bearer token or session ID required",
+        },
+        id: null,
+      });
+      return;
+    }
+  }
+
+  next();
+});
+
 app.use(express.json());
 
 // Allow CORS for all domains, expose the Mcp-Session-Id header
@@ -504,42 +530,58 @@ const mcpPostHandler = async (
       // Reuse existing transport
       transport = sessionManager.getTransport(sessionId)!;
     } else if (!sessionId && isInitializeRequest(req.body)) {
-      // New initialization request
+      // Security (AAP-70224): Validate token BEFORE creating expensive transport object
+      // This prevents CPU exhaustion from unauthenticated initialization requests
+      const token = extractBearerToken(authHeader);
+      if (!token) {
+        res.status(401).json({
+          jsonrpc: "2.0",
+          error: {
+            code: -32000,
+            message: "Unauthorized: Bearer token required",
+          },
+          id: (req.body as any).id || null,
+        });
+        return;
+      }
+
+      // Validate token before proceeding with session creation
+      let userInfo: UserInfo;
+      try {
+        userInfo = await validateToken(token);
+      } catch (error) {
+        console.error(`${getTimestamp()} Token validation failed:`, error);
+        res.status(401).json({
+          jsonrpc: "2.0",
+          error: {
+            code: -32000,
+            message: "Unauthorized: Invalid or expired token",
+          },
+          id: (req.body as any).id || null,
+        });
+        return;
+      }
+
+      const identity = userIdentityService.deriveIdentity(userInfo);
+
+      // New initialization request - token is valid, create transport
       transport = new StreamableHTTPServerTransport({
         sessionIdGenerator: () => randomUUID(),
         onsessioninitialized: async (sessionId: string) => {
           try {
-            // Extract and validate the bearer token
-            const token = extractBearerToken(authHeader);
-            if (token) {
-              try {
-                // Validate token and extract user info
-                const userInfo = await validateToken(token);
-                const identity = userIdentityService.deriveIdentity(userInfo);
-
-                // Store session data with userAgent, toolset, and transport
-                const userAgent = req.headers["user-agent"] || "unknown";
-                storeSessionData(
-                  sessionId,
-                  token,
-                  userAgent,
-                  toolset,
-                  transport,
-                  identity.userPseudoId,
-                  identity.userType,
-                  identity.installerPseudoId,
-                );
-              } catch (error) {
-                console.error(
-                  `${getTimestamp()} Failed to validate token:`,
-                  error,
-                );
-                // Token validation failed, we cannot create the session without valid token
-                throw error;
-              }
-            } else {
-              console.warn(`${getTimestamp()} No bearer token provided`);
-            }
+            // Store session data with userAgent, toolset, and transport
+            // Token and userInfo already validated above
+            const userAgent = req.headers["user-agent"] || "unknown";
+            storeSessionData(
+              sessionId,
+              token,
+              userAgent,
+              toolset,
+              transport,
+              identity.userPseudoId,
+              identity.userType,
+              identity.installerPseudoId,
+            );
           } catch (error) {
             console.error(
               `${getTimestamp()} Session init callback failed:`,
