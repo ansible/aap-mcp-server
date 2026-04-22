@@ -222,7 +222,9 @@ describe("End-to-End: MCP Server", () => {
       expect(response.status).toBe(404);
     });
 
-    it("should return error for POST without session ID and non-init request", async () => {
+    it("should return 401 for POST without session ID and no auth header", async () => {
+      // After security fix: requests without auth/session are rejected with 401
+      // before reaching the handler that would return 404
       const response = await fetch(`${MCP_BASE_URL}/mcp`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -232,7 +234,7 @@ describe("End-to-End: MCP Server", () => {
           id: 1,
         }),
       });
-      expect(response.status).toBe(404);
+      expect(response.status).toBe(401);
     });
   });
 
@@ -414,7 +416,9 @@ describe("End-to-End: MCP Server", () => {
       expect(response.status).toBe(404);
     });
 
-    it("should reject POST on /:toolset/mcp without init request and no session", async () => {
+    it("should reject POST on /:toolset/mcp without auth header and no session", async () => {
+      // After security fix: requests without auth/session are rejected with 401
+      // by the early auth check middleware
       const response = await fetch(`${MCP_BASE_URL}/job_management/mcp`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -424,7 +428,7 @@ describe("End-to-End: MCP Server", () => {
           id: 1,
         }),
       });
-      expect(response.status).toBe(404);
+      expect(response.status).toBe(401);
     });
   });
 });
