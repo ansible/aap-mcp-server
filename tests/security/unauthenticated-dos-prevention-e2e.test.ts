@@ -266,14 +266,13 @@ describe("Unauthenticated DoS Prevention (E2E)", () => {
       );
     }, 15000);
 
-    it("should accept valid token and create session successfully", async () => {
-      // This is the positive test case
-      // A legitimate user provides a VALID token
+    it("should accept valid token and handle request successfully (stateless)", async () => {
+      // Positive test case: legitimate user provides a VALID token
+      // In stateless mode, there are no sessions — each request is independent
       // The server MUST:
       // 1. Validate the token against AAP (returns 200)
-      // 2. Create the session
-      // 3. Return session ID
-      // This proves the security fix doesn't break legitimate requests
+      // 2. Process the request
+      // 3. Return a successful response (no session ID)
 
       const response = await fetch(`${MCP_BASE_URL}/mcp`, {
         method: "POST",
@@ -300,15 +299,12 @@ describe("Unauthenticated DoS Prevention (E2E)", () => {
       // Verify success
       expect(response.status).toBe(200);
 
-      // Verify session ID is returned
+      // Stateless mode: no session ID should be returned
       const sessionId = response.headers.get("mcp-session-id");
-      expect(sessionId).toBeTruthy();
-      expect(sessionId).toMatch(
-        /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i,
-      );
+      expect(sessionId).toBeFalsy();
 
       console.log(
-        `✓ Valid token accepted, session created: ${sessionId?.substring(0, 8)}...`,
+        `✓ Valid token accepted, request processed (stateless, no session ID)`,
       );
     }, 15000);
   });
