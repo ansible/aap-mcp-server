@@ -4,24 +4,21 @@ import OASNormalize from "oas-normalize";
 import { config } from "dotenv";
 import express from "express";
 import cors from "cors";
-import { randomUUID } from "node:crypto";
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import {
   CallToolRequestSchema,
   ListToolsRequestSchema,
-  isInitializeRequest,
 } from "@modelcontextprotocol/sdk/types.js";
 import { extractToolsFromApi } from "./extract-tools.js";
 import { readFileSync, writeFileSync } from "fs";
-import { basename, join } from "path";
+import { join } from "path";
 import * as yaml from "js-yaml";
 import { metricsService } from "./metrics.js";
 import {
   loadOpenApiSpecs,
   type AAPMcpToolDefinition,
 } from "./openapi-loader.js";
-import { SessionManager } from "./session.js";
 import { AnalyticsService } from "./analytics.js";
 import { PseudoIdentityService, type UserInfo } from "./pseudo-identity.js";
 import { AapMcpConfig, loadToolsetsFromCfg } from "./config-utils.js";
@@ -49,9 +46,6 @@ const localConfig = loadConfig();
 const CONFIG = {
   BASE_URL: process.env.BASE_URL || localConfig.base_url || "https://localhost",
   MCP_PORT: process.env.MCP_PORT ? parseInt(process.env.MCP_PORT, 10) : 3000,
-  SESSION_TIMEOUT: process.env.SESSION_TIMEOUT
-    ? parseInt(process.env.SESSION_TIMEOUT, 10)
-    : localConfig.session_timeout || 1200, // 20 minutes, to accomodate Claude
   ANALYTICS_KEY: (
     process.env.ANALYTICS_KEY ||
     localConfig.analytics_key ||
@@ -108,6 +102,16 @@ if (ignoreCertificateErrors) {
 
 // TypeScript interfaces
 
+// Per-request context passed through authInfo.extra
+interface RequestContext {
+  token: string;
+  toolset: string;
+  userAgent: string;
+  userPseudoId: string;
+  userType: string;
+  installerPseudoId: string;
+}
+
 // Helper functions
 
 const extractBearerToken = (
@@ -152,42 +156,6 @@ const validateToken = async (bearerToken: string): Promise<UserInfo> => {
       { cause: error },
     );
   }
-};
-
-const storeSessionData = (
-  sessionId: string,
-  token: string,
-  userAgent: string,
-  toolset: string,
-  transport: StreamableHTTPServerTransport,
-  userPseudoId: string,
-  userType: string,
-  installerPseudoId: string,
-): void => {
-  sessionManager.store(
-    sessionId,
-    token,
-    userAgent,
-    toolset,
-    transport,
-    userPseudoId,
-    userType,
-    installerPseudoId,
-  );
-
-  // Track session started event
-  analyticsService.trackMcpSessionStarted(
-    sessionId,
-    userAgent,
-    toolset,
-    userPseudoId,
-    userType,
-    installerPseudoId,
-  );
-};
-
-const deleteSessionData = (sessionId: string): void => {
-  sessionManager.delete(sessionId);
 };
 
 // Determine user toolset based on toolset name
@@ -288,8 +256,16 @@ const generateTools = async (): Promise<AAPMcpToolDefinition[]> => {
   return toolsWithSize;
 };
 
+// Helper to extract RequestContext from the extra.authInfo provided by the SDK
+const getRequestContext = (extra: any): RequestContext => {
+  const ctx = extra?.authInfo?.extra as RequestContext | undefined;
+  if (!ctx) {
+    throw new Error("Missing request context");
+  }
+  return ctx;
+};
+
 // Factory function to create a new Server instance with request handlers
-// Each transport gets its own Server instance to prevent session routing conflicts
 const createMcpServer = (): Server => {
   const server = new Server(
     {
@@ -304,17 +280,8 @@ const createMcpServer = (): Server => {
   );
 
   server.setRequestHandler(ListToolsRequestSchema, async (request, extra) => {
-    // Get the session ID from the transport context
-    const sessionId = extra?.sessionId;
-
-    if (!sessionId || !sessionManager.has(sessionId)) {
-      throw new Error("Session not found");
-    }
-    // Get toolset from session data
-    const toolset = sessionManager.getToolset(sessionId);
-
-    // Determine user toolset based on toolset from session
-    const availableTools = getToolsByToolset(toolset);
+    const ctx = getRequestContext(extra);
+    const availableTools = getToolsByToolset(ctx.toolset);
 
     return {
       tools: availableTools.map((tool) => ({
@@ -328,15 +295,10 @@ const createMcpServer = (): Server => {
   server.setRequestHandler(CallToolRequestSchema, async (request, extra) => {
     const { name, arguments: args = {} } = request.params;
     const _startTime = Date.now();
-    const sessionId = extra?.sessionId;
-
-    if (!sessionId || !sessionManager.has(sessionId)) {
-      throw new Error("Session not found");
-    }
+    const ctx = getRequestContext(extra);
 
     // Get user's toolset to ensure they have access to this tool
-    const toolset = sessionManager.getToolset(sessionId);
-    const availableTools = getToolsByToolset(toolset);
+    const availableTools = getToolsByToolset(ctx.toolset);
 
     // Find the matching tool by external name (without service prefix)
     const tool = availableTools.find((t) => t.name === name);
@@ -346,15 +308,6 @@ const createMcpServer = (): Server => {
 
     // Get toolset for this tool
     const toolToolset = getToolsetForTool(tool.name);
-
-    // Get user-agent from session data (if available)
-    let userAgent = "unknown";
-    if (sessionId && sessionManager.has(sessionId)) {
-      userAgent = sessionManager.getUserAgent(sessionId) || "unknown";
-    }
-
-    // Get the Bearer token for this session
-    const token = sessionManager.getToken(sessionId)!;
 
     // Execute the tool by making HTTP request
     let result: any;
@@ -366,7 +319,7 @@ const createMcpServer = (): Server => {
       // Build URL from path template and parameters
       let url = tool.pathTemplate;
       const headers: Record<string, string> = {
-        Authorization: `Bearer ${token}`,
+        Authorization: `Bearer ${ctx.token}`,
         Accept: "application/json",
       };
 
@@ -434,20 +387,16 @@ const createMcpServer = (): Server => {
         `${getTimestamp()} [toolset:${toolToolset}] ${tool.name} → ${response && response.status} ${response && response.statusText} (${executionTimeMs}ms)`,
       );
 
-      const userPseudoId = sessionManager.getUserPseudoId(sessionId);
-      const userType = sessionManager.getUserType(sessionId);
-      const installerPseudoId = sessionManager.getInstallerPseudoId(sessionId);
       analyticsService.trackMcpToolCalled(
         tool.name,
         toolToolset,
-        userAgent,
-        sessionId,
+        ctx.userAgent,
         parameterLength,
         response ? response.status : 0,
         executionTimeMs,
-        userPseudoId,
-        userType,
-        installerPseudoId,
+        ctx.userPseudoId,
+        ctx.userType,
+        ctx.installerPseudoId,
       );
       metricsService.recordToolExecution(
         tool.name,
@@ -465,10 +414,6 @@ const createMcpServer = (): Server => {
 
   return server;
 };
-
-// Global state management
-const servers: Record<string, Server> = {};
-const sessionManager = new SessionManager(CONFIG.SESSION_TIMEOUT);
 
 const app = express();
 
@@ -500,154 +445,100 @@ app.use((req, res, next) => {
 
 app.use(express.json());
 
-// Allow CORS for all domains, expose the Mcp-Session-Id header
 app.use(
   cors({
     origin: "*",
-    exposedHeaders: ["Mcp-Session-Id"],
   }),
 );
 
-// MCP POST endpoint handler
+// Authenticate the request and build the per-request context
+const authenticateRequest = async (
+  req: express.Request,
+  toolset: string,
+): Promise<
+  | { ok: true; ctx: RequestContext }
+  | { ok: false; reason: "no-token" }
+  | { ok: false; reason: "invalid-token" }
+> => {
+  const authHeader = req.headers["authorization"] as string;
+  const token = extractBearerToken(authHeader);
+  if (!token) {
+    return { ok: false, reason: "no-token" };
+  }
+
+  let userInfo: UserInfo;
+  try {
+    userInfo = await validateToken(token);
+  } catch (error) {
+    console.error(`${getTimestamp()} Token validation failed:`, error);
+    return { ok: false, reason: "invalid-token" };
+  }
+
+  const identity = userIdentityService.deriveIdentity(userInfo);
+  const userAgent = (req.headers["user-agent"] as string) || "unknown";
+
+  return {
+    ok: true,
+    ctx: {
+      token,
+      toolset,
+      userAgent,
+      userPseudoId: identity.userPseudoId,
+      userType: identity.userType,
+      installerPseudoId: identity.installerPseudoId,
+    },
+  };
+};
+
+// MCP POST endpoint handler - stateless, no sessions
 const mcpPostHandler = async (
   req: express.Request,
   res: express.Response,
   toolset: string = "all",
 ) => {
-  const sessionId = req.headers["mcp-session-id"] as string;
-  const authHeader = req.headers["authorization"] as string;
-
-  if (sessionId) {
-    console.log(`${getTimestamp()} Received MCP request`);
-  } else {
-    console.log(`${getTimestamp()} Request body:`, req.body);
-  }
+  console.log(`${getTimestamp()} Received MCP request`);
 
   try {
-    let transport: StreamableHTTPServerTransport;
-
-    if (sessionId && sessionManager.has(sessionId)) {
-      // Reuse existing transport
-      transport = sessionManager.getTransport(sessionId)!;
-    } else if (!sessionId && isInitializeRequest(req.body)) {
-      // Security (AAP-70224): Validate token BEFORE creating expensive transport object
-      // This prevents CPU exhaustion from unauthenticated initialization requests
-      const token = extractBearerToken(authHeader);
-      if (!token) {
-        res.status(401).json({
-          jsonrpc: "2.0",
-          error: {
-            code: -32000,
-            message: "Unauthorized: Bearer token required",
-          },
-          id: (req.body as any).id || null,
-        });
-        return;
-      }
-
-      // Validate token before proceeding with session creation
-      let userInfo: UserInfo;
-      try {
-        userInfo = await validateToken(token);
-      } catch (error) {
-        console.error(`${getTimestamp()} Token validation failed:`, error);
-        res.status(401).json({
-          jsonrpc: "2.0",
-          error: {
-            code: -32000,
-            message: "Unauthorized: Invalid or expired token",
-          },
-          id: (req.body as any).id || null,
-        });
-        return;
-      }
-
-      const identity = userIdentityService.deriveIdentity(userInfo);
-
-      // New initialization request - token is valid, create transport
-      transport = new StreamableHTTPServerTransport({
-        sessionIdGenerator: () => randomUUID(),
-        onsessioninitialized: async (sessionId: string) => {
-          try {
-            // Store session data with userAgent, toolset, and transport
-            // Token and userInfo already validated above
-            const userAgent = req.headers["user-agent"] || "unknown";
-            storeSessionData(
-              sessionId,
-              token,
-              userAgent,
-              toolset,
-              transport,
-              identity.userPseudoId,
-              identity.userType,
-              identity.installerPseudoId,
-            );
-          } catch (error) {
-            console.error(
-              `${getTimestamp()} Session init callback failed:`,
-              error,
-            );
-            throw error;
-          }
-        },
-      });
-
-      // Set up onclose handler to clean up transport when closed
-      transport.onclose = () => {
-        const sid = transport.sessionId;
-        if (sid && sessionManager.has(sid)) {
-          console.log(
-            `${getTimestamp()} Transport closed, removing from session data and servers map`,
-          );
-          // Clean up server instance
-          if (servers[sid]) {
-            delete servers[sid];
-            console.log(`${getTimestamp()} Removed server instance`);
-          }
-          // Clean up session data (this includes the transport)
-          sessionManager.delete(sid);
-          console.log(`${getTimestamp()} Removed session data`);
-        }
-      };
-
-      // Create a new Server instance for this transport
-      // Each transport needs its own Server to prevent session routing conflicts
-      const server = createMcpServer();
-
-      // Connect the transport to the MCP server BEFORE handling the request
-      try {
-        await server.connect(transport);
-
-        // Store the server instance for this session
-        const sid = transport.sessionId;
-        if (sid) {
-          servers[sid] = server;
-        }
-
-        await transport.handleRequest(req, res, req.body);
-      } catch (error) {
-        console.error(
-          `${getTimestamp()} Failed during server.connect() or handleRequest():`,
-          error,
-        );
-        throw error;
-      }
-      return;
-    } else {
-      // Invalid request - no session ID or not initialization request
-      res.status(404).json({
+    // Authenticate every request
+    const authResult = await authenticateRequest(req, toolset);
+    if (!authResult.ok) {
+      const isInvalidToken = authResult.reason === "invalid-token";
+      res.status(401).json({
         jsonrpc: "2.0",
         error: {
           code: -32000,
-          message: "Session not found",
+          message: isInvalidToken
+            ? "Unauthorized: Invalid or expired token"
+            : "Unauthorized: Bearer token required",
         },
-        id: null,
+        id: isInvalidToken ? (req.body as any)?.id || null : null,
       });
       return;
     }
 
-    // Handle the request with existing transport
+    const ctx = authResult.ctx;
+
+    // Create a fresh stateless transport for each request
+    const transport = new StreamableHTTPServerTransport({
+      sessionIdGenerator: undefined,
+    });
+
+    const server = createMcpServer();
+    await server.connect(transport);
+
+    // The SDK reads authInfo from req.auth
+    (req as any).auth = {
+      token: ctx.token,
+      clientId: "aap-mcp",
+      scopes: [],
+      extra: ctx as unknown as Record<string, unknown>,
+    };
+
     await transport.handleRequest(req, res, req.body);
+
+    // Clean up after request
+    await transport.close();
+    await server.close();
   } catch (error) {
     console.error(`${getTimestamp()} Error handling MCP request:`, error);
     if (!res.headersSent) {
@@ -664,72 +555,11 @@ const mcpPostHandler = async (
   }
 };
 
-// MCP GET endpoint for streaming data
-const mcpGetHandler = async (req: express.Request, res: express.Response) => {
-  const sessionId = req.headers["mcp-session-id"] as string;
-
-  if (basename(req.path) === "mcp") {
-    res.status(405).send("GET method not allowed on /mcp endpoint");
-    return;
-  }
-
-  if (!sessionId || !sessionManager.has(sessionId)) {
-    res.status(404).send("Session not found");
-    return;
-  }
-
-  // Note: Token updates are not supported in GET requests - tokens are validated only during session initialization
-
-  const lastEventId = req.headers["last-event-id"];
-  if (lastEventId) {
-    console.log(
-      `${getTimestamp()} Client reconnecting with Last-Event-ID: ${lastEventId}`,
-    );
-  } else {
-    console.log(`${getTimestamp()} Establishing new SSE stream`);
-  }
-
-  const transport = sessionManager.getTransport(sessionId)!;
-  await transport.handleRequest(req, res);
-};
-
-// MCP DELETE endpoint for session termination
-const mcpDeleteHandler = async (
-  req: express.Request,
-  res: express.Response,
-) => {
-  const sessionId = req.headers["mcp-session-id"] as string;
-
-  if (!sessionId || !sessionManager.has(sessionId)) {
-    res.status(404).send("Session not found");
-    return;
-  }
-
-  console.log(`${getTimestamp()} Received session termination request`);
-
-  try {
-    const transport = sessionManager.getTransport(sessionId)!;
-    await transport.handleRequest(req, res);
-
-    deleteSessionData(sessionId);
-  } catch (error) {
-    console.error(
-      `${getTimestamp()} Error handling session termination:`,
-      error,
-    );
-    if (!res.headersSent) {
-      res.status(500).send("Error processing session termination");
-    }
-  }
-};
-
 const allTools: AAPMcpToolDefinition[] = await generateTools();
 const allToolsets = loadToolsetsFromCfg(allTools, localConfig);
 
-// Set up routes
+// Set up routes - POST only, no GET/DELETE (no sessions to stream or terminate)
 app.post("/mcp", (req, res) => mcpPostHandler(req, res));
-app.get("/mcp", (req, res) => mcpGetHandler(req, res));
-app.delete("/mcp", (req, res) => mcpDeleteHandler(req, res));
 
 app.post("/:toolset/mcp", (req, res) => {
   const toolset = req.params.toolset;
@@ -739,44 +569,12 @@ app.post("/:toolset/mcp", (req, res) => {
   return mcpPostHandler(req, res, toolset);
 });
 
-app.get("/:toolset/mcp", (req, res) => {
-  const toolset = req.params.toolset;
-  console.log(
-    `${getTimestamp()} Toolset-specific GET request for toolset: ${toolset}`,
-  );
-  return mcpGetHandler(req, res);
-});
-
-app.delete("/:toolset/mcp", (req, res) => {
-  const toolset = req.params.toolset;
-  console.log(
-    `${getTimestamp()} Toolset-specific DELETE request for toolset: ${toolset}`,
-  );
-  return mcpDeleteHandler(req, res);
-});
-
 app.post("/mcp/:toolset", (req, res) => {
   const toolset = req.params.toolset;
   console.log(
     `${getTimestamp()} Toolset-specific POST request for toolset: ${toolset}`,
   );
   return mcpPostHandler(req, res, toolset);
-});
-
-app.get("/mcp/:toolset", (req, res) => {
-  const toolset = req.params.toolset;
-  console.log(
-    `${getTimestamp()} Toolset-specific GET request for toolset: ${toolset}`,
-  );
-  return mcpGetHandler(req, res);
-});
-
-app.delete("/mcp/:toolset", (req, res) => {
-  const toolset = req.params.toolset;
-  console.log(
-    `${getTimestamp()} Toolset-specific DELETE request for toolset: ${toolset}`,
-  );
-  return mcpDeleteHandler(req, res);
 });
 
 // Health check endpoint (always enabled)
@@ -817,7 +615,7 @@ async function main(): Promise<void> {
   // Print startup banner
   console.log("");
   console.log("═══════════════════════════════════════════════════════════");
-  console.log("           AAP MCP Server Starting");
+  console.log("           AAP MCP Server Starting (Stateless)");
   console.log("═══════════════════════════════════════════════════════════");
   console.log("");
   console.log("Configuration:");
@@ -885,13 +683,13 @@ async function main(): Promise<void> {
 
     // Initialize analytics with periodic status reporting (only if key provided)
     if (CONFIG.ANALYTICS_KEY) {
-      const serverVersion = process.env.npm_package_version || "1.0.0"; // From package.json
+      const serverVersion = process.env.npm_package_version || "1.0.0";
       const containerVersion = process.env.CONTAINER_VERSION || "unknown";
       const readOnlyMode = !allowWriteOperations;
 
       analyticsService.initialize(
         CONFIG.ANALYTICS_KEY,
-        () => sessionManager.getActiveCount(),
+        () => 0, // No active sessions in stateless mode
         serverVersion,
         containerVersion,
         readOnlyMode,
@@ -903,30 +701,7 @@ async function main(): Promise<void> {
 // Graceful shutdown
 process.on("SIGINT", async () => {
   console.log(`${getTimestamp()} Shutting down server...`);
-
-  // Shutdown analytics service
   await analyticsService.shutdown();
-
-  // Close all active sessions and transports
-  for (const sessionId of sessionManager.getAllSessionIds()) {
-    try {
-      console.log(`${getTimestamp()} Closing transport during shutdown`);
-      const transport = sessionManager.getTransport(sessionId);
-      if (transport) {
-        await transport.close();
-      }
-      // Clean up server instance
-      if (servers[sessionId]) {
-        delete servers[sessionId];
-      }
-      // Clean up session data (includes transport)
-      sessionManager.delete(sessionId);
-    } catch (error) {
-      console.error(`${getTimestamp()} Error closing transport:`, error);
-    }
-  }
-
-  await sessionManager.closeAllSessions();
   console.log(`${getTimestamp()} Server shutdown complete`);
   process.exit(0);
 });
