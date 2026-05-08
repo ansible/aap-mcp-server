@@ -82,7 +82,6 @@ describe("MetricsService", () => {
   });
 
   it("should record telemetry sent events", () => {
-    metricsService.recordTelemetrySent("mcp_session_started");
     metricsService.recordTelemetrySent("mcp_tool_called");
     metricsService.recordTelemetrySent("mcp_server_status");
 
@@ -99,9 +98,9 @@ describe("MetricsService", () => {
 
   it("should handle multiple telemetry events with different event types", () => {
     // Record successful telemetry
-    metricsService.recordTelemetrySent("mcp_session_started");
     metricsService.recordTelemetrySent("mcp_tool_called");
     metricsService.recordTelemetrySent("mcp_tool_called");
+    metricsService.recordTelemetrySent("mcp_server_status");
 
     // Record telemetry errors
     metricsService.recordTelemetryError();

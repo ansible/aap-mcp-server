@@ -236,21 +236,10 @@ export class AnalyticsService {
   }
 }
 
-export interface SessionStartedEvent {
-  user_agent?: string;
-  sess_id: string;
-  mcp_tool_set?: string;
-  process_id: string;
-  user_pseudo_id: string;
-  user_type: string;
-  installer_pseudo_id: string;
-}
-
 export interface ToolCalledEvent {
   tool_name: string;
   mcp_tool_set: string;
   user_agent: string;
-  sess_id: string;
   parameter_length: number;
   http_status: number;
   execution_time_ms: number;
