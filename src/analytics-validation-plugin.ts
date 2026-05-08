@@ -1,44 +1,15 @@
 import type { Plugin, Context } from "@segment/analytics-node";
-import {
-  SessionStartedEvent,
-  ToolCalledEvent,
-  ServerStatusEvent,
-} from "./analytics.js";
+import { ToolCalledEvent, ServerStatusEvent } from "./analytics.js";
 
 /**
  * Validation schemas for different event types
  */
 const EVENT_SCHEMAS = {
-  mcp_session_started: {
-    required: [
-      "sess_id",
-      "process_id",
-      "user_pseudo_id",
-      "user_type",
-      "installer_pseudo_id",
-    ],
-    optional: ["user_agent", "mcp_tool_set"],
-    validators: {
-      sess_id: (value: any) => typeof value === "string" && value.length > 0,
-      process_id: (value: any) => typeof value === "string" && value.length > 0,
-      user_pseudo_id: (value: any) =>
-        typeof value === "string" && value.length > 0,
-      user_type: (value: any) =>
-        typeof value === "string" && ["internal", "external"].includes(value),
-      user_agent: (value: any) =>
-        value === undefined || typeof value === "string",
-      mcp_tool_set: (value: any) =>
-        value === undefined || typeof value === "string",
-      installer_pseudo_id: (value: any) =>
-        typeof value === "string" && value.length > 0,
-    },
-  },
   mcp_tool_called: {
     required: [
       "tool_name",
       "mcp_tool_set",
       "user_agent",
-      "sess_id",
       "parameter_length",
       "http_status",
       "execution_time_ms",
@@ -52,7 +23,6 @@ const EVENT_SCHEMAS = {
       mcp_tool_set: (value: any) =>
         typeof value === "string" && value.length > 0,
       user_agent: (value: any) => typeof value === "string" && value.length > 0,
-      sess_id: (value: any) => typeof value === "string" && value.length > 0,
       parameter_length: (value: any) => typeof value === "number" && value >= 0,
       http_status: (value: any) =>
         typeof value === "number" &&
@@ -280,13 +250,6 @@ export function createValidationPlugin(
 /**
  * Type-safe event validation functions for external use
  */
-export const validateSessionStartedEvent = (
-  properties: any,
-): properties is SessionStartedEvent => {
-  const errors = validateEvent("mcp_session_started", properties);
-  return errors.length === 0;
-};
-
 export const validateToolCalledEvent = (
   properties: any,
 ): properties is ToolCalledEvent => {

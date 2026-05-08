@@ -1,7 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import {
   createValidationPlugin,
-  validateSessionStartedEvent,
   validateToolCalledEvent,
   validateServerStatusEvent,
 } from "./analytics-validation-plugin.js";
@@ -20,86 +19,12 @@ describe("Analytics Validation Plugin", () => {
     mockContext.updateEvent.mockClear();
   });
 
-  describe("validateSessionStartedEvent", () => {
-    it("should validate a correct session started event", () => {
-      const validEvent = {
-        sess_id: "session-123",
-        process_id: "process-456",
-        user_pseudo_id: "user-789",
-        user_type: "internal",
-        installer_pseudo_id: "installer-abc",
-        user_agent: "TestAgent/1.0",
-        mcp_tool_set: "test-toolset",
-      };
-
-      expect(validateSessionStartedEvent(validEvent)).toBe(true);
-    });
-
-    it("should reject event with missing required fields", () => {
-      const invalidEvent = {
-        user_agent: "TestAgent/1.0",
-        // Missing sess_id, process_id, user_pseudo_id, user_type
-      };
-
-      expect(validateSessionStartedEvent(invalidEvent)).toBe(false);
-    });
-
-    it("should reject event with invalid field types", () => {
-      const invalidEvent = {
-        sess_id: 123, // Should be string
-        process_id: "process-456",
-        user_pseudo_id: "user-789",
-        user_type: "internal",
-        installer_pseudo_id: "installer-abc",
-      };
-
-      expect(validateSessionStartedEvent(invalidEvent)).toBe(false);
-    });
-
-    it("should accept event with optional fields", () => {
-      const validEvent = {
-        sess_id: "session-123",
-        process_id: "process-456",
-        user_pseudo_id: "user-789",
-        user_type: "external",
-        installer_pseudo_id: "installer-abc",
-      };
-
-      expect(validateSessionStartedEvent(validEvent)).toBe(true);
-    });
-
-    it("should reject event with unexpected fields", () => {
-      const invalidEvent = {
-        sess_id: "session-123",
-        process_id: "process-456",
-        user_pseudo_id: "user-789",
-        user_type: "internal",
-        installer_pseudo_id: "installer-abc",
-        unexpected_field: "value",
-      };
-
-      expect(validateSessionStartedEvent(invalidEvent)).toBe(false);
-    });
-
-    it("should reject event with invalid user_type value", () => {
-      const invalidEvent = {
-        sess_id: "session-123",
-        process_id: "process-456",
-        user_pseudo_id: "user-789",
-        user_type: "admin", // Invalid value
-      };
-
-      expect(validateSessionStartedEvent(invalidEvent)).toBe(false);
-    });
-  });
-
   describe("validateToolCalledEvent", () => {
     it("should validate a correct tool called event", () => {
       const validEvent = {
         tool_name: "test-tool",
         mcp_tool_set: "test-toolset",
         user_agent: "TestAgent/1.0",
-        sess_id: "session-123",
         parameter_length: 100,
         http_status: 200,
         execution_time_ms: 500,
@@ -125,7 +50,6 @@ describe("Analytics Validation Plugin", () => {
         tool_name: "test-tool",
         mcp_tool_set: "test-toolset",
         user_agent: "TestAgent/1.0",
-        sess_id: "session-123",
         parameter_length: 100,
         http_status: 99, // Invalid HTTP status
         execution_time_ms: 500,
@@ -142,7 +66,6 @@ describe("Analytics Validation Plugin", () => {
         tool_name: "test-tool",
         mcp_tool_set: "test-toolset",
         user_agent: "TestAgent/1.0",
-        sess_id: "session-123",
         parameter_length: -10, // Invalid negative value
         http_status: 200,
         execution_time_ms: 500,
@@ -159,7 +82,6 @@ describe("Analytics Validation Plugin", () => {
         tool_name: "test-tool",
         mcp_tool_set: "test-toolset",
         user_agent: "TestAgent/1.0",
-        sess_id: "session-123",
         parameter_length: 100,
         http_status: 200,
         execution_time_ms: -100, // Invalid negative value
@@ -176,7 +98,6 @@ describe("Analytics Validation Plugin", () => {
         tool_name: "test-tool",
         mcp_tool_set: "test-toolset",
         user_agent: "TestAgent/1.0",
-        sess_id: "session-123",
         parameter_length: 0,
         http_status: 599, // Valid edge case
         execution_time_ms: 0,
@@ -299,10 +220,14 @@ describe("Analytics Validation Plugin", () => {
         const validContext = {
           ...mockContext,
           event: {
-            event: "mcp_session_started",
+            event: "mcp_tool_called",
             properties: {
-              sess_id: "session-123",
-              process_id: "process-456",
+              tool_name: "test-tool",
+              mcp_tool_set: "test-toolset",
+              user_agent: "TestAgent/1.0",
+              parameter_length: 100,
+              http_status: 200,
+              execution_time_ms: 500,
               user_pseudo_id: "user-789",
               user_type: "internal",
               installer_pseudo_id: "installer-abc",
@@ -326,7 +251,7 @@ describe("Analytics Validation Plugin", () => {
         const invalidContext = {
           ...mockContext,
           event: {
-            event: "mcp_session_started",
+            event: "mcp_tool_called",
             properties: {
               // Missing required fields
             },
@@ -352,7 +277,7 @@ describe("Analytics Validation Plugin", () => {
         const invalidContext = {
           ...mockContext,
           event: {
-            event: "mcp_session_started",
+            event: "mcp_tool_called",
             properties: {
               // Missing required fields
             },
@@ -374,10 +299,14 @@ describe("Analytics Validation Plugin", () => {
         const eventWithExtraFields = {
           ...mockContext,
           event: {
-            event: "mcp_session_started",
+            event: "mcp_tool_called",
             properties: {
-              sess_id: "session-123",
-              process_id: "process-456",
+              tool_name: "test-tool",
+              mcp_tool_set: "test-toolset",
+              user_agent: "TestAgent/1.0",
+              parameter_length: 100,
+              http_status: 200,
+              execution_time_ms: 500,
               user_pseudo_id: "user-789",
               user_type: "internal",
               installer_pseudo_id: "installer-abc",
@@ -427,10 +356,14 @@ describe("Analytics Validation Plugin", () => {
         const validContext = {
           ...mockContext,
           event: {
-            event: "mcp_session_started",
+            event: "mcp_tool_called",
             properties: {
-              sess_id: "session-123",
-              process_id: "process-456",
+              tool_name: "test-tool",
+              mcp_tool_set: "test-toolset",
+              user_agent: "TestAgent/1.0",
+              parameter_length: 100,
+              http_status: 200,
+              execution_time_ms: 500,
               user_pseudo_id: "user-789",
               user_type: "external",
               installer_pseudo_id: "installer-abc",
@@ -507,7 +440,6 @@ describe("Analytics Validation Plugin", () => {
               tool_name: "", // Invalid empty string
               mcp_tool_set: "test-toolset",
               user_agent: "TestAgent/1.0",
-              sess_id: "session-123",
               parameter_length: "not-a-number", // Invalid type
               http_status: 200,
               execution_time_ms: 500,
@@ -597,7 +529,7 @@ describe("Analytics Validation Plugin", () => {
         const nullPropsContext = {
           ...mockContext,
           event: {
-            event: "mcp_session_started",
+            event: "mcp_tool_called",
             properties: null,
           },
         };
@@ -608,7 +540,7 @@ describe("Analytics Validation Plugin", () => {
           expect.stringContaining("Invalid event structure"),
           expect.objectContaining({
             event: expect.objectContaining({
-              event: "mcp_session_started",
+              event: "mcp_tool_called",
               properties: null,
             }),
           }),
@@ -686,7 +618,6 @@ describe("Analytics Validation Plugin", () => {
               tool_name: "test-tool",
               mcp_tool_set: "test-toolset",
               user_agent: "TestAgent/1.0",
-              sess_id: "session-123",
               parameter_length: 100,
               http_status: status,
               execution_time_ms: 500,
@@ -716,7 +647,6 @@ describe("Analytics Validation Plugin", () => {
               tool_name: "test-tool",
               mcp_tool_set: "test-toolset",
               user_agent: "TestAgent/1.0",
-              sess_id: "session-123",
               parameter_length: 100,
               http_status: status,
               execution_time_ms: 500,
@@ -749,7 +679,6 @@ describe("Analytics Validation Plugin", () => {
             tool_name: "test-tool",
             mcp_tool_set: "test-toolset",
             user_agent: "TestAgent/1.0",
-            sess_id: "session-123",
             parameter_length: 0, // Zero should be valid
             http_status: 200,
             execution_time_ms: 0, // Zero should be valid
@@ -778,7 +707,6 @@ describe("Analytics Validation Plugin", () => {
             tool_name: "", // Invalid
             mcp_tool_set: "", // Invalid
             user_agent: "", // Invalid
-            sess_id: "", // Invalid
             parameter_length: -1, // Invalid
             http_status: 99, // Invalid
             execution_time_ms: -1, // Invalid
@@ -799,7 +727,6 @@ describe("Analytics Validation Plugin", () => {
             expect.objectContaining({ field: "tool_name" }),
             expect.objectContaining({ field: "mcp_tool_set" }),
             expect.objectContaining({ field: "user_agent" }),
-            expect.objectContaining({ field: "sess_id" }),
             expect.objectContaining({ field: "parameter_length" }),
             expect.objectContaining({ field: "http_status" }),
             expect.objectContaining({ field: "execution_time_ms" }),
@@ -811,9 +738,9 @@ describe("Analytics Validation Plugin", () => {
         }),
       );
 
-      // Should have detected 11 errors
+      // Should have detected 10 errors
       const logCall = mockLogger.mock.calls[0][1];
-      expect(logCall.errors).toHaveLength(11);
+      expect(logCall.errors).toHaveLength(10);
     });
   });
 });
