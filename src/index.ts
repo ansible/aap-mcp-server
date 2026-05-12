@@ -3,6 +3,7 @@
 import OASNormalize from "oas-normalize";
 import { config } from "dotenv";
 import express from "express";
+import { validateJWT } from "./jwt-validator.js";
 import cors from "cors";
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
@@ -105,6 +106,8 @@ if (ignoreCertificateErrors) {
 // Per-request context passed through authInfo.extra
 interface RequestContext {
   token: string;
+  authHeaderName: string;
+  authHeaderValue: string;
   toolset: string;
   userAgent: string;
   userPseudoId: string;
@@ -319,7 +322,7 @@ const createMcpServer = (): Server => {
       // Build URL from path template and parameters
       let url = tool.pathTemplate;
       const headers: Record<string, string> = {
-        Authorization: `Bearer ${ctx.token}`,
+        [ctx.authHeaderName]: ctx.authHeaderValue,
         Accept: "application/json",
       };
 
@@ -424,15 +427,16 @@ app.use((req, res, next) => {
   if (req.method === "POST" && req.path.includes("/mcp")) {
     const sessionId = req.headers["mcp-session-id"];
     const authHeader = req.headers["authorization"];
+    const jwtHeader = req.headers["x-dab-jw-token"];
 
-    // Reject requests without session ID or Authorization header immediately
-    // This prevents expensive JSON parsing and session creation for unauthenticated requests
-    if (!sessionId && !authHeader) {
+    // Reject requests without any form of auth immediately
+    // This prevents expensive JSON parsing for unauthenticated requests (AAP-70224)
+    if (!sessionId && !authHeader && !jwtHeader) {
       res.status(401).json({
         jsonrpc: "2.0",
         error: {
           code: -32000,
-          message: "Unauthorized: Bearer token or session ID required",
+          message: "Unauthorized: Bearer token, JWT (X-DAB-JW-TOKEN), or session ID required",
         },
         id: null,
       });
@@ -460,6 +464,42 @@ const authenticateRequest = async (
   | { ok: false; reason: "no-token" }
   | { ok: false; reason: "invalid-token" }
 > => {
+  // Try JWT authentication first (X-DAB-JW-TOKEN header)
+  try {
+    const jwtUser = await validateJWT(
+      req.headers as Record<string, string | string[] | undefined>,
+      CONFIG.BASE_URL,
+      !localConfig["ignore-certificate-errors"],
+    );
+
+    if (jwtUser) {
+      console.log(
+        `${getTimestamp()} JWT authentication successful for user: ${jwtUser.username}`,
+      );
+      const userAgent = (req.headers["user-agent"] as string) || "unknown";
+      const identity = userIdentityService.deriveIdentity({});
+      return {
+        ok: true,
+        ctx: {
+          token: jwtUser.headerValue,
+          authHeaderName: jwtUser.headerName,
+          authHeaderValue: jwtUser.headerValue,
+          toolset,
+          userAgent,
+          userPseudoId: identity.userPseudoId,
+          userType: identity.userType,
+          installerPseudoId: identity.installerPseudoId,
+        },
+      };
+    }
+  } catch (error) {
+    console.warn(
+      `${getTimestamp()} JWT authentication failed: ${error instanceof Error ? error.message : String(error)}`,
+    );
+    // Fall through to Bearer token authentication
+  }
+
+  // Fall back to Bearer token authentication
   const authHeader = req.headers["authorization"] as string;
   const token = extractBearerToken(authHeader);
   if (!token) {
@@ -481,6 +521,8 @@ const authenticateRequest = async (
     ok: true,
     ctx: {
       token,
+      authHeaderName: "Authorization",
+      authHeaderValue: `Bearer ${token}`,
       toolset,
       userAgent,
       userPseudoId: identity.userPseudoId,

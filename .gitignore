@@ -21,3 +21,8 @@ test-results.json
 
 # Others
 aap-mcp.yaml
+
+# Mock gateway test credentials (never commit)
+test/.env
+test/jwt_private.pem
+test/jwt_public.pem
