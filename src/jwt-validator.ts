@@ -79,8 +79,21 @@ async function getPublicKey(
     );
   }
 
-  const data = (await response.json()) as { public_key?: string; key?: string };
-  const publicKey = data.public_key || data.key;
+  const contentType = response.headers.get("content-type") || "";
+  let publicKey: string | undefined;
+
+  if (contentType.includes("application/json")) {
+    const data = (await response.json()) as {
+      public_key?: string;
+      key?: string;
+    };
+    publicKey = data.public_key || data.key;
+  } else {
+    const text = (await response.text()).trim();
+    if (text.startsWith("-----BEGIN")) {
+      publicKey = text;
+    }
+  }
 
   if (!publicKey) {
     throw new Error("Public key not found in response");

@@ -34,11 +34,22 @@ function signToken(
   });
 }
 
+const jsonHeaders = {
+  get: (name: string) =>
+    name.toLowerCase() === "content-type" ? "application/json" : null,
+};
+
+const plainTextHeaders = {
+  get: (name: string) =>
+    name.toLowerCase() === "content-type" ? "text/plain" : null,
+};
+
 function mockPublicKeyEndpoint(key: string = publicKey): void {
   vi.spyOn(global, "fetch").mockResolvedValue({
     ok: true,
+    headers: jsonHeaders,
     json: async () => ({ public_key: key }),
-  } as Response);
+  } as unknown as Response);
 }
 
 beforeEach(() => {
@@ -105,8 +116,9 @@ describe("validateJWT — successful validation", () => {
   it("fetches the public key from the correct endpoint", async () => {
     const fetchSpy = vi.spyOn(global, "fetch").mockResolvedValue({
       ok: true,
+      headers: jsonHeaders,
       json: async () => ({ public_key: publicKey }),
-    } as Response);
+    } as unknown as Response);
 
     const token = signToken();
     await validateJWT({ "x-dab-jw-token": token }, BASE_URL);
@@ -120,12 +132,57 @@ describe("validateJWT — successful validation", () => {
   it("accepts a response with a 'key' field instead of 'public_key'", async () => {
     vi.spyOn(global, "fetch").mockResolvedValue({
       ok: true,
+      headers: jsonHeaders,
       json: async () => ({ key: publicKey }),
-    } as Response);
+    } as unknown as Response);
 
     const token = signToken();
     const result = await validateJWT({ "x-dab-jw-token": token }, BASE_URL);
     expect(result?.username).toBe("admin");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// validateJWT — public key response formats
+// ---------------------------------------------------------------------------
+
+describe("validateJWT — public key response formats", () => {
+  it("accepts a plain-text PEM public key (real gateway behavior)", async () => {
+    vi.spyOn(global, "fetch").mockResolvedValue({
+      ok: true,
+      headers: plainTextHeaders,
+      text: async () => publicKey,
+    } as unknown as Response);
+
+    const token = signToken();
+    const result = await validateJWT({ "x-dab-jw-token": token }, BASE_URL);
+    expect(result).not.toBeNull();
+    expect(result?.username).toBe("admin");
+  });
+
+  it("accepts a plain-text PEM key with trailing whitespace", async () => {
+    vi.spyOn(global, "fetch").mockResolvedValue({
+      ok: true,
+      headers: plainTextHeaders,
+      text: async () => publicKey + "\n\n",
+    } as unknown as Response);
+
+    const token = signToken();
+    const result = await validateJWT({ "x-dab-jw-token": token }, BASE_URL);
+    expect(result?.username).toBe("admin");
+  });
+
+  it("throws when plain-text response is not a PEM key", async () => {
+    vi.spyOn(global, "fetch").mockResolvedValue({
+      ok: true,
+      headers: plainTextHeaders,
+      text: async () => "not a key",
+    } as unknown as Response);
+
+    const token = signToken();
+    await expect(
+      validateJWT({ "x-dab-jw-token": token }, BASE_URL),
+    ).rejects.toThrow(/public key not found/i);
   });
 });
 
@@ -138,8 +195,9 @@ describe("validateJWT — public key caching", () => {
     const fetchSpy = mockPublicKeyEndpoint() as unknown;
     const spyFetch = vi.spyOn(global, "fetch").mockResolvedValue({
       ok: true,
+      headers: jsonHeaders,
       json: async () => ({ public_key: publicKey }),
-    } as Response);
+    } as unknown as Response);
 
     const token = signToken();
     await validateJWT({ "x-dab-jw-token": token }, BASE_URL);
@@ -156,8 +214,9 @@ describe("validateJWT — public key caching", () => {
   it("re-fetches the public key after the cache is cleared", async () => {
     const spyFetch = vi.spyOn(global, "fetch").mockResolvedValue({
       ok: true,
+      headers: jsonHeaders,
       json: async () => ({ public_key: publicKey }),
-    } as Response);
+    } as unknown as Response);
 
     const token = signToken();
     await validateJWT({ "x-dab-jw-token": token }, BASE_URL);
@@ -211,12 +270,14 @@ describe("validateJWT — key rotation handling", () => {
       .spyOn(global, "fetch")
       .mockResolvedValueOnce({
         ok: true,
+        headers: jsonHeaders,
         json: async () => ({ public_key: publicKey }), // old key
-      } as Response)
+      } as unknown as Response)
       .mockResolvedValueOnce({
         ok: true,
+        headers: jsonHeaders,
         json: async () => ({ public_key: rotatedPublicKey }), // new key
-      } as Response);
+      } as unknown as Response);
 
     // Token signed with the NEW private key (after rotation)
     const token = jwt.sign(DEFAULT_CLAIMS, rotatedPrivateKey, {
@@ -241,8 +302,9 @@ describe("validateJWT — key rotation handling", () => {
     // Both fetches return the same key that doesn't match the token
     vi.spyOn(global, "fetch").mockResolvedValue({
       ok: true,
+      headers: jsonHeaders,
       json: async () => ({ public_key: publicKey }),
-    } as Response);
+    } as unknown as Response);
 
     const token = jwt.sign(DEFAULT_CLAIMS, unknownKey, { algorithm: "RS256" });
 
@@ -341,8 +403,9 @@ describe("validateJWT — public key fetch failures", () => {
   it("throws when the public key endpoint returns an empty body", async () => {
     vi.spyOn(global, "fetch").mockResolvedValue({
       ok: true,
+      headers: jsonHeaders,
       json: async () => ({}),
-    } as Response);
+    } as unknown as Response);
 
     const token = signToken();
     await expect(
