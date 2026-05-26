@@ -423,7 +423,8 @@ app.use((req, res, next) => {
   // Only apply to POST requests to MCP endpoints
   if (req.method === "POST" && req.path.includes("/mcp")) {
     const sessionId = req.headers["mcp-session-id"];
-    const authHeader = req.headers["authorization"];
+    const authHeader =
+      req.headers["authorization"] || req.headers["x-authorization"];
 
     // Reject requests without session ID or Authorization header immediately
     // This prevents expensive JSON parsing and session creation for unauthenticated requests
@@ -460,7 +461,8 @@ const authenticateRequest = async (
   | { ok: false; reason: "no-token" }
   | { ok: false; reason: "invalid-token" }
 > => {
-  const authHeader = req.headers["authorization"] as string;
+  const authHeader = (req.headers["authorization"] ||
+    req.headers["x-authorization"]) as string;
   const token = extractBearerToken(authHeader);
   if (!token) {
     return { ok: false, reason: "no-token" };
