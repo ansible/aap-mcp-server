@@ -21,6 +21,7 @@ env:
 jobs:
   sync:
     name: "Sync → aap-mcp-server"
+    if: github.repository_owner == 'ansible'
     runs-on: ubuntu-latest
 
     steps:
