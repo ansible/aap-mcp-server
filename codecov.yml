@@ -1,0 +1,38 @@
+codecov:
+  require_ci_to_pass: yes
+
+coverage:
+  precision: 2
+  round: down
+  range: "50...100"
+
+  # Align with SonarCloud exclusions from sonar-project.properties
+  # and vitest.config.ts coverage configuration
+  ignore:
+    # TypeScript test files
+    - "src/**/*.test.ts"
+    - "src/**/*.spec.ts"
+    - "src/**/__tests__/**"
+    # Test directory
+    - "tests/**"
+    # Build artifacts and configuration
+    - "dist/**"
+    - "coverage/**"
+    - "scripts/**"
+    - "**/*.config.ts"
+    - "**/*.config.js"
+    # Data files
+    - "data/**/*.json"
+
+flags:
+  typescript:
+    carryforward: true
+    paths:
+      - src/
+
+comment:
+  layout: "reach,diff,flags,files"
+  behavior: default
+  require_changes: false
+  require_base: true
+  require_head: true
