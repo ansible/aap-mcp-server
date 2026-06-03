@@ -22,6 +22,9 @@ import {
 import { AnalyticsService } from "./analytics.js";
 import { PseudoIdentityService, type UserInfo } from "./pseudo-identity.js";
 import { AapMcpConfig, loadToolsetsFromCfg } from "./config-utils.js";
+import { createOAuth2Provider, type OAuth2Setup } from "./oauth2-provider.js";
+import { errors as joseErrors } from "jose";
+import rateLimit from "express-rate-limit";
 
 // Load environment variables
 config();
@@ -51,7 +54,24 @@ const CONFIG = {
     localConfig.analytics_key ||
     ""
   ).trim(),
+  OAUTH2_CLIENT_ID: (process.env.OAUTH2_CLIENT_ID || "").trim(),
+  OAUTH2_CLIENT_SECRET: (process.env.OAUTH2_CLIENT_SECRET || "").trim(),
+  MCP_SERVER_URL: (process.env.MCP_SERVER_URL || "").trim(),
+  OAUTH2_ALLOWED_REDIRECT_HOSTS: (
+    process.env.OAUTH2_ALLOWED_REDIRECT_HOSTS || "localhost,127.0.0.1,[::1]"
+  )
+    .split(",")
+    .map((h) => h.trim())
+    .filter(Boolean),
+  OAUTH2_RATE_LIMIT: process.env.OAUTH2_RATE_LIMIT
+    ? parseInt(process.env.OAUTH2_RATE_LIMIT, 10)
+    : 100,
 } as const;
+
+const oauth2Enabled = !!(
+  CONFIG.OAUTH2_CLIENT_ID && CONFIG.OAUTH2_CLIENT_SECRET
+);
+let oauth2Setup: OAuth2Setup | undefined;
 
 // Initialize analytics service (always instantiated, but only enabled if key provided)
 const analyticsService = new AnalyticsService();
@@ -83,6 +103,8 @@ const allowWriteOperations = getBooleanConfig(
 const allowedOperations = allowWriteOperations
   ? ["GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"]
   : ["GET", "HEAD", "OPTIONS"];
+
+const oauth2Scope = allowWriteOperations ? "read write" : "read";
 
 // Get configured default page size
 const { value: defaultPageSize, source: defaultPageSizeSource } =
@@ -124,6 +146,29 @@ const extractBearerToken = (
   return authHeader && authHeader.startsWith("Bearer ")
     ? authHeader.substring(7)
     : undefined;
+};
+
+const extractTokenFromRequest = (req: express.Request): string | undefined => {
+  const authHeader = (req.headers["authorization"] ||
+    req.headers["x-authorization"]) as string;
+  return extractBearerToken(authHeader);
+};
+
+const buildRequestContext = (
+  token: string,
+  toolset: string,
+  userInfo: UserInfo,
+  userAgent: string,
+): RequestContext => {
+  const identity = userIdentityService.deriveIdentity(userInfo);
+  return {
+    token,
+    toolset,
+    userAgent,
+    userPseudoId: identity.userPseudoId,
+    userType: identity.userType,
+    installerPseudoId: identity.installerPseudoId,
+  };
 };
 
 // Validate authorization token
@@ -435,14 +480,32 @@ app.use((req, res, next) => {
     // Reject requests without session ID or Authorization header immediately
     // This prevents expensive JSON parsing and session creation for unauthenticated requests
     if (!sessionId && !authHeader) {
-      res.status(401).json({
-        jsonrpc: "2.0",
-        error: {
-          code: -32000,
-          message: "Unauthorized: Bearer token or session ID required",
-        },
-        id: null,
-      });
+      if (oauth2Setup) {
+        const metadataUrl = oauth2Setup.getResourceMetadataUrl(req.path);
+        res
+          .status(401)
+          .set(
+            "WWW-Authenticate",
+            `Bearer resource_metadata="${metadataUrl}", scope="${oauth2Scope}"`,
+          )
+          .json({
+            jsonrpc: "2.0",
+            error: {
+              code: -32000,
+              message: "Unauthorized: Bearer token required",
+            },
+            id: null,
+          });
+      } else {
+        res.status(401).json({
+          jsonrpc: "2.0",
+          error: {
+            code: -32000,
+            message: "Unauthorized: Bearer token or session ID required",
+          },
+          id: null,
+        });
+      }
       return;
     }
   }
@@ -458,7 +521,7 @@ app.use(
   }),
 );
 
-// Authenticate the request and build the per-request context
+// Authenticate via legacy token validation against AAP /me/
 const authenticateRequest = async (
   req: express.Request,
   toolset: string,
@@ -467,9 +530,7 @@ const authenticateRequest = async (
   | { ok: false; reason: "no-token" }
   | { ok: false; reason: "invalid-token" }
 > => {
-  const authHeader = (req.headers["authorization"] ||
-    req.headers["x-authorization"]) as string;
-  const token = extractBearerToken(authHeader);
+  const token = extractTokenFromRequest(req);
   if (!token) {
     return { ok: false, reason: "no-token" };
   }
@@ -482,20 +543,66 @@ const authenticateRequest = async (
     return { ok: false, reason: "invalid-token" };
   }
 
-  const identity = userIdentityService.deriveIdentity(userInfo);
   const userAgent = (req.headers["user-agent"] as string) || "unknown";
-
   return {
     ok: true,
-    ctx: {
-      token,
-      toolset,
-      userAgent,
-      userPseudoId: identity.userPseudoId,
-      userType: identity.userType,
-      installerPseudoId: identity.installerPseudoId,
-    },
+    ctx: buildRequestContext(token, toolset, userInfo, userAgent),
   };
+};
+
+// Try to authenticate via JWT (OAuth2) first, then fall back to legacy token validation
+const authenticateRequestWithOAuth2 = async (
+  req: express.Request,
+  toolset: string,
+): Promise<
+  | { ok: true; ctx: RequestContext }
+  | { ok: false; reason: "no-token" }
+  | { ok: false; reason: "invalid-token" }
+> => {
+  const token = extractTokenFromRequest(req);
+  if (!token) {
+    return { ok: false, reason: "no-token" };
+  }
+
+  // Try JWT verification first (fast, local) when OAuth2 is configured
+  // Only attempt if the token looks like a JWT (three dot-separated segments)
+  if (oauth2Setup && token.split(".").length === 3) {
+    try {
+      const authInfo = await oauth2Setup.verifyAccessToken(token);
+      const jwtExtra = authInfo.extra || {};
+      const userInfo: UserInfo = {
+        ansibleId: jwtExtra.sub as string,
+        email: jwtExtra.email as string,
+      };
+      const userAgent = (req.headers["user-agent"] as string) || "unknown";
+      return {
+        ok: true,
+        ctx: buildRequestContext(token, toolset, userInfo, userAgent),
+      };
+    } catch (jwtError) {
+      // Audience, issuer, or signature failures are security-relevant —
+      // reject immediately without falling back to legacy validation.
+      if (
+        jwtError instanceof joseErrors.JWTClaimValidationFailed ||
+        jwtError instanceof joseErrors.JWTExpired ||
+        jwtError instanceof joseErrors.JWSSignatureVerificationFailed
+      ) {
+        console.debug(
+          `${getTimestamp()} JWT rejected (no fallback): %s`,
+          jwtError instanceof Error ? jwtError.message : jwtError,
+        );
+        return { ok: false, reason: "invalid-token" };
+      }
+      // Structural errors (not actually a JWT) — fall back to legacy
+      console.debug(
+        `${getTimestamp()} JWT verification failed, falling back to legacy auth: %s`,
+        jwtError instanceof Error ? jwtError.message : jwtError,
+      );
+    }
+  }
+
+  // Legacy path: validate opaque token against AAP /me/
+  return authenticateRequest(req, toolset);
 };
 
 // MCP POST endpoint handler - stateless, no sessions
@@ -507,20 +614,40 @@ const mcpPostHandler = async (
   console.log(`${getTimestamp()} Received MCP request`);
 
   try {
-    // Authenticate every request
-    const authResult = await authenticateRequest(req, toolset);
+    // Authenticate every request (JWT first if OAuth2 enabled, then legacy)
+    const authResult = await authenticateRequestWithOAuth2(req, toolset);
     if (!authResult.ok) {
       const isInvalidToken = authResult.reason === "invalid-token";
-      res.status(401).json({
-        jsonrpc: "2.0",
-        error: {
-          code: -32000,
-          message: isInvalidToken
-            ? "Unauthorized: Invalid or expired token"
-            : "Unauthorized: Bearer token required",
-        },
-        id: isInvalidToken ? (req.body as any)?.id || null : null,
-      });
+      if (oauth2Setup) {
+        const metadataUrl = oauth2Setup.getResourceMetadataUrl(req.path);
+        const wwwAuth = isInvalidToken
+          ? `Bearer error="invalid_token", resource_metadata="${metadataUrl}", scope="${oauth2Scope}"`
+          : `Bearer resource_metadata="${metadataUrl}", scope="${oauth2Scope}"`;
+        res
+          .status(401)
+          .set("WWW-Authenticate", wwwAuth)
+          .json({
+            jsonrpc: "2.0",
+            error: {
+              code: -32000,
+              message: isInvalidToken
+                ? "Unauthorized: Invalid or expired token"
+                : "Unauthorized: Bearer token required",
+            },
+            id: isInvalidToken ? (req.body as any)?.id || null : null,
+          });
+      } else {
+        res.status(401).json({
+          jsonrpc: "2.0",
+          error: {
+            code: -32000,
+            message: isInvalidToken
+              ? "Unauthorized: Invalid or expired token"
+              : "Unauthorized: Bearer token required",
+          },
+          id: isInvalidToken ? (req.body as any)?.id || null : null,
+        });
+      }
       return;
     }
 
@@ -565,6 +692,54 @@ const mcpPostHandler = async (
 
 const allTools: AAPMcpToolDefinition[] = await generateTools();
 const allToolsets = loadToolsetsFromCfg(allTools, localConfig);
+
+// OAuth2 auth router placeholder — mounted here (before MCP routes) so
+// /authorize, /token, /register, /.well-known/* are matched first.
+// The actual router is attached in main() after OIDC discovery completes.
+const oauthRateLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  limit: CONFIG.OAUTH2_RATE_LIMIT,
+  standardHeaders: "draft-8",
+  legacyHeaders: false,
+  message: { error: "Too many requests, please try again later" },
+  skip: (req) =>
+    !req.path.startsWith("/.well-known/oauth") &&
+    ![
+      "/register",
+      "/authorize",
+      "/token",
+      "/revoke",
+      "/oauth/callback",
+    ].includes(req.path),
+});
+let oauthRouterSlot: express.RequestHandler | undefined;
+app.use((req, res, next) => {
+  if (oauthRouterSlot) {
+    return oauthRateLimiter(req, res, () => oauthRouterSlot!(req, res, next));
+  }
+  next();
+});
+// Catch errors from the OAuth2 router that would otherwise return a bare 500
+app.use(
+  (
+    err: Error,
+    req: express.Request,
+    res: express.Response,
+    _next: express.NextFunction,
+  ) => {
+    const safePath = req.path.replace(/[^\w/.-]/g, "_");
+    console.error(
+      "%s [OAuth2 error] %s %s: %s",
+      getTimestamp(),
+      req.method,
+      safePath,
+      err.message,
+    );
+    if (!res.headersSent) {
+      res.status(500).json({ error: "Internal server error" });
+    }
+  },
+);
 
 // Set up routes - POST only, no GET/DELETE (no sessions to stream or terminate)
 app.post("/mcp", (req, res) => mcpPostHandler(req, res));
@@ -620,6 +795,25 @@ if (enableMetrics) {
 }
 
 async function main(): Promise<void> {
+  // Initialize OAuth2 provider if configured
+  if (oauth2Enabled) {
+    const serverUrl =
+      CONFIG.MCP_SERVER_URL || `http://localhost:${CONFIG.MCP_PORT}`;
+    try {
+      oauth2Setup = await createOAuth2Provider({
+        clientId: CONFIG.OAUTH2_CLIENT_ID,
+        clientSecret: CONFIG.OAUTH2_CLIENT_SECRET,
+        baseUrl: CONFIG.BASE_URL,
+        serverUrl,
+        allowedRedirectHosts: CONFIG.OAUTH2_ALLOWED_REDIRECT_HOSTS,
+      });
+      oauthRouterSlot = oauth2Setup.authRouter;
+    } catch (error) {
+      console.error(`${getTimestamp()} OAuth2 initialization failed:`, error);
+      console.error(`${getTimestamp()} Falling back to legacy auth only`);
+    }
+  }
+
   // Print startup banner
   console.log("");
   console.log("═══════════════════════════════════════════════════════════");
@@ -639,6 +833,12 @@ async function main(): Promise<void> {
     `  Certificate validation: ${ignoreCertificateErrors ? "DISABLED" : "ENABLED"}`,
   );
   console.log(`  Metrics: ${enableMetrics ? "ENABLED" : "DISABLED"}`);
+  console.log(`  OAuth2: ${oauth2Setup ? "ENABLED" : "DISABLED"}`);
+  if (oauth2Setup) {
+    console.log(
+      `  OAuth2 rate limit: ${CONFIG.OAUTH2_RATE_LIMIT} req/min per IP`,
+    );
+  }
   console.log(
     `  Default page_size: ${defaultPageSize} (from ${defaultPageSizeSource})`,
   );
