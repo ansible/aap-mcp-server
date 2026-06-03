@@ -484,7 +484,11 @@ export function extractToolsFromApi(
 
       // Generate input schema and extract parameters
       const { inputSchema, parameters, requestBodyContentType } =
-        generateInputSchemaAndDetails(operation, pathItem.parameters, defaultPageSize);
+        generateInputSchemaAndDetails(
+          operation,
+          pathItem.parameters,
+          defaultPageSize,
+        );
 
       if (typeof inputSchema === "object" && inputSchema.properties) {
         const propertiesEntries = Object.entries(inputSchema.properties).map(

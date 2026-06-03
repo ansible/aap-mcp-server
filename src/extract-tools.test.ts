@@ -1043,10 +1043,14 @@ describe("Default page_size in tool extraction", () => {
     const spec = createSpecWithPageSize();
 
     const tools50 = extractToolsFromApi(spec, true, 50);
-    expect((tools50[0].inputSchema as any).properties.page_size.default).toBe(50);
+    expect((tools50[0].inputSchema as any).properties.page_size.default).toBe(
+      50,
+    );
 
     const tools100 = extractToolsFromApi(spec, true, 100);
-    expect((tools100[0].inputSchema as any).properties.page_size.default).toBe(100);
+    expect((tools100[0].inputSchema as any).properties.page_size.default).toBe(
+      100,
+    );
   });
 
   it("should only apply to query parameters named page_size", () => {
