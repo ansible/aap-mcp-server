@@ -1,6 +1,11 @@
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import type { AAPMcpToolDefinition } from "./openapi-loader.js";
 import { AapMcpConfig, loadToolsetsFromCfg } from "./config-utils.js";
+import {
+  getDefaultPageSize,
+  DEFAULT_PAGE_SIZE,
+  MAX_PAGE_SIZE,
+} from "./extract-tools.js";
 
 // Helper function to create mock tools with all required properties
 const createMockTool = (
@@ -524,6 +529,132 @@ describe("loadToolsetsFromCfg", () => {
       const allToolNames = result.all.map((tool) => tool.fullName);
       expect(allToolNames).toContain("eda.tool1");
       expect(allToolNames).toContain("controller.tool2");
+    });
+  });
+});
+
+describe("getDefaultPageSize", () => {
+  const originalEnv = process.env.DEFAULT_PAGE_SIZE;
+
+  afterEach(() => {
+    if (originalEnv === undefined) {
+      delete process.env.DEFAULT_PAGE_SIZE;
+    } else {
+      process.env.DEFAULT_PAGE_SIZE = originalEnv;
+    }
+  });
+
+  describe("priority resolution", () => {
+    it("should return hard-coded default when no config or env var is set", () => {
+      delete process.env.DEFAULT_PAGE_SIZE;
+      const result = getDefaultPageSize();
+      expect(result.value).toBe(DEFAULT_PAGE_SIZE);
+      expect(result.source).toBe("hard-coded default");
+    });
+
+    it("should return hard-coded default when config has no default-page-size", () => {
+      delete process.env.DEFAULT_PAGE_SIZE;
+      const result = getDefaultPageSize({});
+      expect(result.value).toBe(DEFAULT_PAGE_SIZE);
+      expect(result.source).toBe("hard-coded default");
+    });
+
+    it("should use config file value when set and no env var", () => {
+      delete process.env.DEFAULT_PAGE_SIZE;
+      const result = getDefaultPageSize({ "default-page-size": 50 });
+      expect(result.value).toBe(50);
+      expect(result.source).toBe("config file");
+    });
+
+    it("should use environment variable over config file", () => {
+      process.env.DEFAULT_PAGE_SIZE = "75";
+      const result = getDefaultPageSize({ "default-page-size": 50 });
+      expect(result.value).toBe(75);
+      expect(result.source).toBe("environment variable");
+    });
+
+    it("should use environment variable when no config provided", () => {
+      process.env.DEFAULT_PAGE_SIZE = "42";
+      const result = getDefaultPageSize();
+      expect(result.value).toBe(42);
+      expect(result.source).toBe("environment variable");
+    });
+
+    it("should ignore config file value when env var is set", () => {
+      process.env.DEFAULT_PAGE_SIZE = "100";
+      const result = getDefaultPageSize({ "default-page-size": 25 });
+      expect(result.value).toBe(100);
+      expect(result.source).toBe("environment variable");
+    });
+  });
+
+  describe("validation", () => {
+    it("should reject negative config file value", () => {
+      delete process.env.DEFAULT_PAGE_SIZE;
+      expect(() => getDefaultPageSize({ "default-page-size": -1 })).toThrow(
+        "Must be a positive integer",
+      );
+    });
+
+    it("should reject zero config file value", () => {
+      delete process.env.DEFAULT_PAGE_SIZE;
+      expect(() => getDefaultPageSize({ "default-page-size": 0 })).toThrow(
+        "Must be a positive integer",
+      );
+    });
+
+    it("should reject non-integer config file value", () => {
+      delete process.env.DEFAULT_PAGE_SIZE;
+      expect(() => getDefaultPageSize({ "default-page-size": 10.5 })).toThrow(
+        "Must be a positive integer",
+      );
+    });
+
+    it("should reject config file value exceeding MAX_PAGE_SIZE", () => {
+      delete process.env.DEFAULT_PAGE_SIZE;
+      expect(() => getDefaultPageSize({ "default-page-size": 201 })).toThrow(
+        `exceeds maximum of ${MAX_PAGE_SIZE}`,
+      );
+    });
+
+    it("should accept config file value at MAX_PAGE_SIZE", () => {
+      delete process.env.DEFAULT_PAGE_SIZE;
+      const result = getDefaultPageSize({ "default-page-size": MAX_PAGE_SIZE });
+      expect(result.value).toBe(MAX_PAGE_SIZE);
+    });
+
+    it("should reject non-numeric env var", () => {
+      process.env.DEFAULT_PAGE_SIZE = "abc";
+      expect(() => getDefaultPageSize()).toThrow("Must be a positive integer");
+    });
+
+    it("should reject negative env var", () => {
+      process.env.DEFAULT_PAGE_SIZE = "-5";
+      expect(() => getDefaultPageSize()).toThrow("Must be a positive integer");
+    });
+
+    it("should reject zero env var", () => {
+      process.env.DEFAULT_PAGE_SIZE = "0";
+      expect(() => getDefaultPageSize()).toThrow("Must be a positive integer");
+    });
+
+    it("should reject env var exceeding MAX_PAGE_SIZE", () => {
+      process.env.DEFAULT_PAGE_SIZE = "300";
+      expect(() => getDefaultPageSize()).toThrow(
+        `exceeds maximum of ${MAX_PAGE_SIZE}`,
+      );
+    });
+
+    it("should accept env var at MAX_PAGE_SIZE", () => {
+      process.env.DEFAULT_PAGE_SIZE = String(MAX_PAGE_SIZE);
+      const result = getDefaultPageSize();
+      expect(result.value).toBe(MAX_PAGE_SIZE);
+    });
+
+    it("should accept value of 1", () => {
+      delete process.env.DEFAULT_PAGE_SIZE;
+      const result = getDefaultPageSize({ "default-page-size": 1 });
+      expect(result.value).toBe(1);
     });
   });
 });

@@ -10,7 +10,7 @@ import {
   CallToolRequestSchema,
   ListToolsRequestSchema,
 } from "@modelcontextprotocol/sdk/types.js";
-import { extractToolsFromApi } from "./extract-tools.js";
+import { extractToolsFromApi, getDefaultPageSize } from "./extract-tools.js";
 import { readFileSync, writeFileSync } from "fs";
 import { join } from "path";
 import * as yaml from "js-yaml";
@@ -83,6 +83,10 @@ const allowWriteOperations = getBooleanConfig(
 const allowedOperations = allowWriteOperations
   ? ["GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"]
   : ["GET", "HEAD", "OPTIONS"];
+
+// Get configured default page size
+const { value: defaultPageSize, source: defaultPageSizeSource } =
+  getDefaultPageSize(localConfig);
 
 // Get services configuration
 const servicesConfig = localConfig.services || [];
@@ -193,6 +197,8 @@ const generateTools = async (): Promise<AAPMcpToolDefinition[]> => {
     try {
       const tools = extractToolsFromApi(
         bundledSpec as any,
+        true,
+        defaultPageSize,
       ) as AAPMcpToolDefinition[];
       const filteredTools = tools.filter((tool) => {
         tool.service = spec.service; // Add service information to each tool
@@ -631,6 +637,12 @@ async function main(): Promise<void> {
     `  Certificate validation: ${ignoreCertificateErrors ? "DISABLED" : "ENABLED"}`,
   );
   console.log(`  Metrics: ${enableMetrics ? "ENABLED" : "DISABLED"}`);
+  console.log(
+    `  Default page_size: ${defaultPageSize} (from ${defaultPageSizeSource})`,
+  );
+  console.log(
+    `  NOTE: Default page_size changed to ${defaultPageSize} (was 25). Set DEFAULT_PAGE_SIZE=25 to restore previous behavior.`,
+  );
   console.log("");
   console.log("───────────────────────────────────────────────────────────");
 
