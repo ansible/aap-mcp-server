@@ -19,8 +19,9 @@ export function getDefaultPageSize(config?: { "default-page-size"?: number }): {
   let source: string = "hard-coded default";
 
   if (process.env.DEFAULT_PAGE_SIZE) {
-    const envValue = Number.parseInt(process.env.DEFAULT_PAGE_SIZE, 10);
-    if (Number.isNaN(envValue) || envValue < 1) {
+    const envRaw = process.env.DEFAULT_PAGE_SIZE.trim();
+    const envValue = Number(envRaw);
+    if (!Number.isInteger(envValue) || envValue < 1) {
       throw new Error(
         `Invalid DEFAULT_PAGE_SIZE environment variable: ${process.env.DEFAULT_PAGE_SIZE}. Must be a positive integer.`,
       );

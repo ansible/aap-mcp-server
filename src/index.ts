@@ -640,9 +640,11 @@ async function main(): Promise<void> {
   console.log(
     `  Default page_size: ${defaultPageSize} (from ${defaultPageSizeSource})`,
   );
-  console.log(
-    `  NOTE: Default page_size changed to ${defaultPageSize} (was 25). Set DEFAULT_PAGE_SIZE=25 to restore previous behavior.`,
-  );
+  if (defaultPageSizeSource === "hard-coded default") {
+    console.log(
+      `  NOTE: Default page_size changed to ${defaultPageSize} (was 25). Set DEFAULT_PAGE_SIZE=25 to restore previous behavior.`,
+    );
+  }
   console.log("");
   console.log("───────────────────────────────────────────────────────────");
 

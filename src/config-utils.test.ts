@@ -628,6 +628,11 @@ describe("getDefaultPageSize", () => {
       expect(() => getDefaultPageSize()).toThrow("Must be a positive integer");
     });
 
+    it("should reject env var with trailing garbage", () => {
+      process.env.DEFAULT_PAGE_SIZE = "75abc";
+      expect(() => getDefaultPageSize()).toThrow("Must be a positive integer");
+    });
+
     it("should reject negative env var", () => {
       process.env.DEFAULT_PAGE_SIZE = "-5";
       expect(() => getDefaultPageSize()).toThrow("Must be a positive integer");
