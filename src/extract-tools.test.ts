@@ -1009,7 +1009,7 @@ describe("Default page_size in tool extraction", () => {
   });
 
   it("should not affect tools without page_size parameter", () => {
-    const spec = {
+    const spec: any = {
       openapi: "3.0.0",
       info: { title: "Test API", version: "1.0.0" },
       paths: {
@@ -1054,7 +1054,7 @@ describe("Default page_size in tool extraction", () => {
   });
 
   it("should only apply to query parameters named page_size", () => {
-    const spec = {
+    const spec: any = {
       openapi: "3.0.0",
       info: { title: "Test API", version: "1.0.0" },
       paths: {
