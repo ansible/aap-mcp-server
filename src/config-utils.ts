@@ -7,6 +7,7 @@ export interface AapMcpConfig {
   allow_write_operations?: boolean;
   base_url?: string;
   session_timeout?: number;
+  "default-page-size"?: number;
   services?: ServiceConfig[];
   toolsets: Record<string, string[]>;
   analytics_key?: string;

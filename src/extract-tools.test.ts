@@ -1,6 +1,7 @@
 import { describe, it, expect, vi } from "vitest";
 import {
   extractToolsFromApi,
+  generateInputSchemaAndDetails,
   AAPOperationObject,
   normalizeBoolean,
   shouldIncludeOperationForMcp,
@@ -950,5 +951,202 @@ describe("shouldIncludeOperationForMcp", () => {
     );
 
     consoleSpy.mockRestore();
+  });
+});
+
+describe("Default page_size in tool extraction", () => {
+  const createSpecWithPageSize = (pageSizeDefault?: number) => {
+    const pageSizeParam: any = {
+      name: "page_size",
+      in: "query",
+      schema: { type: "integer" },
+      description: "Number of results per page",
+    };
+    if (pageSizeDefault !== undefined) {
+      pageSizeParam.schema.default = pageSizeDefault;
+    }
+    return {
+      openapi: "3.0.0",
+      info: { title: "Test API", version: "1.0.0" },
+      paths: {
+        "/items": {
+          get: {
+            operationId: "items_list",
+            "x-ai-description": "List items",
+            parameters: [pageSizeParam],
+            responses: { "200": { description: "Success" } },
+          },
+        },
+      },
+    };
+  };
+
+  it("should set page_size default when not present in OpenAPI schema", () => {
+    const spec = createSpecWithPageSize();
+    const tools = extractToolsFromApi(spec, true, 10);
+
+    expect(tools).toHaveLength(1);
+    const schema = tools[0].inputSchema as any;
+    expect(schema.properties.page_size.default).toBe(10);
+  });
+
+  it("should preserve existing OpenAPI schema default", () => {
+    const spec = createSpecWithPageSize(25);
+    const tools = extractToolsFromApi(spec, true, 10);
+
+    expect(tools).toHaveLength(1);
+    const schema = tools[0].inputSchema as any;
+    expect(schema.properties.page_size.default).toBe(25);
+  });
+
+  it("should not set default when defaultPageSize is not provided", () => {
+    const spec = createSpecWithPageSize();
+    const tools = extractToolsFromApi(spec, true);
+
+    expect(tools).toHaveLength(1);
+    const schema = tools[0].inputSchema as any;
+    expect(schema.properties.page_size.default).toBeUndefined();
+  });
+
+  it("should not affect tools without page_size parameter", () => {
+    const spec: any = {
+      openapi: "3.0.0",
+      info: { title: "Test API", version: "1.0.0" },
+      paths: {
+        "/items/{id}": {
+          get: {
+            operationId: "items_retrieve",
+            "x-ai-description": "Retrieve item",
+            parameters: [
+              {
+                name: "id",
+                in: "path",
+                required: true,
+                schema: { type: "integer" },
+                description: "Item ID",
+              },
+            ],
+            responses: { "200": { description: "Success" } },
+          },
+        },
+      },
+    };
+
+    const tools = extractToolsFromApi(spec, true, 10);
+    expect(tools).toHaveLength(1);
+    const schema = tools[0].inputSchema as any;
+    expect(schema.properties.id).toBeDefined();
+    expect(schema.properties.page_size).toBeUndefined();
+  });
+
+  it("should apply different defaultPageSize values", () => {
+    const spec = createSpecWithPageSize();
+
+    const tools50 = extractToolsFromApi(spec, true, 50);
+    expect((tools50[0].inputSchema as any).properties.page_size.default).toBe(
+      50,
+    );
+
+    const tools100 = extractToolsFromApi(spec, true, 100);
+    expect((tools100[0].inputSchema as any).properties.page_size.default).toBe(
+      100,
+    );
+  });
+
+  it("should only apply to query parameters named page_size", () => {
+    const spec: any = {
+      openapi: "3.0.0",
+      info: { title: "Test API", version: "1.0.0" },
+      paths: {
+        "/items/{page_size}": {
+          get: {
+            operationId: "items_by_page",
+            "x-ai-description": "List items by page size",
+            parameters: [
+              {
+                name: "page_size",
+                in: "path",
+                required: true,
+                schema: { type: "integer" },
+                description: "Page size in path",
+              },
+            ],
+            responses: { "200": { description: "Success" } },
+          },
+        },
+      },
+    };
+
+    const tools = extractToolsFromApi(spec, true, 10);
+    expect(tools).toHaveLength(1);
+    const schema = tools[0].inputSchema as any;
+    expect(schema.properties.page_size.default).toBeUndefined();
+  });
+});
+
+describe("generateInputSchemaAndDetails with defaultPageSize", () => {
+  it("should set page_size default on query parameter", () => {
+    const operation = new AAPOperationObject({
+      operationId: "test_list",
+      parameters: [
+        {
+          name: "page_size",
+          in: "query",
+          schema: { type: "integer" },
+          description: "Page size",
+        },
+      ],
+      responses: { "200": { description: "OK" } },
+    });
+
+    const { inputSchema } = generateInputSchemaAndDetails(
+      operation,
+      undefined,
+      15,
+    );
+
+    expect((inputSchema as any).properties.page_size.default).toBe(15);
+  });
+
+  it("should not override existing default", () => {
+    const operation = new AAPOperationObject({
+      operationId: "test_list",
+      parameters: [
+        {
+          name: "page_size",
+          in: "query",
+          schema: { type: "integer", default: 25 },
+          description: "Page size",
+        },
+      ],
+      responses: { "200": { description: "OK" } },
+    });
+
+    const { inputSchema } = generateInputSchemaAndDetails(
+      operation,
+      undefined,
+      15,
+    );
+
+    expect((inputSchema as any).properties.page_size.default).toBe(25);
+  });
+
+  it("should not set default when defaultPageSize is undefined", () => {
+    const operation = new AAPOperationObject({
+      operationId: "test_list",
+      parameters: [
+        {
+          name: "page_size",
+          in: "query",
+          schema: { type: "integer" },
+          description: "Page size",
+        },
+      ],
+      responses: { "200": { description: "OK" } },
+    });
+
+    const { inputSchema } = generateInputSchemaAndDetails(operation);
+
+    expect((inputSchema as any).properties.page_size.default).toBeUndefined();
   });
 });

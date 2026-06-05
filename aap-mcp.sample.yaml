@@ -23,6 +23,11 @@
 # Allow write operation (POST, DELETE and PATCH)
 # allow_write_operations: false
 
+# Global default page size for all list operations (1-200)
+# Priority: DEFAULT_PAGE_SIZE env var > this setting > hard-coded default (10)
+# OpenAPI schema defaults take precedence over this value
+# default-page-size: 10
+
 services:
   - name: controller
     # url: "https://custom-controller.example.com/api/v2/schema/"

@@ -8,6 +8,47 @@ import { OpenAPIV3 } from "openapi-types";
 import type { JSONSchema7 } from "json-schema";
 import type { McpToolDefinition } from "openapi-mcp-generator";
 
+export const DEFAULT_PAGE_SIZE = 10;
+export const MAX_PAGE_SIZE = 200;
+
+export function getDefaultPageSize(config?: { "default-page-size"?: number }): {
+  value: number;
+  source: string;
+} {
+  let resolvedValue: number = DEFAULT_PAGE_SIZE;
+  let source: string = "hard-coded default";
+
+  if (process.env.DEFAULT_PAGE_SIZE) {
+    const envRaw = process.env.DEFAULT_PAGE_SIZE.trim();
+    const envValue = Number(envRaw);
+    if (!Number.isInteger(envValue) || envValue < 1) {
+      throw new Error(
+        `Invalid DEFAULT_PAGE_SIZE environment variable: ${process.env.DEFAULT_PAGE_SIZE}. Must be a positive integer.`,
+      );
+    }
+    resolvedValue = envValue;
+    source = "environment variable";
+  } else if (config?.["default-page-size"] !== undefined) {
+    const configValue = config["default-page-size"];
+    if (!Number.isInteger(configValue) || configValue < 1) {
+      throw new Error(
+        `Invalid default-page-size: ${configValue}. Must be a positive integer.`,
+      );
+    }
+    resolvedValue = configValue;
+    source = "config file";
+  }
+
+  if (resolvedValue > MAX_PAGE_SIZE) {
+    throw new Error(
+      `Invalid page size ${resolvedValue} (from ${source}): exceeds maximum of ${MAX_PAGE_SIZE}. ` +
+        `Large page sizes defeat the purpose of this setting and risk exhausting the LLM context window.`,
+    );
+  }
+
+  return { value: resolvedValue, source };
+}
+
 export interface McpToolLogEntry {
   severity: "INFO" | "WARN" | "ERR";
   msg: string;
@@ -214,6 +255,7 @@ export function mapOpenApiSchemaToJsonSchema(
 export function generateInputSchemaAndDetails(
   operation: AAPOperationObject,
   pathParameters?: (OpenAPIV3.ParameterObject | OpenAPIV3.ReferenceObject)[],
+  defaultPageSize?: number,
 ): {
   inputSchema: JSONSchema7 | boolean;
   parameters: OpenAPIV3.ParameterObject[];
@@ -259,6 +301,17 @@ export function generateInputSchemaAndDetails(
     const paramSchema = mapOpenApiSchemaToJsonSchema(
       param.schema as OpenAPIV3.SchemaObject,
     );
+
+    if (
+      param.name === "page_size" &&
+      param.in === "query" &&
+      typeof paramSchema === "object" &&
+      defaultPageSize !== undefined &&
+      paramSchema.default === undefined
+    ) {
+      paramSchema.default = defaultPageSize;
+    }
+
     if (typeof paramSchema === "object") {
       paramSchema.description = param.description || paramSchema.description;
     }
@@ -328,6 +381,7 @@ export function generateInputSchemaAndDetails(
 export function extractToolsFromApi(
   api: OpenAPIV3.Document,
   defaultInclude = true,
+  defaultPageSize?: number,
 ): AAPMcpToolDefinition[] {
   const tools: AAPMcpToolDefinition[] = [];
   const usedNames = new Set<string>();
@@ -431,7 +485,11 @@ export function extractToolsFromApi(
 
       // Generate input schema and extract parameters
       const { inputSchema, parameters, requestBodyContentType } =
-        generateInputSchemaAndDetails(operation, pathItem.parameters);
+        generateInputSchemaAndDetails(
+          operation,
+          pathItem.parameters,
+          defaultPageSize,
+        );
 
       if (typeof inputSchema === "object" && inputSchema.properties) {
         const propertiesEntries = Object.entries(inputSchema.properties).map(
