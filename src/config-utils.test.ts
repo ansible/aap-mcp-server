@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
+import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import type { AAPMcpToolDefinition } from "./openapi-loader.js";
 import { AapMcpConfig, loadToolsetsFromCfg } from "./config-utils.js";
 import {
