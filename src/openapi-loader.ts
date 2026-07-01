@@ -184,15 +184,18 @@ export const reformatGalaxyTool = (
     });
     return false;
   }
-  if (!tool.name.startsWith("api_galaxy_v3")) {
+  // Galaxy's OpenAPI schema uses inconsistent operationId prefixes unlike other services
+  const ALLOWED_GALAXY_PREFIXES = ["api_galaxy_v3_", "v3_"];
+  if (!ALLOWED_GALAXY_PREFIXES.some((prefix) => tool.name.startsWith(prefix))) {
     tool.logs.push({
       severity: "INFO",
-      msg: "tool ignored, name doesn't start with api_galaxy_v3",
+      msg: "tool ignored, name doesn't match allowed Galaxy prefixes",
     });
     return false;
   }
   const originalName = tool.name;
-  tool.name = tool.name.replace(/(api_galaxy_v3_|api_galaxy_|)(.+)/, "$2");
+  const prefixPattern = new RegExp(`^(${ALLOWED_GALAXY_PREFIXES.join("|")})`);
+  tool.name = tool.name.replace(prefixPattern, "");
   if (originalName !== tool.name) {
     tool.logs.push({
       severity: "WARN",
