@@ -47,6 +47,10 @@ services:
     # url: "https://custom-eda.example.com/api/v1/openapi.json"
     local_path: data/eda-openapi.json
     # enabled: true
+  - name: lightspeed
+    # url: "https://custom-lightspeed.example.com/api/lightspeed/v1/openapi.json"
+    local_path: data/lightspeed.json
+    # enabled: true
 
 toolsets:
   # Phase 1
@@ -175,6 +179,9 @@ toolsets:
     - controller.execution_environments_retrieve
     - controller.execution_environments_update
     - controller.execution_environments_destroy
+
+  ai_assistant:
+    - lightspeed.ai_chat_create
 
   # Categories below this comment have yet to be clarified/validated
   # Phase 3
