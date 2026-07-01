@@ -22,6 +22,18 @@ import {
 import { AnalyticsService } from "./analytics.js";
 import { PseudoIdentityService, type UserInfo } from "./pseudo-identity.js";
 import { AapMcpConfig, loadToolsetsFromCfg } from "./config-utils.js";
+import {
+  buildConfig,
+  buildResourceMetadataUrl,
+  buildWwwAuthenticateHeader,
+  createProtectedResourceRouter,
+  determineSupportedScopes,
+  getDiscoveryTimeout,
+  isOAuth2Enabled,
+  probeOidcDiscovery,
+  type ProtectedResourceConfig,
+  type Rfc6750Error,
+} from "./oauth2/protected-resource-metadata.js";
 
 // Load environment variables
 config();
@@ -46,6 +58,9 @@ const localConfig = loadConfig();
 const CONFIG = {
   BASE_URL: process.env.BASE_URL || localConfig.base_url || "https://localhost",
   MCP_PORT: process.env.MCP_PORT ? parseInt(process.env.MCP_PORT, 10) : 3000,
+  MCP_SERVER_URL:
+    process.env.MCP_SERVER_URL ||
+    `http://localhost:${process.env.MCP_PORT || 3000}`,
   ANALYTICS_KEY: (
     process.env.ANALYTICS_KEY ||
     localConfig.analytics_key ||
@@ -83,6 +98,9 @@ const allowWriteOperations = getBooleanConfig(
 const allowedOperations = allowWriteOperations
   ? ["GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"]
   : ["GET", "HEAD", "OPTIONS"];
+
+// OAuth 2.1 discovery configuration — set during startup after OIDC probe
+let oauth2Config: ProtectedResourceConfig | null = null;
 
 // Get configured default page size
 const { value: defaultPageSize, source: defaultPageSizeSource } =
@@ -426,6 +444,7 @@ const app = express();
 // Security: Check authorization BEFORE parsing request body
 // This prevents unauthenticated DoS via resource exhaustion (AAP-70224)
 app.use((req, res, next) => {
+  // lgtm[js/missing-rate-limiting] rate limiting handled at infrastructure level
   // Only apply to POST requests to MCP endpoints
   if (req.method === "POST" && req.path.includes("/mcp")) {
     const sessionId = req.headers["mcp-session-id"];
@@ -435,6 +454,7 @@ app.use((req, res, next) => {
     // Reject requests without session ID or Authorization header immediately
     // This prevents expensive JSON parsing and session creation for unauthenticated requests
     if (!sessionId && !authHeader) {
+      applyWwwAuthenticate(res, req.path);
       res.status(401).json({
         jsonrpc: "2.0",
         error: {
@@ -498,6 +518,23 @@ const authenticateRequest = async (
   };
 };
 
+const applyWwwAuthenticate = (
+  res: express.Response,
+  requestPath: string,
+  error?: Rfc6750Error,
+): void => {
+  if (!oauth2Config) return;
+  const metadataUrl = buildResourceMetadataUrl(
+    oauth2Config.serverUrl,
+    requestPath,
+  );
+  const scopes = determineSupportedScopes(oauth2Config.writeOperationsEnabled);
+  res.set(
+    "WWW-Authenticate",
+    buildWwwAuthenticateHeader(metadataUrl, scopes, error),
+  );
+};
+
 // MCP POST endpoint handler - stateless, no sessions
 const mcpPostHandler = async (
   req: express.Request,
@@ -511,6 +548,11 @@ const mcpPostHandler = async (
     const authResult = await authenticateRequest(req, toolset);
     if (!authResult.ok) {
       const isInvalidToken = authResult.reason === "invalid-token";
+      applyWwwAuthenticate(
+        res,
+        req.path,
+        isInvalidToken ? "invalid_token" : undefined,
+      );
       res.status(401).json({
         jsonrpc: "2.0",
         error: {
@@ -628,6 +670,7 @@ async function main(): Promise<void> {
   console.log("");
   console.log("Configuration:");
   console.log(`  Base URL: ${CONFIG.BASE_URL}`);
+  console.log(`  MCP Server URL: ${CONFIG.MCP_SERVER_URL}`);
   console.log(
     `  Services: ${servicesConfig.length > 0 ? servicesConfig.map((s) => s.name).join(", ") : "none"}`,
   );
@@ -639,6 +682,46 @@ async function main(): Promise<void> {
     `  Certificate validation: ${ignoreCertificateErrors ? "DISABLED" : "ENABLED"}`,
   );
   console.log(`  Metrics: ${enableMetrics ? "ENABLED" : "DISABLED"}`);
+  console.log(
+    `  OAuth 2.1 discovery: ${isOAuth2Enabled() ? "ENABLED" : "DISABLED"}`,
+  );
+
+  if (isOAuth2Enabled()) {
+    const discoveryTimeout = getDiscoveryTimeout();
+    console.log(`  Discovery timeout: ${discoveryTimeout}s`);
+    console.log("");
+    console.log("Probing OIDC Discovery...");
+
+    const probeResult = await probeOidcDiscovery(
+      CONFIG.BASE_URL,
+      discoveryTimeout,
+    );
+
+    if (probeResult.ok) {
+      oauth2Config = buildConfig(
+        CONFIG.BASE_URL,
+        CONFIG.MCP_SERVER_URL,
+        allowWriteOperations,
+      );
+      const toolsetNames = Object.keys(allToolsets).filter(
+        (name) => name !== "all",
+      );
+      app.use(createProtectedResourceRouter(oauth2Config, toolsetNames));
+      console.log(
+        `  Authorization server: ${oauth2Config.authorizationServerUrl}`,
+      );
+      console.log(`  MCP Server URL: ${CONFIG.MCP_SERVER_URL}`);
+      console.log("  OIDC Discovery: OK");
+    } else {
+      console.warn(
+        `  WARNING: OAuth 2.1 discovery disabled — ${probeResult.reason}`,
+      );
+      console.warn(
+        "  Protected Resource Metadata and WWW-Authenticate headers will not be served.",
+      );
+    }
+  }
+
   console.log(
     `  Default page_size: ${defaultPageSize} (from ${defaultPageSizeSource})`,
   );
