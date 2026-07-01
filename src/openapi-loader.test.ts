@@ -216,20 +216,46 @@ describe("OpenAPI Loader", () => {
       expect(result).toBe(false);
       expect(mockTool.logs).toContainEqual({
         severity: "INFO",
-        msg: "tool ignored, name doesn't start with api_galaxy_v3",
+        msg: "tool ignored, name doesn't match allowed Galaxy prefixes",
       });
     });
 
-    it("should rename v3 tools correctly", () => {
-      const mockTool = createMockTool({
-        name: "api_galaxy_v3_collections_create",
-      });
+    it.each([
+      [
+        "api_galaxy_v3_",
+        "api_galaxy_v3_collections_create",
+        "collections_create",
+      ],
+      [
+        "v3_",
+        "v3_ansible_content_collections_index",
+        "ansible_content_collections_index",
+      ],
+    ])(
+      "should strip %s prefix and rename correctly",
+      (_prefix, input, expected) => {
+        const mockTool = createMockTool({ name: input });
 
-      const result = reformatGalaxyTool(mockTool);
+        const result = reformatGalaxyTool(mockTool);
 
-      expect(result).toBeTruthy();
-      if (result) {
-        expect(result.name).toBe("collections_create");
+        expect(result).toBeTruthy();
+        if (result) {
+          expect(result.name).toBe(expected);
+        }
+      },
+    );
+
+    it("should allow all three target v3_ Galaxy content tools", () => {
+      const toolNames = [
+        "v3_ansible_content_collections_index",
+        "v3_ansible_content_collections_index_versions_get_distro_base_pa",
+        "v3_execution_environments_repositories_get_repositories",
+      ];
+
+      for (const name of toolNames) {
+        const mockTool = createMockTool({ name });
+        const result = reformatGalaxyTool(mockTool);
+        expect(result).toBeTruthy();
       }
     });
   });

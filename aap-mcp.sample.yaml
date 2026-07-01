@@ -201,6 +201,11 @@ toolsets:
     - controller.organizations_instance_groups_create
     - controller.organizations_galaxy_credentials_create
 
+  content_discovery:
+    - galaxy.ansible_content_collections_index
+    - galaxy.ansible_content_collections_index_versions_get_distro_base_pa
+    - galaxy.execution_environments_repositories_get_repositories
+
   # Categories below this comment have yet to be clarified/validated
   # Phase 3
   # event_management:
