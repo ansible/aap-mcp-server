@@ -172,6 +172,35 @@ function generateOperationId(method: string, path: string): string {
   return name;
 }
 
+const NUMERIC_CONSTRAINT_KEYS = [
+  "maximum",
+  "minimum",
+  "exclusiveMaximum",
+  "exclusiveMinimum",
+  "maxLength",
+  "maxItems",
+  "maxProperties",
+  "minLength",
+  "minItems",
+  "minProperties",
+] as const;
+
+/**
+ * Clamps numeric JSON Schema constraints to Number.MAX_SAFE_INTEGER.
+ * OpenAPI specs generated from Python/Django use int64-max (2^63-1) which
+ * exceeds the safe integer range for JSON and causes API rejections.
+ */
+export function clampNumericConstraints(schema: Record<string, any>): void {
+  for (const key of NUMERIC_CONSTRAINT_KEYS) {
+    if (typeof schema[key] === "number") {
+      schema[key] = Math.max(
+        -Number.MAX_SAFE_INTEGER,
+        Math.min(Number.MAX_SAFE_INTEGER, schema[key]),
+      );
+    }
+  }
+}
+
 /**
  * Maps an OpenAPI schema to a JSON Schema with cycle protection.
  */
@@ -199,6 +228,7 @@ export function mapOpenApiSchemaToJsonSchema(
     const jsonSchema: any = { ...schema };
     // Convert integer type to number (JSON Schema compatible)
     if (schema.type === "integer") jsonSchema.type = "number";
+    clampNumericConstraints(jsonSchema);
     // Remove OpenAPI-specific properties that aren't in JSON Schema
     delete jsonSchema.nullable;
     delete jsonSchema.example;
