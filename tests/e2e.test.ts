@@ -236,6 +236,31 @@ describe("End-to-End: MCP Server", () => {
     });
   });
 
+  // --- OAuth 2.1 Discovery (RFC 9728) ---
+
+  describe("OAuth disabled - backward compatibility", () => {
+    it("should not serve Protected Resource Metadata when OAuth is disabled", async () => {
+      const response = await fetch(
+        `${MCP_BASE_URL}/.well-known/oauth-protected-resource`,
+      );
+      expect(response.status).toBe(404);
+    });
+
+    it("should not include WWW-Authenticate header on 401 when OAuth is disabled", async () => {
+      const response = await fetch(`${MCP_BASE_URL}/mcp`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          jsonrpc: "2.0",
+          method: "tools/list",
+          id: 1,
+        }),
+      });
+      expect(response.status).toBe(401);
+      expect(response.headers.get("www-authenticate")).toBeNull();
+    });
+  });
+
   // --- DELETE handler ---
 
   describe("DELETE handler", () => {
