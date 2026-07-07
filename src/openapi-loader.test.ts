@@ -346,7 +346,7 @@ describe("OpenAPI Loader", () => {
   });
 
   describe("reformatLightspeedTool", () => {
-    it("should prepend /api/lightspeed/v1 to path template", () => {
+    it("should prepend /api/lightspeed/v1 to path template and rename mapped tools", () => {
       const mockTool = createMockTool({
         name: "ai_chat_create",
         pathTemplate: "/ai/chat/",
@@ -357,7 +357,7 @@ describe("OpenAPI Loader", () => {
       expect(result).toBeTruthy();
       if (result) {
         expect(result.pathTemplate).toBe("/api/lightspeed/v1/ai/chat/");
-        expect(result.name).toBe("ai_chat_create");
+        expect(result.name).toBe("aap_rag_search");
       }
     });
 
