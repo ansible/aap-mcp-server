@@ -15,6 +15,7 @@ import {
   isOAuth2Enabled,
   probeOidcDiscovery,
   resolveResourceUrl,
+  validateIssuerUrl,
   type ProtectedResourceConfig,
 } from "./protected-resource-metadata.js";
 
@@ -180,6 +181,42 @@ describe("probeOidcDiscovery", () => {
     }
   });
 
+  it("succeeds when issuer matches after port normalization", async () => {
+    const baseUrl = `http://localhost:${mockPort}`;
+    responseBody = {
+      ...responseBody,
+      issuer: `http://localhost:${mockPort}/o`,
+    };
+
+    const result = await probeOidcDiscovery(baseUrl, 5);
+
+    expect(result.ok).toBe(true);
+  });
+
+  it("fails when metadata issuer is not a valid URL", async () => {
+    const baseUrl = `http://localhost:${mockPort}`;
+    responseBody = { ...responseBody, issuer: "not-a-url" };
+
+    const result = await probeOidcDiscovery(baseUrl, 5);
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.reason).toContain("not a valid URL");
+    }
+  });
+
+  it("fails when metadata issuer uses non-http protocol", async () => {
+    const baseUrl = `http://localhost:${mockPort}`;
+    responseBody = { ...responseBody, issuer: "ftp://example.com/o" };
+
+    const result = await probeOidcDiscovery(baseUrl, 5);
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.reason).toContain("http or https");
+    }
+  });
+
   it("fails when issuer does not match", async () => {
     const baseUrl = `http://localhost:${mockPort}`;
     responseBody = { ...responseBody, issuer: "https://wrong-issuer.com/o" };
@@ -283,6 +320,60 @@ describe("probeOidcDiscovery", () => {
       }
     } finally {
       await new Promise<void>((resolve) => slowServer.close(() => resolve()));
+    }
+  });
+
+  it("fails when base URL is not a valid URL", async () => {
+    const result = await probeOidcDiscovery("not-a-url", 5);
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.reason).toContain("Expected issuer");
+      expect(result.reason).toContain("not a valid URL");
+    }
+  });
+});
+
+// --- validateIssuerUrl ---
+
+describe("validateIssuerUrl", () => {
+  it.each([
+    ["https://example.com/o", "https://example.com/o", "valid https URL"],
+    ["http://localhost/o", "http://localhost/o", "valid http URL"],
+    [
+      "https://example.com:443/o",
+      "https://example.com/o",
+      "strips default https port 443",
+    ],
+    [
+      "http://localhost:80/o",
+      "http://localhost/o",
+      "strips default http port 80",
+    ],
+    [
+      "https://example.com:8443/o",
+      "https://example.com:8443/o",
+      "preserves non-default ports",
+    ],
+    [
+      "https://example.com/o/",
+      "https://example.com/o",
+      "strips trailing slashes",
+    ],
+  ])("normalizes %s → %s (%s)", (input, expected) => {
+    const result = validateIssuerUrl(input, "Test");
+    expect(result).toEqual({ ok: true, normalized: expected });
+  });
+
+  it.each([
+    ["not-a-url", "Test", "not a valid URL", "invalid URL"],
+    ["ftp://example.com/o", "Test", "http or https", "non-http(s) protocol"],
+    ["bad", "Metadata issuer", "Metadata issuer", "includes label in reason"],
+  ])("rejects %s — %s (%s)", (input, label, expectedReason) => {
+    const result = validateIssuerUrl(input, label);
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.reason).toContain(expectedReason);
     }
   });
 });

@@ -38,6 +38,28 @@ function stripTrailingSlashes(url: string): string {
   return url.slice(0, end);
 }
 
+export function validateIssuerUrl(
+  raw: string,
+  label: string,
+): { ok: true; normalized: string } | { ok: false; reason: string } {
+  let url: URL;
+  try {
+    url = new URL(raw);
+  } catch {
+    return { ok: false, reason: `${label} is not a valid URL: "${raw}"` };
+  }
+  if (url.protocol !== "https:" && url.protocol !== "http:") {
+    return {
+      ok: false,
+      reason: `${label} must use http or https, got "${url.protocol}"`,
+    };
+  }
+  return {
+    ok: true,
+    normalized: stripTrailingSlashes(url.origin + url.pathname),
+  };
+}
+
 // --- Configuration ---
 
 export function isOAuth2Enabled(): boolean {
@@ -79,7 +101,15 @@ export async function probeOidcDiscovery(
   timeoutSeconds: number,
 ): Promise<{ ok: true; issuer: string } | { ok: false; reason: string }> {
   const discoveryUrl = deriveOidcDiscoveryUrl(baseUrl);
-  const expectedIssuer = deriveAuthorizationServerUrl(baseUrl);
+  const expectedIssuerRaw = deriveAuthorizationServerUrl(baseUrl);
+
+  const expectedResult = validateIssuerUrl(
+    expectedIssuerRaw,
+    "Expected issuer",
+  );
+  if (!expectedResult.ok) {
+    return expectedResult;
+  }
 
   try {
     const response = await fetch(discoveryUrl, {
@@ -108,10 +138,20 @@ export async function probeOidcDiscovery(
       };
     }
 
-    if (metadata.issuer !== expectedIssuer) {
+    const metadataResult = validateIssuerUrl(
+      metadata.issuer,
+      "Metadata issuer",
+    );
+    if (!metadataResult.ok) {
+      return metadataResult;
+    }
+
+    // Intentional: normalized comparison instead of RFC 8414 exact-string match
+    // to tolerate default-port differences between AAP gateway and base URL config.
+    if (metadataResult.normalized !== expectedResult.normalized) {
       return {
         ok: false,
-        reason: `Issuer mismatch: expected "${expectedIssuer}", got "${metadata.issuer}"`,
+        reason: `Issuer mismatch: expected "${expectedIssuerRaw}", got "${metadata.issuer}"`,
       };
     }
 

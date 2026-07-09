@@ -682,8 +682,9 @@ async function main(): Promise<void> {
     `  Certificate validation: ${ignoreCertificateErrors ? "DISABLED" : "ENABLED"}`,
   );
   console.log(`  Metrics: ${enableMetrics ? "ENABLED" : "DISABLED"}`);
+
   console.log(
-    `  OAuth 2.1 discovery: ${isOAuth2Enabled() ? "ENABLED" : "DISABLED"}`,
+    `  OAuth 2.1 discovery: ${isOAuth2Enabled() ? "CONFIGURED" : "DISABLED"}`,
   );
 
   if (isOAuth2Enabled()) {
@@ -707,14 +708,16 @@ async function main(): Promise<void> {
         (name) => name !== "all",
       );
       app.use(createProtectedResourceRouter(oauth2Config, toolsetNames));
+      console.log(`  OAuth 2.1 discovery: ENABLED`);
       console.log(
         `  Authorization server: ${oauth2Config.authorizationServerUrl}`,
       );
       console.log(`  MCP Server URL: ${CONFIG.MCP_SERVER_URL}`);
       console.log("  OIDC Discovery: OK");
     } else {
+      console.log(`  OAuth 2.1 discovery: DISABLED`);
       console.warn(
-        `  WARNING: OAuth 2.1 discovery disabled — ${probeResult.reason}`,
+        `  WARNING: OAuth 2.1 discovery failed — ${probeResult.reason}`,
       );
       console.warn(
         "  Protected Resource Metadata and WWW-Authenticate headers will not be served.",
