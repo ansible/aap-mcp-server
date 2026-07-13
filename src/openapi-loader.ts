@@ -227,6 +227,12 @@ export const reformatLightspeedTool = (
     });
     return false;
   }
+  const nameMap: Record<string, string> = {
+    ai_chat_create: "aap_rag_search",
+  };
+  if (tool.name in nameMap) {
+    tool.name = nameMap[tool.name];
+  }
   tool.pathTemplate = "/api/lightspeed/v1" + tool.pathTemplate;
   return tool;
 };
