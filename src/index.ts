@@ -95,6 +95,9 @@ const allowWriteOperations = getBooleanConfig(
   localConfig.allow_write_operations,
 );
 
+// When true, logs every outbound HTTP request URL+method and non-OK response bodies
+const debugHttp = getBooleanConfig("DEBUG_HTTP", false);
+
 // Initialize allowed operations list based on configuration
 const allowedOperations = allowWriteOperations
   ? ["GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"]
@@ -114,6 +117,12 @@ const servicesConfig = localConfig.services || [];
 const getTimestamp = (): string => {
   return new Date().toISOString().split(".")[0] + "Z";
 };
+
+if (debugHttp) {
+  console.log(
+    `${getTimestamp()} DEBUG_HTTP enabled — outbound request URLs and non-OK response bodies will be logged`,
+  );
+}
 
 // Configure HTTPS certificate validation globally
 if (ignoreCertificateErrors) {
@@ -376,15 +385,24 @@ const executeToolRequest = async (
   const startTime = Date.now();
   const toolToolset = getToolsetForTool(tool.name);
   let response: Response | undefined;
+  let result: unknown;
+  let fullUrl = "";
 
   try {
     const url = buildToolUrl(tool, args);
     const requestOptions = buildRequestOptions(tool, args, ctx.token);
+    fullUrl = `${CONFIG.BASE_URL}${url}`;
 
-    response = await fetch(`${CONFIG.BASE_URL}${url}`, requestOptions);
+    if (debugHttp) {
+      console.log(
+        `${getTimestamp()} [DEBUG_HTTP] ${requestOptions.method} ${fullUrl}`,
+      );
+    }
+
+    response = await fetch(fullUrl, requestOptions);
 
     const contentType = response.headers.get("content-type");
-    const result = contentType?.includes("application/json")
+    result = contentType?.includes("application/json")
       ? await response.json()
       : await response.text();
 
@@ -397,6 +415,19 @@ const executeToolRequest = async (
       { cause: error },
     );
   } finally {
+    // Always surface the full URL on error responses so 404/5xx are traceable
+    if (response && !response.ok) {
+      console.error(
+        `${getTimestamp()} [toolset:${toolToolset}] ${tool.name} failed: ${response.status} ${response.statusText} — URL: ${fullUrl}`,
+      );
+      if (debugHttp && result !== undefined) {
+        const bodySnippet = JSON.stringify(result).slice(0, 500);
+        console.error(
+          `${getTimestamp()} [DEBUG_HTTP] response body (first 500 chars): ${bodySnippet}`,
+        );
+      }
+    }
+
     trackToolExecution(
       tool,
       toolToolset,
