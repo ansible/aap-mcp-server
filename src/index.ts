@@ -94,6 +94,9 @@ const allowWriteOperations = getBooleanConfig(
   localConfig.allow_write_operations,
 );
 
+// When true, logs every outbound HTTP request URL+method and non-OK response bodies
+const debugHttp = getBooleanConfig("DEBUG_HTTP", false);
+
 // Initialize allowed operations list based on configuration
 const allowedOperations = allowWriteOperations
   ? ["GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"]
@@ -113,6 +116,12 @@ const servicesConfig = localConfig.services || [];
 const getTimestamp = (): string => {
   return new Date().toISOString().split(".")[0] + "Z";
 };
+
+if (debugHttp) {
+  console.log(
+    `${getTimestamp()} DEBUG_HTTP enabled — outbound request URLs and non-OK response bodies will be logged`,
+  );
+}
 
 // Configure HTTPS certificate validation globally
 if (ignoreCertificateErrors) {
@@ -336,7 +345,7 @@ const createMcpServer = (): Server => {
     // Execute the tool by making HTTP request
     let result: any;
     let response: Response | undefined;
-    let fullUrl: string;
+    let fullUrl = "";
     let requestOptions: RequestInit | undefined;
 
     try {
@@ -381,6 +390,11 @@ const createMcpServer = (): Server => {
 
       // Make HTTP request
       fullUrl = `${CONFIG.BASE_URL}${url}`;
+      if (debugHttp) {
+        console.log(
+          `${getTimestamp()} [DEBUG_HTTP] ${requestOptions.method} ${fullUrl}`,
+        );
+      }
       response = await fetch(fullUrl, requestOptions);
 
       const contentType = response.headers.get("content-type");
@@ -410,6 +424,19 @@ const createMcpServer = (): Server => {
       console.log(
         `${getTimestamp()} [toolset:${toolToolset}] ${tool.name} → ${response && response.status} ${response && response.statusText} (${executionTimeMs}ms)`,
       );
+
+      // Always surface the full URL on error responses so 404/5xx are traceable
+      if (response && !response.ok) {
+        console.error(
+          `${getTimestamp()} [toolset:${toolToolset}] ${tool.name} failed: ${response.status} ${response.statusText} — URL: ${fullUrl}`,
+        );
+        if (debugHttp && result !== undefined) {
+          const bodySnippet = JSON.stringify(result).slice(0, 500);
+          console.error(
+            `${getTimestamp()} [DEBUG_HTTP] response body (first 500 chars): ${bodySnippet}`,
+          );
+        }
+      }
 
       analyticsService.trackMcpToolCalled(
         tool.name,
