@@ -289,6 +289,227 @@ const getRequestContext = (extra: any): RequestContext => {
   return ctx;
 };
 
+const TOOLSET_DESCRIPTIONS: Record<string, string> = {
+  job_management:
+    "Launch, monitor, and manage jobs, job templates, workflows, and schedules",
+  inventory_management:
+    "Manage inventories, hosts, groups, and inventory sources",
+  system_monitoring:
+    "Monitor instances, instance groups, and system health",
+  user_management:
+    "Manage users, teams, organizations, and role-based access",
+  security_compliance:
+    "Manage credentials, credential types, and audit activity streams",
+  platform_configuration:
+    "Configure platform settings, execution environments, and notifications",
+  content_discovery:
+    "Search Ansible collections, execution environments, and AI-assisted content",
+};
+
+const DISCOVER_TOOLS = [
+  {
+    name: "discover",
+    description:
+      "Discover available tools. Without a toolset_name, returns all toolsets with descriptions. With a toolset_name, returns that toolset's full tool definitions including input schemas.",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        toolset_name: {
+          type: "string",
+          description:
+            "Optional: name of a specific toolset to get full tool definitions for. Omit to list all available toolsets.",
+        },
+      },
+      required: [],
+    },
+  },
+  {
+    name: "call_tool",
+    description: "Execute a tool from a specific toolset",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        toolset_name: {
+          type: "string",
+          description: "Name of the toolset containing the tool",
+        },
+        tool_name: {
+          type: "string",
+          description: "Name of the tool to call",
+        },
+        arguments: {
+          type: "object",
+          description: "Arguments to pass to the tool",
+        },
+      },
+      required: ["toolset_name", "tool_name", "arguments"],
+    },
+  },
+];
+
+const proxyToolCall = async (
+  tool: AAPMcpToolDefinition,
+  args: Record<string, unknown>,
+  ctx: RequestContext,
+): Promise<{ content: Array<{ type: string; text: string }> }> => {
+  const _startTime = Date.now();
+  const toolToolset = getToolsetForTool(tool.name);
+
+  let result: any;
+  let response: Response | undefined;
+
+  try {
+    let url = tool.pathTemplate;
+    const headers: Record<string, string> = {
+      Authorization: `Bearer ${ctx.token}`,
+      Accept: "application/json",
+    };
+
+    for (const param of tool.parameters || []) {
+      if (param.in === "path" && args[param.name]) {
+        url = url.replace(`{${param.name}}`, String(args[param.name]));
+      }
+    }
+
+    const queryParams = new URLSearchParams();
+    for (const param of tool.parameters || []) {
+      if (param.in === "query" && args[param.name] !== undefined) {
+        queryParams.append(param.name, String(args[param.name]));
+      }
+    }
+    if (queryParams.toString()) {
+      url += "?" + queryParams.toString();
+    }
+
+    const requestOptions: RequestInit = {
+      method: tool.method.toUpperCase(),
+      headers,
+    };
+
+    if (
+      ["POST", "PUT", "PATCH"].includes(tool.method.toUpperCase()) &&
+      args.requestBody
+    ) {
+      headers["Content-Type"] = "application/json";
+      requestOptions.body = JSON.stringify(args.requestBody);
+    }
+
+    const fullUrl = `${CONFIG.BASE_URL}${url}`;
+    response = await fetch(fullUrl, requestOptions);
+
+    const contentType = response.headers.get("content-type");
+    if (contentType && contentType.includes("application/json")) {
+      result = await response.json();
+    } else {
+      result = await response.text();
+    }
+
+    return {
+      content: [
+        {
+          type: "text",
+          text: JSON.stringify(result, null, 2),
+        },
+      ],
+    };
+  } catch (error) {
+    throw new Error(
+      `Tool execution failed: ${error instanceof Error ? error.message : String(error)}`,
+      { cause: error },
+    );
+  } finally {
+    const executionTimeMs = Date.now() - _startTime;
+    const parameterLength = JSON.stringify(args).length;
+
+    console.log(
+      `${getTimestamp()} [toolset:${toolToolset}] ${tool.name} → ${response && response.status} ${response && response.statusText} (${executionTimeMs}ms)`,
+    );
+
+    analyticsService.trackMcpToolCalled(
+      tool.name,
+      toolToolset,
+      ctx.userAgent,
+      parameterLength,
+      response ? response.status : 0,
+      executionTimeMs,
+      ctx.userPseudoId,
+      ctx.userType,
+      ctx.installerPseudoId,
+    );
+    metricsService.recordToolExecution(
+      tool.name,
+      response ? response.status : 0,
+      executionTimeMs,
+    );
+    if (!response || !response.ok) {
+      metricsService.recordToolError(
+        tool.name,
+        response ? response.status : 0,
+      );
+    }
+  }
+};
+
+const handleDiscoverTool = async (
+  name: string,
+  args: Record<string, unknown>,
+  ctx: RequestContext,
+): Promise<{ content: Array<{ type: string; text: string }> }> => {
+  switch (name) {
+    case "discover": {
+      const toolsetName = args.toolset_name as string | undefined;
+
+      if (!toolsetName) {
+        const toolsets = Object.entries(allToolsets)
+          .filter(([n]) => n !== "all" && n !== "discover")
+          .map(([n, tools]) => ({
+            name: n,
+            description: TOOLSET_DESCRIPTIONS[n] ?? "",
+            endpoint: `/mcp/${n}`,
+            tool_count: tools.length,
+          }));
+        return {
+          content: [{ type: "text", text: JSON.stringify(toolsets, null, 2) }],
+        };
+      }
+
+      const toolsetTools = allToolsets[toolsetName];
+      if (!toolsetTools || toolsetName === "all" || toolsetName === "discover") {
+        throw new Error(`Unknown toolset: ${toolsetName}`);
+      }
+      const tools = toolsetTools.map((t) => ({
+        name: t.name,
+        description: t.description,
+        inputSchema: t.inputSchema,
+      }));
+      return {
+        content: [{ type: "text", text: JSON.stringify(tools, null, 2) }],
+      };
+    }
+    case "call_tool": {
+      const toolsetName = args.toolset_name as string;
+      const toolName = args.tool_name as string;
+      const toolArgs = (args.arguments as Record<string, unknown>) || {};
+
+      const toolsetTools = allToolsets[toolsetName];
+      if (!toolsetTools || toolsetName === "all" || toolsetName === "discover") {
+        throw new Error(`Unknown toolset: ${toolsetName}`);
+      }
+
+      const tool = toolsetTools.find((t) => t.name === toolName);
+      if (!tool) {
+        throw new Error(
+          `Unknown tool: ${toolName} in toolset ${toolsetName}`,
+        );
+      }
+
+      return proxyToolCall(tool, toolArgs, ctx);
+    }
+    default:
+      throw new Error(`Unknown discover tool: ${name}`);
+  }
+};
+
 // Factory function to create a new Server instance with request handlers
 const createMcpServer = (): Server => {
   const server = new Server(
@@ -305,6 +526,11 @@ const createMcpServer = (): Server => {
 
   server.setRequestHandler(ListToolsRequestSchema, async (request, extra) => {
     const ctx = getRequestContext(extra);
+
+    if (ctx.toolset === "discover") {
+      return { tools: DISCOVER_TOOLS };
+    }
+
     const availableTools = getToolsByToolset(ctx.toolset);
 
     return {
@@ -318,122 +544,19 @@ const createMcpServer = (): Server => {
 
   server.setRequestHandler(CallToolRequestSchema, async (request, extra) => {
     const { name, arguments: args = {} } = request.params;
-    const _startTime = Date.now();
     const ctx = getRequestContext(extra);
 
-    // Get user's toolset to ensure they have access to this tool
-    const availableTools = getToolsByToolset(ctx.toolset);
+    if (ctx.toolset === "discover") {
+      return handleDiscoverTool(name, args, ctx);
+    }
 
-    // Find the matching tool by external name (without service prefix)
+    const availableTools = getToolsByToolset(ctx.toolset);
     const tool = availableTools.find((t) => t.name === name);
     if (!tool) {
       throw new Error(`Unknown tool: ${name}`);
     }
 
-    // Get toolset for this tool
-    const toolToolset = getToolsetForTool(tool.name);
-
-    // Execute the tool by making HTTP request
-    let result: any;
-    let response: Response | undefined;
-    let fullUrl: string;
-    let requestOptions: RequestInit | undefined;
-
-    try {
-      // Build URL from path template and parameters
-      let url = tool.pathTemplate;
-      const headers: Record<string, string> = {
-        Authorization: `Bearer ${ctx.token}`,
-        Accept: "application/json",
-      };
-
-      for (const param of tool.parameters || []) {
-        if (param.in === "path" && args[param.name]) {
-          url = url.replace(`{${param.name}}`, String(args[param.name]));
-        }
-      }
-
-      // Add query parameters
-      const queryParams = new URLSearchParams();
-      for (const param of tool.parameters || []) {
-        if (param.in === "query" && args[param.name] !== undefined) {
-          queryParams.append(param.name, String(args[param.name]));
-        }
-      }
-      if (queryParams.toString()) {
-        url += "?" + queryParams.toString();
-      }
-
-      // Prepare request options
-      requestOptions = {
-        method: tool.method.toUpperCase(),
-        headers,
-      };
-
-      // Add request body for POST, PUT, PATCH
-      if (
-        ["POST", "PUT", "PATCH"].includes(tool.method.toUpperCase()) &&
-        args.requestBody
-      ) {
-        headers["Content-Type"] = "application/json";
-        requestOptions.body = JSON.stringify(args.requestBody);
-      }
-
-      // Make HTTP request
-      fullUrl = `${CONFIG.BASE_URL}${url}`;
-      response = await fetch(fullUrl, requestOptions);
-
-      const contentType = response.headers.get("content-type");
-      if (contentType && contentType.includes("application/json")) {
-        result = await response.json();
-      } else {
-        result = await response.text();
-      }
-
-      return {
-        content: [
-          {
-            type: "text",
-            text: JSON.stringify(result, null, 2),
-          },
-        ],
-      };
-    } catch (error) {
-      throw new Error(
-        `Tool execution failed: ${error instanceof Error ? error.message : String(error)}`,
-        { cause: error },
-      );
-    } finally {
-      const executionTimeMs = Date.now() - _startTime;
-      const parameterLength = JSON.stringify(args).length;
-
-      console.log(
-        `${getTimestamp()} [toolset:${toolToolset}] ${tool.name} → ${response && response.status} ${response && response.statusText} (${executionTimeMs}ms)`,
-      );
-
-      analyticsService.trackMcpToolCalled(
-        tool.name,
-        toolToolset,
-        ctx.userAgent,
-        parameterLength,
-        response ? response.status : 0,
-        executionTimeMs,
-        ctx.userPseudoId,
-        ctx.userType,
-        ctx.installerPseudoId,
-      );
-      metricsService.recordToolExecution(
-        tool.name,
-        response ? response.status : 0,
-        executionTimeMs,
-      );
-      if (!response || !response.ok) {
-        metricsService.recordToolError(
-          tool.name,
-          response ? response.status : 0,
-        );
-      }
-    }
+    return proxyToolCall(tool, args, ctx);
   });
 
   return server;
@@ -607,6 +730,7 @@ const mcpPostHandler = async (
 
 const allTools: AAPMcpToolDefinition[] = await generateTools();
 const allToolsets = loadToolsetsFromCfg(allTools, localConfig);
+allToolsets["discover"] = [];
 
 // Set up routes - POST only, no GET/DELETE (no sessions to stream or terminate)
 app.post("/mcp", (req, res) => mcpPostHandler(req, res));
@@ -634,11 +758,13 @@ app.get("/api/v1/health", (req, res) => {
 
 app.get("/", (req, res) => {
   const endpoints = Object.keys(allToolsets)
-    .filter((name) => name !== "all")
+    .filter((name) => name !== "all" && name !== "discover")
     .map((toolset) => `/mcp/${toolset}`);
   const banner = `This is a MCP server, you can access it with a MCP client through the following end-points:
     - ${endpoints.join("\r\n    - ")}
-  or just /mcp if you want to get access to all the tools at the same time.`;
+  or just /mcp if you want to get access to all the tools at the same time.
+
+  Connect to /mcp/discover to browse available toolsets before loading tools.`;
   res.set("Content-Type", "text/plain");
   res.status(200).send(banner);
 });
@@ -705,7 +831,7 @@ async function main(): Promise<void> {
         allowWriteOperations,
       );
       const toolsetNames = Object.keys(allToolsets).filter(
-        (name) => name !== "all",
+        (name) => name !== "all" && name !== "discover",
       );
       app.use(createProtectedResourceRouter(oauth2Config, toolsetNames));
       console.log(`  OAuth 2.1 discovery: ENABLED`);
