@@ -92,6 +92,17 @@ toolsets:
     - controller.unified_job_templates_list
     - controller.projects_playbooks_retrieve
     - controller.workflow_job_template_nodes_credentials_list
+    - controller.ad_hoc_commands_create
+    - controller.ad_hoc_commands_list
+    - controller.ad_hoc_commands_retrieve
+    - controller.ad_hoc_commands_stdout_retrieve
+    - controller.ad_hoc_commands_events_list
+    - controller.ad_hoc_commands_cancel_create
+    - controller.ad_hoc_commands_relaunch_create
+    - controller.ad_hoc_commands_relaunch_retrieve
+    - controller.hosts_ad_hoc_commands_create
+    - controller.inventories_ad_hoc_commands_create
+    - controller.groups_ad_hoc_commands_create
 
   inventory_management:
     - controller.inventories_list
