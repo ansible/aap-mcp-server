@@ -423,6 +423,75 @@ describe("End-to-End: MCP Server", () => {
     }, 15000);
   });
 
+  // --- Discover toolset ---
+
+  describe("Discover toolset", () => {
+    it("should list only discover and call_tool tools", async () => {
+      const { client, transport } = createMcpClient("discover", BEARER_TOKEN);
+      await client.connect(transport);
+
+      const toolsResponse = await client.listTools();
+      expect(toolsResponse.tools).toHaveLength(2);
+
+      const names = toolsResponse.tools.map((t) => t.name);
+      expect(names).toContain("discover");
+      expect(names).toContain("call_tool");
+
+      await client.close();
+      await transport.close();
+    }, 15000);
+
+    it("should list available toolsets via discover tool", async () => {
+      const { client, transport } = createMcpClient("discover", BEARER_TOKEN);
+      await client.connect(transport);
+
+      const result = await client.callTool({ name: "discover", arguments: {} });
+      expect(result.content).toBeDefined();
+
+      const toolsets = JSON.parse(
+        (result.content as Array<{ type: string; text: string }>)[0].text,
+      );
+      expect(Array.isArray(toolsets)).toBe(true);
+      expect(toolsets.length).toBeGreaterThan(0);
+
+      const names = toolsets.map((t: any) => t.name);
+      expect(names).toContain("job_management");
+      expect(names).not.toContain("all");
+      expect(names).not.toContain("discover");
+
+      for (const ts of toolsets) {
+        expect(ts).toHaveProperty("description");
+        expect(ts).toHaveProperty("endpoint");
+        expect(ts).toHaveProperty("tool_count");
+      }
+
+      await client.close();
+      await transport.close();
+    }, 15000);
+
+    it("should return tool definitions for a specific toolset", async () => {
+      const { client, transport } = createMcpClient("discover", BEARER_TOKEN);
+      await client.connect(transport);
+
+      const result = await client.callTool({
+        name: "discover",
+        arguments: { toolset_name: "job_management" },
+      });
+
+      const tools = JSON.parse(
+        (result.content as Array<{ type: string; text: string }>)[0].text,
+      );
+      expect(Array.isArray(tools)).toBe(true);
+      expect(tools.length).toBeGreaterThan(0);
+      expect(tools[0]).toHaveProperty("name");
+      expect(tools[0]).toHaveProperty("description");
+      expect(tools[0]).toHaveProperty("inputSchema");
+
+      await client.close();
+      await transport.close();
+    }, 15000);
+  });
+
   // --- Additional route coverage ---
 
   describe("Additional routes", () => {

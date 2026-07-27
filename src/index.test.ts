@@ -1,5 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import type { Request, Response } from "express";
+import type { AAPMcpToolDefinition } from "./openapi-loader.js";
+import { buildToolUrl, buildRequestOptions } from "./index.js";
 
 // Mock dependencies
 vi.mock("./metrics.js", () => ({
@@ -170,5 +172,121 @@ describe("mcpGetHandler", () => {
       expect(statusMock).toHaveBeenCalledWith(404);
       expect(sendMock).toHaveBeenCalledWith("Session not found");
     });
+  });
+});
+
+const createMockTool = (
+  overrides: Partial<AAPMcpToolDefinition> = {},
+): AAPMcpToolDefinition => ({
+  name: "test-tool",
+  service: "test-service",
+  fullName: "test-service.test-tool",
+  description: "Test tool",
+  inputSchema: {},
+  pathTemplate: "/api/v2/test/",
+  method: "GET",
+  parameters: [] as any,
+  executionParameters: {} as any,
+  securityRequirements: [] as any,
+  operationId: "test-op",
+  deprecated: false,
+  logs: [],
+  size: 100,
+  ...overrides,
+});
+
+describe("buildToolUrl", () => {
+  it("should return the path template when there are no parameters", () => {
+    const tool = createMockTool({ pathTemplate: "/api/v2/jobs/" });
+    expect(buildToolUrl(tool, {})).toBe("/api/v2/jobs/");
+  });
+
+  it("should substitute path parameters", () => {
+    const tool = createMockTool({
+      pathTemplate: "/api/v2/jobs/{id}/",
+      parameters: [{ name: "id", in: "path" }] as any,
+    });
+    expect(buildToolUrl(tool, { id: 42 })).toBe("/api/v2/jobs/42/");
+  });
+
+  it("should append query parameters", () => {
+    const tool = createMockTool({
+      pathTemplate: "/api/v2/jobs/",
+      parameters: [{ name: "page_size", in: "query" }] as any,
+    });
+    expect(buildToolUrl(tool, { page_size: 10 })).toBe(
+      "/api/v2/jobs/?page_size=10",
+    );
+  });
+
+  it("should handle both path and query parameters", () => {
+    const tool = createMockTool({
+      pathTemplate: "/api/v2/projects/{id}/playbooks/",
+      parameters: [
+        { name: "id", in: "path" },
+        { name: "page", in: "query" },
+        { name: "page_size", in: "query" },
+      ] as any,
+    });
+    const url = buildToolUrl(tool, { id: 5, page: 2, page_size: 25 });
+    expect(url).toBe("/api/v2/projects/5/playbooks/?page=2&page_size=25");
+  });
+
+  it("should skip query parameters that are undefined", () => {
+    const tool = createMockTool({
+      pathTemplate: "/api/v2/jobs/",
+      parameters: [
+        { name: "page", in: "query" },
+        { name: "search", in: "query" },
+      ] as any,
+    });
+    expect(buildToolUrl(tool, { page: 1 })).toBe("/api/v2/jobs/?page=1");
+  });
+
+  it("should skip path parameters not present in args", () => {
+    const tool = createMockTool({
+      pathTemplate: "/api/v2/jobs/{id}/",
+      parameters: [{ name: "id", in: "path" }] as any,
+    });
+    expect(buildToolUrl(tool, {})).toBe("/api/v2/jobs/{id}/");
+  });
+});
+
+describe("buildRequestOptions", () => {
+  it("should build GET request with auth header", () => {
+    const tool = createMockTool({ method: "GET" });
+    const opts = buildRequestOptions(tool, {}, "my-token");
+
+    expect(opts.method).toBe("GET");
+    expect((opts.headers as Record<string, string>)["Authorization"]).toBe(
+      "Bearer my-token",
+    );
+    expect((opts.headers as Record<string, string>)["Accept"]).toBe(
+      "application/json",
+    );
+    expect(opts.body).toBeUndefined();
+  });
+
+  it("should build POST request with JSON body", () => {
+    const tool = createMockTool({ method: "post" });
+    const body = { name: "my-job", inventory: 1 };
+    const opts = buildRequestOptions(tool, { requestBody: body }, "my-token");
+
+    expect(opts.method).toBe("POST");
+    expect((opts.headers as Record<string, string>)["Content-Type"]).toBe(
+      "application/json",
+    );
+    expect(opts.body).toBe(JSON.stringify(body));
+  });
+
+  it("should not set body for POST without requestBody", () => {
+    const tool = createMockTool({ method: "post" });
+    const opts = buildRequestOptions(tool, {}, "my-token");
+
+    expect(opts.method).toBe("POST");
+    expect(opts.body).toBeUndefined();
+    expect(
+      (opts.headers as Record<string, string>)["Content-Type"],
+    ).toBeUndefined();
   });
 });

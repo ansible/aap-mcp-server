@@ -22,6 +22,7 @@ import {
 import { AnalyticsService } from "./analytics.js";
 import { PseudoIdentityService, type UserInfo } from "./pseudo-identity.js";
 import { AapMcpConfig, loadToolsetsFromCfg } from "./config-utils.js";
+import { DISCOVER_TOOLS, handleDiscoverTool } from "./discover.js";
 import {
   buildConfig,
   buildResourceMetadataUrl,
@@ -289,128 +290,106 @@ const getRequestContext = (extra: any): RequestContext => {
   return ctx;
 };
 
-const TOOLSET_DESCRIPTIONS: Record<string, string> = {
-  job_management:
-    "Launch, monitor, and manage jobs, job templates, workflows, and schedules",
-  inventory_management:
-    "Manage inventories, hosts, groups, and inventory sources",
-  system_monitoring:
-    "Monitor instances, instance groups, and system health",
-  user_management:
-    "Manage users, teams, organizations, and role-based access",
-  security_compliance:
-    "Manage credentials, credential types, and audit activity streams",
-  platform_configuration:
-    "Configure platform settings, execution environments, and notifications",
-  content_discovery:
-    "Search Ansible collections, execution environments, and AI-assisted content",
+export const buildToolUrl = (
+  tool: AAPMcpToolDefinition,
+  args: Record<string, unknown>,
+): string => {
+  let url = tool.pathTemplate;
+
+  for (const param of tool.parameters || []) {
+    if (param.in === "path" && args[param.name]) {
+      url = url.replace(`{${param.name}}`, String(args[param.name]));
+    }
+  }
+
+  const queryParams = new URLSearchParams();
+  for (const param of tool.parameters || []) {
+    if (param.in === "query" && args[param.name] !== undefined) {
+      queryParams.append(param.name, String(args[param.name]));
+    }
+  }
+  if (queryParams.toString()) {
+    url += "?" + queryParams.toString();
+  }
+
+  return url;
 };
 
-const DISCOVER_TOOLS = [
-  {
-    name: "discover",
-    description:
-      "Discover available tools. Without a toolset_name, returns all toolsets with descriptions. With a toolset_name, returns that toolset's full tool definitions including input schemas.",
-    inputSchema: {
-      type: "object" as const,
-      properties: {
-        toolset_name: {
-          type: "string",
-          description:
-            "Optional: name of a specific toolset to get full tool definitions for. Omit to list all available toolsets.",
-        },
-      },
-      required: [],
-    },
-  },
-  {
-    name: "call_tool",
-    description: "Execute a tool from a specific toolset",
-    inputSchema: {
-      type: "object" as const,
-      properties: {
-        toolset_name: {
-          type: "string",
-          description: "Name of the toolset containing the tool",
-        },
-        tool_name: {
-          type: "string",
-          description: "Name of the tool to call",
-        },
-        arguments: {
-          type: "object",
-          description: "Arguments to pass to the tool",
-        },
-      },
-      required: ["toolset_name", "tool_name", "arguments"],
-    },
-  },
-];
+export const buildRequestOptions = (
+  tool: AAPMcpToolDefinition,
+  args: Record<string, unknown>,
+  token: string,
+): RequestInit => {
+  const headers: Record<string, string> = {
+    Authorization: `Bearer ${token}`,
+    Accept: "application/json",
+  };
 
-const proxyToolCall = async (
+  const method = tool.method.toUpperCase();
+  const requestOptions: RequestInit = { method, headers };
+
+  if (["POST", "PUT", "PATCH"].includes(method) && args.requestBody) {
+    headers["Content-Type"] = "application/json";
+    requestOptions.body = JSON.stringify(args.requestBody);
+  }
+
+  return requestOptions;
+};
+
+const trackToolExecution = (
+  tool: AAPMcpToolDefinition,
+  toolToolset: string,
+  ctx: RequestContext,
+  args: Record<string, unknown>,
+  response: Response | undefined,
+  executionTimeMs: number,
+): void => {
+  const statusCode = response ? response.status : 0;
+  const parameterLength = JSON.stringify(args).length;
+
+  console.log(
+    `${getTimestamp()} [toolset:${toolToolset}] ${tool.name} → ${response && response.status} ${response && response.statusText} (${executionTimeMs}ms)`,
+  );
+
+  analyticsService.trackMcpToolCalled(
+    tool.name,
+    toolToolset,
+    ctx.userAgent,
+    parameterLength,
+    statusCode,
+    executionTimeMs,
+    ctx.userPseudoId,
+    ctx.userType,
+    ctx.installerPseudoId,
+  );
+  metricsService.recordToolExecution(tool.name, statusCode, executionTimeMs);
+  if (!response || !response.ok) {
+    metricsService.recordToolError(tool.name, statusCode);
+  }
+};
+
+const executeToolRequest = async (
   tool: AAPMcpToolDefinition,
   args: Record<string, unknown>,
   ctx: RequestContext,
 ): Promise<{ content: Array<{ type: string; text: string }> }> => {
-  const _startTime = Date.now();
+  const startTime = Date.now();
   const toolToolset = getToolsetForTool(tool.name);
-
-  let result: any;
   let response: Response | undefined;
 
   try {
-    let url = tool.pathTemplate;
-    const headers: Record<string, string> = {
-      Authorization: `Bearer ${ctx.token}`,
-      Accept: "application/json",
-    };
+    const url = buildToolUrl(tool, args);
+    const requestOptions = buildRequestOptions(tool, args, ctx.token);
 
-    for (const param of tool.parameters || []) {
-      if (param.in === "path" && args[param.name]) {
-        url = url.replace(`{${param.name}}`, String(args[param.name]));
-      }
-    }
-
-    const queryParams = new URLSearchParams();
-    for (const param of tool.parameters || []) {
-      if (param.in === "query" && args[param.name] !== undefined) {
-        queryParams.append(param.name, String(args[param.name]));
-      }
-    }
-    if (queryParams.toString()) {
-      url += "?" + queryParams.toString();
-    }
-
-    const requestOptions: RequestInit = {
-      method: tool.method.toUpperCase(),
-      headers,
-    };
-
-    if (
-      ["POST", "PUT", "PATCH"].includes(tool.method.toUpperCase()) &&
-      args.requestBody
-    ) {
-      headers["Content-Type"] = "application/json";
-      requestOptions.body = JSON.stringify(args.requestBody);
-    }
-
-    const fullUrl = `${CONFIG.BASE_URL}${url}`;
-    response = await fetch(fullUrl, requestOptions);
+    response = await fetch(`${CONFIG.BASE_URL}${url}`, requestOptions);
 
     const contentType = response.headers.get("content-type");
-    if (contentType && contentType.includes("application/json")) {
-      result = await response.json();
-    } else {
-      result = await response.text();
-    }
+    const result = contentType?.includes("application/json")
+      ? await response.json()
+      : await response.text();
 
     return {
-      content: [
-        {
-          type: "text",
-          text: JSON.stringify(result, null, 2),
-        },
-      ],
+      content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
     };
   } catch (error) {
     throw new Error(
@@ -418,95 +397,14 @@ const proxyToolCall = async (
       { cause: error },
     );
   } finally {
-    const executionTimeMs = Date.now() - _startTime;
-    const parameterLength = JSON.stringify(args).length;
-
-    console.log(
-      `${getTimestamp()} [toolset:${toolToolset}] ${tool.name} → ${response && response.status} ${response && response.statusText} (${executionTimeMs}ms)`,
-    );
-
-    analyticsService.trackMcpToolCalled(
-      tool.name,
+    trackToolExecution(
+      tool,
       toolToolset,
-      ctx.userAgent,
-      parameterLength,
-      response ? response.status : 0,
-      executionTimeMs,
-      ctx.userPseudoId,
-      ctx.userType,
-      ctx.installerPseudoId,
+      ctx,
+      args,
+      response,
+      Date.now() - startTime,
     );
-    metricsService.recordToolExecution(
-      tool.name,
-      response ? response.status : 0,
-      executionTimeMs,
-    );
-    if (!response || !response.ok) {
-      metricsService.recordToolError(
-        tool.name,
-        response ? response.status : 0,
-      );
-    }
-  }
-};
-
-const handleDiscoverTool = async (
-  name: string,
-  args: Record<string, unknown>,
-  ctx: RequestContext,
-): Promise<{ content: Array<{ type: string; text: string }> }> => {
-  switch (name) {
-    case "discover": {
-      const toolsetName = args.toolset_name as string | undefined;
-
-      if (!toolsetName) {
-        const toolsets = Object.entries(allToolsets)
-          .filter(([n]) => n !== "all" && n !== "discover")
-          .map(([n, tools]) => ({
-            name: n,
-            description: TOOLSET_DESCRIPTIONS[n] ?? "",
-            endpoint: `/mcp/${n}`,
-            tool_count: tools.length,
-          }));
-        return {
-          content: [{ type: "text", text: JSON.stringify(toolsets, null, 2) }],
-        };
-      }
-
-      const toolsetTools = allToolsets[toolsetName];
-      if (!toolsetTools || toolsetName === "all" || toolsetName === "discover") {
-        throw new Error(`Unknown toolset: ${toolsetName}`);
-      }
-      const tools = toolsetTools.map((t) => ({
-        name: t.name,
-        description: t.description,
-        inputSchema: t.inputSchema,
-      }));
-      return {
-        content: [{ type: "text", text: JSON.stringify(tools, null, 2) }],
-      };
-    }
-    case "call_tool": {
-      const toolsetName = args.toolset_name as string;
-      const toolName = args.tool_name as string;
-      const toolArgs = (args.arguments as Record<string, unknown>) || {};
-
-      const toolsetTools = allToolsets[toolsetName];
-      if (!toolsetTools || toolsetName === "all" || toolsetName === "discover") {
-        throw new Error(`Unknown toolset: ${toolsetName}`);
-      }
-
-      const tool = toolsetTools.find((t) => t.name === toolName);
-      if (!tool) {
-        throw new Error(
-          `Unknown tool: ${toolName} in toolset ${toolsetName}`,
-        );
-      }
-
-      return proxyToolCall(tool, toolArgs, ctx);
-    }
-    default:
-      throw new Error(`Unknown discover tool: ${name}`);
   }
 };
 
@@ -547,7 +445,9 @@ const createMcpServer = (): Server => {
     const ctx = getRequestContext(extra);
 
     if (ctx.toolset === "discover") {
-      return handleDiscoverTool(name, args, ctx);
+      return handleDiscoverTool(name, args, allToolsets, (tool, toolArgs) =>
+        executeToolRequest(tool, toolArgs, ctx),
+      );
     }
 
     const availableTools = getToolsByToolset(ctx.toolset);
@@ -556,7 +456,7 @@ const createMcpServer = (): Server => {
       throw new Error(`Unknown tool: ${name}`);
     }
 
-    return proxyToolCall(tool, args, ctx);
+    return executeToolRequest(tool, args, ctx);
   });
 
   return server;
