@@ -22,6 +22,7 @@ import {
 import { AnalyticsService } from "./analytics.js";
 import { PseudoIdentityService, type UserInfo } from "./pseudo-identity.js";
 import { AapMcpConfig, loadToolsetsFromCfg } from "./config-utils.js";
+import { DISCOVER_TOOLS, handleDiscoverTool } from "./discover.js";
 import {
   buildConfig,
   buildResourceMetadataUrl,
@@ -289,6 +290,124 @@ const getRequestContext = (extra: any): RequestContext => {
   return ctx;
 };
 
+export const buildToolUrl = (
+  tool: AAPMcpToolDefinition,
+  args: Record<string, unknown>,
+): string => {
+  let url = tool.pathTemplate;
+
+  for (const param of tool.parameters || []) {
+    if (param.in === "path" && args[param.name]) {
+      url = url.replace(`{${param.name}}`, String(args[param.name]));
+    }
+  }
+
+  const queryParams = new URLSearchParams();
+  for (const param of tool.parameters || []) {
+    if (param.in === "query" && args[param.name] !== undefined) {
+      queryParams.append(param.name, String(args[param.name]));
+    }
+  }
+  if (queryParams.toString()) {
+    url += "?" + queryParams.toString();
+  }
+
+  return url;
+};
+
+export const buildRequestOptions = (
+  tool: AAPMcpToolDefinition,
+  args: Record<string, unknown>,
+  token: string,
+): RequestInit => {
+  const headers: Record<string, string> = {
+    Authorization: `Bearer ${token}`,
+    Accept: "application/json",
+  };
+
+  const method = tool.method.toUpperCase();
+  const requestOptions: RequestInit = { method, headers };
+
+  if (["POST", "PUT", "PATCH"].includes(method) && args.requestBody) {
+    headers["Content-Type"] = "application/json";
+    requestOptions.body = JSON.stringify(args.requestBody);
+  }
+
+  return requestOptions;
+};
+
+const trackToolExecution = (
+  tool: AAPMcpToolDefinition,
+  toolToolset: string,
+  ctx: RequestContext,
+  args: Record<string, unknown>,
+  response: Response | undefined,
+  executionTimeMs: number,
+): void => {
+  const statusCode = response ? response.status : 0;
+  const parameterLength = JSON.stringify(args).length;
+
+  console.log(
+    `${getTimestamp()} [toolset:${toolToolset}] ${tool.name} → ${response && response.status} ${response && response.statusText} (${executionTimeMs}ms)`,
+  );
+
+  analyticsService.trackMcpToolCalled(
+    tool.name,
+    toolToolset,
+    ctx.userAgent,
+    parameterLength,
+    statusCode,
+    executionTimeMs,
+    ctx.userPseudoId,
+    ctx.userType,
+    ctx.installerPseudoId,
+  );
+  metricsService.recordToolExecution(tool.name, statusCode, executionTimeMs);
+  if (!response || !response.ok) {
+    metricsService.recordToolError(tool.name, statusCode);
+  }
+};
+
+const executeToolRequest = async (
+  tool: AAPMcpToolDefinition,
+  args: Record<string, unknown>,
+  ctx: RequestContext,
+): Promise<{ content: Array<{ type: string; text: string }> }> => {
+  const startTime = Date.now();
+  const toolToolset = getToolsetForTool(tool.name);
+  let response: Response | undefined;
+
+  try {
+    const url = buildToolUrl(tool, args);
+    const requestOptions = buildRequestOptions(tool, args, ctx.token);
+
+    response = await fetch(`${CONFIG.BASE_URL}${url}`, requestOptions);
+
+    const contentType = response.headers.get("content-type");
+    const result = contentType?.includes("application/json")
+      ? await response.json()
+      : await response.text();
+
+    return {
+      content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+    };
+  } catch (error) {
+    throw new Error(
+      `Tool execution failed: ${error instanceof Error ? error.message : String(error)}`,
+      { cause: error },
+    );
+  } finally {
+    trackToolExecution(
+      tool,
+      toolToolset,
+      ctx,
+      args,
+      response,
+      Date.now() - startTime,
+    );
+  }
+};
+
 // Factory function to create a new Server instance with request handlers
 const createMcpServer = (): Server => {
   const server = new Server(
@@ -305,6 +424,11 @@ const createMcpServer = (): Server => {
 
   server.setRequestHandler(ListToolsRequestSchema, async (request, extra) => {
     const ctx = getRequestContext(extra);
+
+    if (ctx.toolset === "discover") {
+      return { tools: DISCOVER_TOOLS };
+    }
+
     const availableTools = getToolsByToolset(ctx.toolset);
 
     return {
@@ -318,122 +442,21 @@ const createMcpServer = (): Server => {
 
   server.setRequestHandler(CallToolRequestSchema, async (request, extra) => {
     const { name, arguments: args = {} } = request.params;
-    const _startTime = Date.now();
     const ctx = getRequestContext(extra);
 
-    // Get user's toolset to ensure they have access to this tool
-    const availableTools = getToolsByToolset(ctx.toolset);
+    if (ctx.toolset === "discover") {
+      return handleDiscoverTool(name, args, allToolsets, (tool, toolArgs) =>
+        executeToolRequest(tool, toolArgs, ctx),
+      );
+    }
 
-    // Find the matching tool by external name (without service prefix)
+    const availableTools = getToolsByToolset(ctx.toolset);
     const tool = availableTools.find((t) => t.name === name);
     if (!tool) {
       throw new Error(`Unknown tool: ${name}`);
     }
 
-    // Get toolset for this tool
-    const toolToolset = getToolsetForTool(tool.name);
-
-    // Execute the tool by making HTTP request
-    let result: any;
-    let response: Response | undefined;
-    let fullUrl: string;
-    let requestOptions: RequestInit | undefined;
-
-    try {
-      // Build URL from path template and parameters
-      let url = tool.pathTemplate;
-      const headers: Record<string, string> = {
-        Authorization: `Bearer ${ctx.token}`,
-        Accept: "application/json",
-      };
-
-      for (const param of tool.parameters || []) {
-        if (param.in === "path" && args[param.name]) {
-          url = url.replace(`{${param.name}}`, String(args[param.name]));
-        }
-      }
-
-      // Add query parameters
-      const queryParams = new URLSearchParams();
-      for (const param of tool.parameters || []) {
-        if (param.in === "query" && args[param.name] !== undefined) {
-          queryParams.append(param.name, String(args[param.name]));
-        }
-      }
-      if (queryParams.toString()) {
-        url += "?" + queryParams.toString();
-      }
-
-      // Prepare request options
-      requestOptions = {
-        method: tool.method.toUpperCase(),
-        headers,
-      };
-
-      // Add request body for POST, PUT, PATCH
-      if (
-        ["POST", "PUT", "PATCH"].includes(tool.method.toUpperCase()) &&
-        args.requestBody
-      ) {
-        headers["Content-Type"] = "application/json";
-        requestOptions.body = JSON.stringify(args.requestBody);
-      }
-
-      // Make HTTP request
-      fullUrl = `${CONFIG.BASE_URL}${url}`;
-      response = await fetch(fullUrl, requestOptions);
-
-      const contentType = response.headers.get("content-type");
-      if (contentType && contentType.includes("application/json")) {
-        result = await response.json();
-      } else {
-        result = await response.text();
-      }
-
-      return {
-        content: [
-          {
-            type: "text",
-            text: JSON.stringify(result, null, 2),
-          },
-        ],
-      };
-    } catch (error) {
-      throw new Error(
-        `Tool execution failed: ${error instanceof Error ? error.message : String(error)}`,
-        { cause: error },
-      );
-    } finally {
-      const executionTimeMs = Date.now() - _startTime;
-      const parameterLength = JSON.stringify(args).length;
-
-      console.log(
-        `${getTimestamp()} [toolset:${toolToolset}] ${tool.name} → ${response && response.status} ${response && response.statusText} (${executionTimeMs}ms)`,
-      );
-
-      analyticsService.trackMcpToolCalled(
-        tool.name,
-        toolToolset,
-        ctx.userAgent,
-        parameterLength,
-        response ? response.status : 0,
-        executionTimeMs,
-        ctx.userPseudoId,
-        ctx.userType,
-        ctx.installerPseudoId,
-      );
-      metricsService.recordToolExecution(
-        tool.name,
-        response ? response.status : 0,
-        executionTimeMs,
-      );
-      if (!response || !response.ok) {
-        metricsService.recordToolError(
-          tool.name,
-          response ? response.status : 0,
-        );
-      }
-    }
+    return executeToolRequest(tool, args, ctx);
   });
 
   return server;
@@ -607,6 +630,7 @@ const mcpPostHandler = async (
 
 const allTools: AAPMcpToolDefinition[] = await generateTools();
 const allToolsets = loadToolsetsFromCfg(allTools, localConfig);
+allToolsets["discover"] = [];
 
 // Set up routes - POST only, no GET/DELETE (no sessions to stream or terminate)
 app.post("/mcp", (req, res) => mcpPostHandler(req, res));
@@ -634,11 +658,13 @@ app.get("/api/v1/health", (req, res) => {
 
 app.get("/", (req, res) => {
   const endpoints = Object.keys(allToolsets)
-    .filter((name) => name !== "all")
+    .filter((name) => name !== "all" && name !== "discover")
     .map((toolset) => `/mcp/${toolset}`);
   const banner = `This is a MCP server, you can access it with a MCP client through the following end-points:
     - ${endpoints.join("\r\n    - ")}
-  or just /mcp if you want to get access to all the tools at the same time.`;
+  or just /mcp if you want to get access to all the tools at the same time.
+
+  Connect to /mcp/discover to browse available toolsets before loading tools.`;
   res.set("Content-Type", "text/plain");
   res.status(200).send(banner);
 });
@@ -705,7 +731,7 @@ async function main(): Promise<void> {
         allowWriteOperations,
       );
       const toolsetNames = Object.keys(allToolsets).filter(
-        (name) => name !== "all",
+        (name) => name !== "all" && name !== "discover",
       );
       app.use(createProtectedResourceRouter(oauth2Config, toolsetNames));
       console.log(`  OAuth 2.1 discovery: ENABLED`);
