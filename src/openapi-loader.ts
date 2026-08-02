@@ -243,10 +243,15 @@ export const reformatLightspeedTool = (
 export const reformatControllerTool = (
   tool: AAPMcpToolDefinition,
 ): AAPMcpToolDefinition => {
-  tool.pathTemplate = tool.pathTemplate?.replace(
-    "/api/v2",
-    "/api/controller/v2",
-  );
+  // Controller-only deployments without Platform Gateway keep the legacy
+  // /api/v2 paths. Set CONTROLLER_LEGACY_PATHS=true to skip the gateway
+  // rewrite; the default (gateway paths) is unchanged.
+  if (process.env.CONTROLLER_LEGACY_PATHS !== "true") {
+    tool.pathTemplate = tool.pathTemplate?.replace(
+      "/api/v2",
+      "/api/controller/v2",
+    );
+  }
 
   // Remove api_ prefix if it exists (backwards compatibility),
   // then always prepend controller.

@@ -345,6 +345,55 @@ describe("OpenAPI Loader", () => {
     });
   });
 
+  describe("reformatControllerTool with CONTROLLER_LEGACY_PATHS", () => {
+    const ORIGINAL_ENV = process.env.CONTROLLER_LEGACY_PATHS;
+
+    afterEach(() => {
+      if (ORIGINAL_ENV === undefined) {
+        delete process.env.CONTROLLER_LEGACY_PATHS;
+      } else {
+        process.env.CONTROLLER_LEGACY_PATHS = ORIGINAL_ENV;
+      }
+    });
+
+    it("should keep legacy /api/v2 paths when CONTROLLER_LEGACY_PATHS is true", () => {
+      process.env.CONTROLLER_LEGACY_PATHS = "true";
+      const mockTool = createMockTool({
+        name: "api_jobs_list",
+        pathTemplate: "/api/v2/jobs/",
+      });
+
+      const result = reformatControllerTool(mockTool);
+
+      expect(result.name).toBe("jobs_list");
+      expect(result.pathTemplate).toBe("/api/v2/jobs/");
+    });
+
+    it("should rewrite to gateway paths when CONTROLLER_LEGACY_PATHS is unset", () => {
+      delete process.env.CONTROLLER_LEGACY_PATHS;
+      const mockTool = createMockTool({
+        name: "api_jobs_list",
+        pathTemplate: "/api/v2/jobs/",
+      });
+
+      const result = reformatControllerTool(mockTool);
+
+      expect(result.pathTemplate).toBe("/api/controller/v2/jobs/");
+    });
+
+    it("should rewrite to gateway paths when CONTROLLER_LEGACY_PATHS is not exactly true", () => {
+      process.env.CONTROLLER_LEGACY_PATHS = "1";
+      const mockTool = createMockTool({
+        name: "api_jobs_list",
+        pathTemplate: "/api/v2/jobs/",
+      });
+
+      const result = reformatControllerTool(mockTool);
+
+      expect(result.pathTemplate).toBe("/api/controller/v2/jobs/");
+    });
+  });
+
   describe("reformatLightspeedTool", () => {
     it("should prepend /api/lightspeed/v1 to path template and rename mapped tools", () => {
       const mockTool = createMockTool({
