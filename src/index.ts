@@ -35,6 +35,10 @@ import {
   type ProtectedResourceConfig,
   type Rfc6750Error,
 } from "./oauth2/protected-resource-metadata.js";
+import {
+  describeInboundAuth,
+  extractMcpRpcMethod,
+} from "./http-debug.js";
 
 // Load environment variables
 config();
@@ -95,6 +99,9 @@ const allowWriteOperations = getBooleanConfig(
   localConfig.allow_write_operations,
 );
 
+// When true, logs inbound MCP requests and outbound AAP HTTP traffic
+const debugHttp = getBooleanConfig("DEBUG_HTTP", false);
+
 // Initialize allowed operations list based on configuration
 const allowedOperations = allowWriteOperations
   ? ["GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"]
@@ -114,6 +121,18 @@ const servicesConfig = localConfig.services || [];
 const getTimestamp = (): string => {
   return new Date().toISOString().split(".")[0] + "Z";
 };
+
+const debugLog = (message: string): void => {
+  if (debugHttp) {
+    console.log(`${getTimestamp()} [DEBUG_HTTP] ${message}`);
+  }
+};
+
+if (debugHttp) {
+  console.log(
+    `${getTimestamp()} DEBUG_HTTP enabled — inbound MCP requests and outbound AAP HTTP traffic will be logged`,
+  );
+}
 
 // Configure HTTPS certificate validation globally
 if (ignoreCertificateErrors) {
@@ -173,7 +192,6 @@ const validateToken = async (bearerToken: string): Promise<UserInfo> => {
       return {};
     }
   } catch (error) {
-    console.error(`${getTimestamp()} Token validation failed:`, error);
     throw new Error(
       `Token validation failed: ${error instanceof Error ? error.message : String(error)}`,
       { cause: error },
@@ -376,15 +394,20 @@ const executeToolRequest = async (
   const startTime = Date.now();
   const toolToolset = getToolsetForTool(tool.name);
   let response: Response | undefined;
+  let result: unknown;
+  let fullUrl = "";
 
   try {
     const url = buildToolUrl(tool, args);
     const requestOptions = buildRequestOptions(tool, args, ctx.token);
+    fullUrl = `${CONFIG.BASE_URL}${url}`;
 
-    response = await fetch(`${CONFIG.BASE_URL}${url}`, requestOptions);
+    debugLog(`outbound ${requestOptions.method} ${fullUrl}`);
+
+    response = await fetch(fullUrl, requestOptions);
 
     const contentType = response.headers.get("content-type");
-    const result = contentType?.includes("application/json")
+    result = contentType?.includes("application/json")
       ? await response.json()
       : await response.text();
 
@@ -397,6 +420,17 @@ const executeToolRequest = async (
       { cause: error },
     );
   } finally {
+    // Always surface the full URL on error responses so 404/5xx are traceable
+    if (response && !response.ok) {
+      console.error(
+        `${getTimestamp()} [toolset:${toolToolset}] ${tool.name} failed: ${response.status} ${response.statusText} — URL: ${fullUrl}`,
+      );
+      if (result !== undefined) {
+        const bodySnippet = JSON.stringify(result).slice(0, 500);
+        debugLog(`outbound response body (first 500 chars): ${bodySnippet}`);
+      }
+    }
+
     trackToolExecution(
       tool,
       toolToolset,
@@ -477,6 +511,9 @@ app.use((req, res, next) => {
     // Reject requests without session ID or Authorization header immediately
     // This prevents expensive JSON parsing and session creation for unauthenticated requests
     if (!sessionId && !authHeader) {
+      debugLog(
+        `inbound ${req.method} ${req.path} auth=missing session=no → 401 (early reject: no credentials)`,
+      );
       applyWwwAuthenticate(res, req.path);
       res.status(401).json({
         jsonrpc: "2.0",
@@ -488,6 +525,10 @@ app.use((req, res, next) => {
       });
       return;
     }
+
+    debugLog(
+      `inbound ${req.method} ${req.path} auth=${describeInboundAuth(authHeader as string | undefined)} session=${sessionId ? "yes" : "no"} (passed early auth)`,
+    );
   }
 
   next();
@@ -521,7 +562,9 @@ const authenticateRequest = async (
   try {
     userInfo = await validateToken(token);
   } catch (error) {
-    console.error(`${getTimestamp()} Token validation failed:`, error);
+    debugLog(
+      `token validation failed for toolset=${toolset}: ${error instanceof Error ? error.message : String(error)}`,
+    );
     return { ok: false, reason: "invalid-token" };
   }
 
@@ -564,13 +607,29 @@ const mcpPostHandler = async (
   res: express.Response,
   toolset: string = "all",
 ) => {
-  console.log(`${getTimestamp()} Received MCP request`);
+  const mcpMethod = extractMcpRpcMethod(req.body);
+  const authHeader = (req.headers["authorization"] ||
+    req.headers["x-authorization"]) as string | undefined;
+  debugLog(
+    `inbound ${req.method} ${req.path} toolset=${toolset} mcp=${mcpMethod ?? "unknown"} auth=${describeInboundAuth(authHeader)} ua=${(req.headers["user-agent"] as string) || "unknown"}`,
+  );
+
+  if (debugHttp) {
+    res.on("finish", () => {
+      debugLog(
+        `inbound ${req.method} ${req.path} toolset=${toolset} mcp=${mcpMethod ?? "unknown"} → ${res.statusCode}`,
+      );
+    });
+  }
 
   try {
     // Authenticate every request
     const authResult = await authenticateRequest(req, toolset);
     if (!authResult.ok) {
       const isInvalidToken = authResult.reason === "invalid-token";
+      debugLog(
+        `inbound ${req.method} ${req.path} toolset=${toolset} mcp=${mcpMethod ?? "unknown"} → 401 (${isInvalidToken ? "invalid token" : "bearer token required"})`,
+      );
       applyWwwAuthenticate(
         res,
         req.path,
@@ -590,6 +649,9 @@ const mcpPostHandler = async (
     }
 
     const ctx = authResult.ctx;
+    debugLog(
+      `inbound ${req.method} ${req.path} toolset=${toolset} mcp=${mcpMethod ?? "unknown"} auth=ok userType=${ctx.userType}`,
+    );
 
     // Create a fresh stateless transport for each request
     const transport = new StreamableHTTPServerTransport({
@@ -637,17 +699,11 @@ app.post("/mcp", (req, res) => mcpPostHandler(req, res));
 
 app.post("/:toolset/mcp", (req, res) => {
   const toolset = req.params.toolset;
-  console.log(
-    `${getTimestamp()} Toolset-specific POST request for toolset: ${toolset}`,
-  );
   return mcpPostHandler(req, res, toolset);
 });
 
 app.post("/mcp/:toolset", (req, res) => {
   const toolset = req.params.toolset;
-  console.log(
-    `${getTimestamp()} Toolset-specific POST request for toolset: ${toolset}`,
-  );
   return mcpPostHandler(req, res, toolset);
 });
 
@@ -708,6 +764,7 @@ async function main(): Promise<void> {
     `  Certificate validation: ${ignoreCertificateErrors ? "DISABLED" : "ENABLED"}`,
   );
   console.log(`  Metrics: ${enableMetrics ? "ENABLED" : "DISABLED"}`);
+  console.log(`  HTTP debug logging: ${debugHttp ? "ENABLED" : "DISABLED"}`);
 
   console.log(
     `  OAuth 2.1 discovery: ${isOAuth2Enabled() ? "CONFIGURED" : "DISABLED"}`,
