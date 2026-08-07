@@ -146,14 +146,25 @@ const extractBearerToken = (
 };
 
 // Validate authorization token
-const validateToken = async (bearerToken: string): Promise<UserInfo> => {
+export const validateToken = async (
+  bearerToken: string,
+): Promise<UserInfo> => {
   try {
-    const response = await fetch(`${CONFIG.BASE_URL}/api/gateway/v1/me/`, {
-      headers: {
-        Authorization: `Bearer ${bearerToken}`,
-        Accept: "application/json",
-      },
+    const headers = {
+      Authorization: `Bearer ${bearerToken}`,
+      Accept: "application/json",
+    };
+    let response = await fetch(`${CONFIG.BASE_URL}/api/gateway/v1/me/`, {
+      headers,
     });
+
+    // Controller-only deployments without Platform Gateway expose the same
+    // token-scoped identity document at the legacy Controller endpoint.
+    // Fall back only when Gateway is absent (404); never mask an auth or
+    // TLS error behind the fallback.
+    if (response.status === 404) {
+      response = await fetch(`${CONFIG.BASE_URL}/api/v2/me/`, { headers });
+    }
 
     if (!response.ok) {
       throw new Error(
