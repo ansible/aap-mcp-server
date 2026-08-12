@@ -11,6 +11,26 @@ import type { McpToolDefinition } from "openapi-mcp-generator";
 export const DEFAULT_PAGE_SIZE = 10;
 export const MAX_PAGE_SIZE = 200;
 
+export interface SchemaOverride {
+  enum?: string[];
+  description?: string;
+  tools?: string[];
+}
+
+// No AAP API exposes valid role_level filter values dynamically — they are
+// hardcoded in AWX (awx.main.constants.role_name_to_perm_mapping). Additional
+// roles exist (e.g. adhoc_role, use_role, auditor_role, org-scoped admin roles)
+// but do not apply to job_templates. Revisit if broader role_level support is needed.
+const ROLE_LEVELS = ["admin_role", "read_role", "execute_role"];
+
+export const SCHEMA_OVERRIDES: Record<string, SchemaOverride> = {
+  role_level: {
+    enum: ROLE_LEVELS,
+    description: `Filter by role level for RBAC. Must be one of: ${ROLE_LEVELS.join(", ")}.`,
+    tools: ["job_templates_list"],
+  },
+};
+
 export function getDefaultPageSize(config?: { "default-page-size"?: number }): {
   value: number;
   source: string;
@@ -344,6 +364,16 @@ export function generateInputSchemaAndDetails(
 
     if (typeof paramSchema === "object") {
       paramSchema.description = param.description || paramSchema.description;
+    }
+
+    const override = SCHEMA_OVERRIDES[param.name];
+    if (override && typeof paramSchema === "object") {
+      const appliesToTool =
+        !override.tools || override.tools.includes(operation.operationId || "");
+      if (appliesToTool) {
+        const { tools: _, ...schemaProps } = override;
+        Object.assign(paramSchema, schemaProps);
+      }
     }
 
     properties[param.name] = paramSchema;

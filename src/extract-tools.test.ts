@@ -7,6 +7,7 @@ import {
   shouldIncludeOperationForMcp,
   clampNumericConstraints,
   mapOpenApiSchemaToJsonSchema,
+  SCHEMA_OVERRIDES,
 } from "./extract-tools.js";
 import type { OpenAPIV3 } from "openapi-types";
 
@@ -1210,5 +1211,94 @@ describe("mapOpenApiSchemaToJsonSchema", () => {
     expect(result.properties.forks.minimum).toBe(0);
     expect(result.properties.timeout.maximum).toBe(Number.MAX_SAFE_INTEGER);
     expect(result.properties.timeout.minimum).toBe(-Number.MAX_SAFE_INTEGER);
+  });
+});
+
+describe("SCHEMA_OVERRIDES applied during tool extraction", () => {
+  it("should not affect parameters without overrides", () => {
+    const operation = new AAPOperationObject({
+      operationId: "job_templates_list",
+      parameters: [
+        {
+          name: "search",
+          in: "query",
+          schema: { type: "string" },
+          description: "Search filter",
+        },
+      ],
+      responses: { "200": { description: "OK" } },
+    });
+
+    const { inputSchema } = generateInputSchemaAndDetails(operation);
+    const schema = inputSchema as any;
+
+    expect(schema.properties.search.enum).toBeUndefined();
+    expect(schema.properties.search.description).toBe("Search filter");
+  });
+
+  it("should apply overrides through full extractToolsFromApi pipeline", () => {
+    const spec: any = {
+      openapi: "3.0.0",
+      info: { title: "Test API", version: "1.0.0" },
+      paths: {
+        "/api/v2/job_templates/": {
+          get: {
+            operationId: "job_templates_list",
+            "x-ai-description": "List job templates",
+            parameters: [
+              {
+                name: "role_level",
+                in: "query",
+                schema: { type: "string" },
+                description: "Filter by role level for RBAC",
+              },
+            ],
+            responses: { "200": { description: "Success" } },
+          },
+        },
+      },
+    };
+
+    const tools = extractToolsFromApi(spec);
+    const schema = tools[0].inputSchema as any;
+
+    expect(schema.properties.role_level.enum).toEqual(
+      SCHEMA_OVERRIDES.role_level.enum,
+    );
+    expect(schema.properties.role_level.description).toBe(
+      SCHEMA_OVERRIDES.role_level.description,
+    );
+  });
+
+  it("should not apply overrides to tools outside the scope", () => {
+    const spec: any = {
+      openapi: "3.0.0",
+      info: { title: "Test API", version: "1.0.0" },
+      paths: {
+        "/api/v2/inventories/": {
+          get: {
+            operationId: "inventories_list",
+            "x-ai-description": "List inventories",
+            parameters: [
+              {
+                name: "role_level",
+                in: "query",
+                schema: { type: "string" },
+                description: "Filter by role level for RBAC",
+              },
+            ],
+            responses: { "200": { description: "Success" } },
+          },
+        },
+      },
+    };
+
+    const tools = extractToolsFromApi(spec);
+    const schema = tools[0].inputSchema as any;
+
+    expect(schema.properties.role_level.enum).toBeUndefined();
+    expect(schema.properties.role_level.description).toBe(
+      "Filter by role level for RBAC",
+    );
   });
 });

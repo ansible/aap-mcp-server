@@ -10,7 +10,11 @@ import {
   CallToolRequestSchema,
   ListToolsRequestSchema,
 } from "@modelcontextprotocol/sdk/types.js";
-import { extractToolsFromApi, getDefaultPageSize } from "./extract-tools.js";
+import {
+  extractToolsFromApi,
+  getDefaultPageSize,
+  SCHEMA_OVERRIDES,
+} from "./extract-tools.js";
 import { readFileSync, writeFileSync } from "fs";
 import { join } from "path";
 import * as yaml from "js-yaml";
@@ -368,6 +372,26 @@ const trackToolExecution = (
   }
 };
 
+export const validateToolArgs = (
+  args: Record<string, unknown>,
+  toolName: string,
+): string[] => {
+  const errors: string[] = [];
+  for (const [paramName, value] of Object.entries(args)) {
+    const override = SCHEMA_OVERRIDES[paramName];
+    if (override?.enum && typeof value === "string") {
+      const appliesToTool =
+        !override.tools || override.tools.includes(toolName);
+      if (appliesToTool && !override.enum.includes(value)) {
+        errors.push(
+          `Invalid parameter "${paramName}": received "${value}". Allowed values: ${override.enum.join(", ")}.`,
+        );
+      }
+    }
+  }
+  return errors;
+};
+
 const executeToolRequest = async (
   tool: AAPMcpToolDefinition,
   args: Record<string, unknown>,
@@ -454,6 +478,14 @@ const createMcpServer = (): Server => {
     const tool = availableTools.find((t) => t.name === name);
     if (!tool) {
       throw new Error(`Unknown tool: ${name}`);
+    }
+
+    const validationErrors = validateToolArgs(args, name);
+    if (validationErrors.length > 0) {
+      return {
+        isError: true,
+        content: [{ type: "text", text: validationErrors.join("\n") }],
+      };
     }
 
     return executeToolRequest(tool, args, ctx);
