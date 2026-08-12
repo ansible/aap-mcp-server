@@ -11,6 +11,18 @@ import type { McpToolDefinition } from "openapi-mcp-generator";
 export const DEFAULT_PAGE_SIZE = 10;
 export const MAX_PAGE_SIZE = 200;
 
+export interface SchemaOverride {
+  enum?: string[];
+  description?: string;
+}
+
+export const SCHEMA_OVERRIDES: Record<string, SchemaOverride> = {
+  role_level: {
+    description:
+      "You MUST call the role_definitions_list tool first to retrieve the valid role_level values before using this parameter. If that tool does not return the needed information, try other RBAC-related tools such as roles_list.",
+  },
+};
+
 export function getDefaultPageSize(config?: { "default-page-size"?: number }): {
   value: number;
   source: string;
@@ -344,6 +356,16 @@ export function generateInputSchemaAndDetails(
 
     if (typeof paramSchema === "object") {
       paramSchema.description = param.description || paramSchema.description;
+    }
+
+    const override = SCHEMA_OVERRIDES[param.name];
+    if (override && typeof paramSchema === "object") {
+      const { description, ...rest } = override;
+      Object.assign(paramSchema, rest);
+      if (description) {
+        paramSchema.description =
+          (paramSchema.description || "") + " " + description;
+      }
     }
 
     properties[param.name] = paramSchema;
