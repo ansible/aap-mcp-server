@@ -16,10 +16,16 @@ export interface SchemaOverride {
   description?: string;
 }
 
+// No AAP API exposes valid role_level filter values dynamically — they are
+// hardcoded in AWX (awx.main.constants.role_name_to_perm_mapping). Additional
+// roles exist (e.g. adhoc_role, use_role, auditor_role, org-scoped admin roles)
+// but do not apply to job_templates. Revisit if broader role_level support is needed.
+const ROLE_LEVELS = ["admin_role", "read_role", "execute_role"];
+
 export const SCHEMA_OVERRIDES: Record<string, SchemaOverride> = {
   role_level: {
-    description:
-      "You MUST call the role_definitions_list tool first to retrieve the valid role_level values before using this parameter. If that tool does not return the needed information, try other RBAC-related tools such as roles_list.",
+    enum: ROLE_LEVELS,
+    description: `Filter by role level for RBAC. Must be one of: ${ROLE_LEVELS.join(", ")}.`,
   },
 };
 
@@ -360,12 +366,7 @@ export function generateInputSchemaAndDetails(
 
     const override = SCHEMA_OVERRIDES[param.name];
     if (override && typeof paramSchema === "object") {
-      const { description, ...rest } = override;
-      Object.assign(paramSchema, rest);
-      if (description) {
-        paramSchema.description =
-          (paramSchema.description || "") + " " + description;
-      }
+      Object.assign(paramSchema, override);
     }
 
     properties[param.name] = paramSchema;

@@ -1262,11 +1262,11 @@ describe("SCHEMA_OVERRIDES applied during tool extraction", () => {
     const tools = extractToolsFromApi(spec);
     const schema = tools[0].inputSchema as any;
 
-    expect(schema.properties.role_level.description).toContain(
-      "Filter by role level for RBAC",
+    expect(schema.properties.role_level.enum).toEqual(
+      SCHEMA_OVERRIDES.role_level.enum,
     );
-    expect(schema.properties.role_level.description).toContain(
-      SCHEMA_OVERRIDES.role_level.description as string,
+    expect(schema.properties.role_level.description).toBe(
+      SCHEMA_OVERRIDES.role_level.description,
     );
   });
 });

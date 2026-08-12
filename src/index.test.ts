@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import type { Request, Response } from "express";
 import type { AAPMcpToolDefinition } from "./openapi-loader.js";
-import { buildToolUrl, buildRequestOptions } from "./index.js";
+import { buildToolUrl, buildRequestOptions, validateToolArgs } from "./index.js";
 
 // Mock dependencies
 vi.mock("./metrics.js", () => ({
@@ -288,5 +288,31 @@ describe("buildRequestOptions", () => {
     expect(
       (opts.headers as Record<string, string>)["Content-Type"],
     ).toBeUndefined();
+  });
+});
+
+describe("validateToolArgs", () => {
+  it("should return no errors for valid role_level", () => {
+    expect(validateToolArgs({ role_level: "admin_role" })).toEqual([]);
+    expect(validateToolArgs({ role_level: "read_role" })).toEqual([]);
+    expect(validateToolArgs({ role_level: "execute_role" })).toEqual([]);
+  });
+
+  it("should return error for invalid role_level", () => {
+    const errors = validateToolArgs({ role_level: "l2" });
+    expect(errors).toHaveLength(1);
+    expect(errors[0]).toContain('"role_level"');
+    expect(errors[0]).toContain('"l2"');
+    expect(errors[0]).toContain("admin_role");
+    expect(errors[0]).toContain("read_role");
+    expect(errors[0]).toContain("execute_role");
+  });
+
+  it("should return no errors for params without overrides", () => {
+    expect(validateToolArgs({ search: "anything", page: 1 })).toEqual([]);
+  });
+
+  it("should skip validation when param is undefined", () => {
+    expect(validateToolArgs({ role_level: undefined })).toEqual([]);
   });
 });
