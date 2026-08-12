@@ -378,8 +378,8 @@ export const validateToolArgs = (
   const errors: string[] = [];
   for (const [paramName, value] of Object.entries(args)) {
     const override = SCHEMA_OVERRIDES[paramName];
-    if (override?.enum && value !== undefined) {
-      if (!override.enum.includes(String(value))) {
+    if (override?.enum && typeof value === "string") {
+      if (!override.enum.includes(value)) {
         errors.push(
           `Invalid parameter "${paramName}": received "${value}". Allowed values: ${override.enum.join(", ")}.`,
         );
