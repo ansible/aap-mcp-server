@@ -1,7 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import type { Request, Response } from "express";
 import type { AAPMcpToolDefinition } from "./openapi-loader.js";
-import { buildToolUrl, buildRequestOptions, validateToolArgs } from "./index.js";
+import {
+  buildToolUrl,
+  buildRequestOptions,
+  validateToolArgs,
+} from "./index.js";
 
 // Mock dependencies
 vi.mock("./metrics.js", () => ({

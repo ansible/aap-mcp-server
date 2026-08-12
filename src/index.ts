@@ -372,9 +372,7 @@ const trackToolExecution = (
   }
 };
 
-export const validateToolArgs = (
-  args: Record<string, unknown>,
-): string[] => {
+export const validateToolArgs = (args: Record<string, unknown>): string[] => {
   const errors: string[] = [];
   for (const [paramName, value] of Object.entries(args)) {
     const override = SCHEMA_OVERRIDES[paramName];
