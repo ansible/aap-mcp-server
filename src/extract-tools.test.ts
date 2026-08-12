@@ -1269,4 +1269,36 @@ describe("SCHEMA_OVERRIDES applied during tool extraction", () => {
       SCHEMA_OVERRIDES.role_level.description,
     );
   });
+
+  it("should not apply overrides to tools outside the scope", () => {
+    const spec: any = {
+      openapi: "3.0.0",
+      info: { title: "Test API", version: "1.0.0" },
+      paths: {
+        "/api/v2/inventories/": {
+          get: {
+            operationId: "inventories_list",
+            "x-ai-description": "List inventories",
+            parameters: [
+              {
+                name: "role_level",
+                in: "query",
+                schema: { type: "string" },
+                description: "Filter by role level for RBAC",
+              },
+            ],
+            responses: { "200": { description: "Success" } },
+          },
+        },
+      },
+    };
+
+    const tools = extractToolsFromApi(spec);
+    const schema = tools[0].inputSchema as any;
+
+    expect(schema.properties.role_level.enum).toBeUndefined();
+    expect(schema.properties.role_level.description).toBe(
+      "Filter by role level for RBAC",
+    );
+  });
 });

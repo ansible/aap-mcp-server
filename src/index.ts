@@ -372,12 +372,17 @@ const trackToolExecution = (
   }
 };
 
-export const validateToolArgs = (args: Record<string, unknown>): string[] => {
+export const validateToolArgs = (
+  args: Record<string, unknown>,
+  toolName: string,
+): string[] => {
   const errors: string[] = [];
   for (const [paramName, value] of Object.entries(args)) {
     const override = SCHEMA_OVERRIDES[paramName];
     if (override?.enum && typeof value === "string") {
-      if (!override.enum.includes(value)) {
+      const appliesToTool =
+        !override.tools || override.tools.includes(toolName);
+      if (appliesToTool && !override.enum.includes(value)) {
         errors.push(
           `Invalid parameter "${paramName}": received "${value}". Allowed values: ${override.enum.join(", ")}.`,
         );
@@ -475,7 +480,7 @@ const createMcpServer = (): Server => {
       throw new Error(`Unknown tool: ${name}`);
     }
 
-    const validationErrors = validateToolArgs(args);
+    const validationErrors = validateToolArgs(args, name);
     if (validationErrors.length > 0) {
       return {
         isError: true,

@@ -14,6 +14,7 @@ export const MAX_PAGE_SIZE = 200;
 export interface SchemaOverride {
   enum?: string[];
   description?: string;
+  tools?: string[];
 }
 
 // No AAP API exposes valid role_level filter values dynamically — they are
@@ -26,6 +27,7 @@ export const SCHEMA_OVERRIDES: Record<string, SchemaOverride> = {
   role_level: {
     enum: ROLE_LEVELS,
     description: `Filter by role level for RBAC. Must be one of: ${ROLE_LEVELS.join(", ")}.`,
+    tools: ["job_templates_list"],
   },
 };
 
@@ -366,7 +368,12 @@ export function generateInputSchemaAndDetails(
 
     const override = SCHEMA_OVERRIDES[param.name];
     if (override && typeof paramSchema === "object") {
-      Object.assign(paramSchema, override);
+      const appliesToTool =
+        !override.tools || override.tools.includes(operation.operationId || "");
+      if (appliesToTool) {
+        const { tools: _, ...schemaProps } = override;
+        Object.assign(paramSchema, schemaProps);
+      }
     }
 
     properties[param.name] = paramSchema;
