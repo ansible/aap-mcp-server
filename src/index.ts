@@ -33,9 +33,8 @@ import {
   buildWwwAuthenticateHeader,
   createProtectedResourceRouter,
   determineSupportedScopes,
-  getDiscoveryTimeout,
+  initOAuth2Discovery,
   isOAuth2Enabled,
-  probeOidcDiscovery,
   type ProtectedResourceConfig,
   type Rfc6750Error,
 } from "./oauth2/protected-resource-metadata.js";
@@ -746,17 +745,7 @@ async function main(): Promise<void> {
   );
 
   if (isOAuth2Enabled()) {
-    const discoveryTimeout = getDiscoveryTimeout();
-    console.log(`  Discovery timeout: ${discoveryTimeout}s`);
-    console.log("");
-    console.log("Probing OIDC Discovery...");
-
-    const probeResult = await probeOidcDiscovery(
-      CONFIG.BASE_URL,
-      discoveryTimeout,
-    );
-
-    if (probeResult.ok) {
+    await initOAuth2Discovery(CONFIG.BASE_URL, () => {
       oauth2Config = buildConfig(
         CONFIG.BASE_URL,
         CONFIG.MCP_SERVER_URL,
@@ -766,21 +755,7 @@ async function main(): Promise<void> {
         (name) => name !== "all" && name !== "discover",
       );
       app.use(createProtectedResourceRouter(oauth2Config, toolsetNames));
-      console.log(`  OAuth 2.1 discovery: ENABLED`);
-      console.log(
-        `  Authorization server: ${oauth2Config.authorizationServerUrl}`,
-      );
-      console.log(`  MCP Server URL: ${CONFIG.MCP_SERVER_URL}`);
-      console.log("  OIDC Discovery: OK");
-    } else {
-      console.log(`  OAuth 2.1 discovery: DISABLED`);
-      console.warn(
-        `  WARNING: OAuth 2.1 discovery failed — ${probeResult.reason}`,
-      );
-      console.warn(
-        "  Protected Resource Metadata and WWW-Authenticate headers will not be served.",
-      );
-    }
+    });
   }
 
   console.log(

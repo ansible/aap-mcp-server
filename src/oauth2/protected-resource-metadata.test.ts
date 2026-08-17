@@ -12,8 +12,11 @@ import {
   deriveOidcDiscoveryUrl,
   determineSupportedScopes,
   getDiscoveryTimeout,
+  getRetryConfig,
+  initOAuth2Discovery,
   isOAuth2Enabled,
   probeOidcDiscovery,
+  probeOidcDiscoveryWithRetry,
   resolveResourceUrl,
   validateIssuerUrl,
   type ProtectedResourceConfig,
@@ -761,5 +764,288 @@ describe("createProtectedResourceRouter", () => {
     );
 
     expect(response.headers.get("cache-control")).toBe("no-store");
+  });
+});
+
+// --- getRetryConfig ---
+
+describe("getRetryConfig", () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
+  it("defaults to unbounded retries when env var is not set", () => {
+    delete process.env.OAUTH2_DISCOVERY_MAX_RETRIES;
+    delete process.env.OAUTH2_DISCOVERY_RETRY_DELAY_MS;
+    delete process.env.OAUTH2_DISCOVERY_MAX_RETRY_DELAY_MS;
+
+    const config = getRetryConfig();
+    expect(config.maxRetries).toBe(-1);
+    expect(config.initialDelayMs).toBe(30000);
+    expect(config.maxDelayMs).toBe(180000);
+  });
+
+  it("reads values from env vars", () => {
+    vi.stubEnv("OAUTH2_DISCOVERY_MAX_RETRIES", "3");
+    vi.stubEnv("OAUTH2_DISCOVERY_RETRY_DELAY_MS", "1000");
+    vi.stubEnv("OAUTH2_DISCOVERY_MAX_RETRY_DELAY_MS", "30000");
+
+    const config = getRetryConfig();
+    expect(config.maxRetries).toBe(3);
+    expect(config.initialDelayMs).toBe(1000);
+    expect(config.maxDelayMs).toBe(30000);
+  });
+
+  it("treats maxRetries=0 as no retries", () => {
+    vi.stubEnv("OAUTH2_DISCOVERY_MAX_RETRIES", "0");
+
+    const config = getRetryConfig();
+    expect(config.maxRetries).toBe(0);
+  });
+
+  it("falls back to unbounded for invalid maxRetries", () => {
+    vi.stubEnv("OAUTH2_DISCOVERY_MAX_RETRIES", "abc");
+    vi.stubEnv("OAUTH2_DISCOVERY_RETRY_DELAY_MS", "-1");
+    vi.stubEnv("OAUTH2_DISCOVERY_MAX_RETRY_DELAY_MS", "0");
+
+    const config = getRetryConfig();
+    expect(config.maxRetries).toBe(-1);
+    expect(config.initialDelayMs).toBe(30000);
+    expect(config.maxDelayMs).toBe(180000);
+  });
+});
+
+// --- probeOidcDiscoveryWithRetry ---
+
+describe("probeOidcDiscoveryWithRetry", () => {
+  let mockServer: http.Server;
+  let mockPort: number;
+  let requestCount: number;
+  let responseStatus: number;
+  let responseBody: object;
+
+  beforeEach(async () => {
+    requestCount = 0;
+    responseStatus = 503;
+    responseBody = {};
+
+    const mockApp = express();
+    mockApp.get(
+      "/o/.well-known/openid-configuration",
+      (req: express.Request, res: express.Response) => {
+        requestCount++;
+        res.status(responseStatus).json(responseBody);
+      },
+    );
+
+    await new Promise<void>((resolve) => {
+      mockServer = mockApp.listen(0, () => {
+        const addr = mockServer.address();
+        if (addr && typeof addr !== "string") {
+          mockPort = addr.port;
+        }
+        resolve();
+      });
+    });
+  });
+
+  afterEach(async () => {
+    await new Promise<void>((resolve) => {
+      mockServer.close(() => resolve());
+    });
+  });
+
+  it("returns failure after exhausting all retries", async () => {
+    const result = await probeOidcDiscoveryWithRetry(
+      `http://localhost:${mockPort}`,
+      2,
+      { maxRetries: 2, initialDelayMs: 10, maxDelayMs: 50 },
+    );
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.reason).toContain("after 2 retries");
+    }
+    expect(requestCount).toBe(2);
+  });
+
+  it("succeeds on a retry after initial failures", async () => {
+    const baseUrl = `http://localhost:${mockPort}`;
+    let callCount = 0;
+
+    await new Promise<void>((resolve) => {
+      mockServer.close(() => resolve());
+    });
+
+    const mockApp = express();
+    mockApp.get(
+      "/o/.well-known/openid-configuration",
+      (req: express.Request, res: express.Response) => {
+        callCount++;
+        if (callCount < 3) {
+          res.status(503).json({});
+        } else {
+          res.status(200).json({ issuer: `${baseUrl}/o` });
+        }
+      },
+    );
+
+    await new Promise<void>((resolve) => {
+      mockServer = mockApp.listen(mockPort, () => resolve());
+    });
+
+    const result = await probeOidcDiscoveryWithRetry(baseUrl, 2, {
+      maxRetries: 5,
+      initialDelayMs: 10,
+      maxDelayMs: 50,
+    });
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.issuer).toBe(`${baseUrl}/o`);
+    }
+    expect(callCount).toBe(3);
+  });
+
+  it("applies exponential backoff between retries", async () => {
+    const timestamps: number[] = [];
+    const origDateNow = Date.now;
+
+    await new Promise<void>((resolve) => {
+      mockServer.close(() => resolve());
+    });
+
+    const mockApp = express();
+    mockApp.get(
+      "/o/.well-known/openid-configuration",
+      (req: express.Request, res: express.Response) => {
+        timestamps.push(origDateNow.call(Date));
+        res.status(503).json({});
+      },
+    );
+
+    await new Promise<void>((resolve) => {
+      mockServer = mockApp.listen(mockPort, () => resolve());
+    });
+
+    await probeOidcDiscoveryWithRetry(`http://localhost:${mockPort}`, 2, {
+      maxRetries: 3,
+      initialDelayMs: 50,
+      maxDelayMs: 500,
+    });
+
+    expect(timestamps).toHaveLength(3);
+    const gap1 = timestamps[1]! - timestamps[0]!;
+    const gap2 = timestamps[2]! - timestamps[1]!;
+    expect(gap1).toBeGreaterThanOrEqual(40);
+    expect(gap2).toBeGreaterThanOrEqual(80);
+    expect(gap2).toBeGreaterThan(gap1);
+  });
+
+  it("does not retry when maxRetries is 0", async () => {
+    const result = await probeOidcDiscoveryWithRetry(
+      `http://localhost:${mockPort}`,
+      2,
+      { maxRetries: 0, initialDelayMs: 10, maxDelayMs: 50 },
+    );
+
+    expect(result.ok).toBe(false);
+    expect(requestCount).toBe(0);
+  });
+});
+
+// --- initOAuth2Discovery ---
+
+describe("initOAuth2Discovery", () => {
+  let mockServer: http.Server;
+  let mockPort: number;
+
+  afterEach(async () => {
+    vi.unstubAllEnvs();
+    if (mockServer) {
+      await new Promise<void>((resolve) => {
+        mockServer.close(() => resolve());
+      });
+    }
+  });
+
+  const startMockOidc = async (
+    handler: (
+      port: number,
+    ) => (req: express.Request, res: express.Response) => void,
+  ): Promise<string> => {
+    const mockApp = express();
+    await new Promise<void>((resolve) => {
+      mockServer = mockApp.listen(0, () => {
+        const addr = mockServer.address();
+        if (addr && typeof addr !== "string") {
+          mockPort = addr.port;
+        }
+        resolve();
+      });
+    });
+    mockApp.get("/o/.well-known/openid-configuration", handler(mockPort));
+    return `http://localhost:${mockPort}`;
+  };
+
+  it("calls onEnabled immediately when probe succeeds", async () => {
+    const baseUrl = await startMockOidc((port) => (_req, res) => {
+      res.status(200).json({ issuer: `http://localhost:${port}/o` });
+    });
+    const onEnabled = vi.fn();
+
+    await initOAuth2Discovery(baseUrl, onEnabled);
+
+    expect(onEnabled).toHaveBeenCalledOnce();
+  });
+
+  it("does not call onEnabled when probe fails and maxRetries is 0", async () => {
+    const baseUrl = await startMockOidc(() => (_req, res) => {
+      res.status(503).json({});
+    });
+    vi.stubEnv("OAUTH2_DISCOVERY_MAX_RETRIES", "0");
+    const onEnabled = vi.fn();
+
+    await initOAuth2Discovery(baseUrl, onEnabled);
+
+    expect(onEnabled).not.toHaveBeenCalled();
+  });
+
+  it("calls onEnabled after successful retry", async () => {
+    let callCount = 0;
+    const baseUrl = await startMockOidc((port) => (_req, res) => {
+      callCount++;
+      if (callCount < 3) {
+        res.status(503).json({});
+      } else {
+        res.status(200).json({ issuer: `http://localhost:${port}/o` });
+      }
+    });
+
+    vi.stubEnv("OAUTH2_DISCOVERY_MAX_RETRIES", "5");
+    vi.stubEnv("OAUTH2_DISCOVERY_RETRY_DELAY_MS", "10");
+    vi.stubEnv("OAUTH2_DISCOVERY_MAX_RETRY_DELAY_MS", "50");
+    const onEnabled = vi.fn();
+
+    await initOAuth2Discovery(baseUrl, onEnabled);
+
+    await vi.waitFor(() => {
+      expect(onEnabled).toHaveBeenCalledOnce();
+    });
+  });
+
+  it("does not call onEnabled when all retries exhausted", async () => {
+    const baseUrl = await startMockOidc(() => (_req, res) => {
+      res.status(503).json({});
+    });
+    vi.stubEnv("OAUTH2_DISCOVERY_MAX_RETRIES", "2");
+    vi.stubEnv("OAUTH2_DISCOVERY_RETRY_DELAY_MS", "10");
+    vi.stubEnv("OAUTH2_DISCOVERY_MAX_RETRY_DELAY_MS", "50");
+    const onEnabled = vi.fn();
+
+    await initOAuth2Discovery(baseUrl, onEnabled);
+
+    await new Promise((resolve) => setTimeout(resolve, 200));
+    expect(onEnabled).not.toHaveBeenCalled();
   });
 });
