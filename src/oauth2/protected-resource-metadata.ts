@@ -74,6 +74,35 @@ export function getDiscoveryTimeout(): number {
   return Number.isFinite(timeout) && timeout > 0 ? timeout : 10;
 }
 
+export interface RetryConfig {
+  maxRetries: number;
+  initialDelayMs: number;
+  maxDelayMs: number;
+}
+
+export function getRetryConfig(): RetryConfig {
+  const env = process.env.OAUTH2_DISCOVERY_MAX_RETRIES;
+  const maxRetries = env !== undefined ? Number.parseInt(env, 10) : -1;
+  const initialDelayMs = Number.parseInt(
+    process.env.OAUTH2_DISCOVERY_RETRY_DELAY_MS || "30000",
+    10,
+  );
+  const maxDelayMs = Number.parseInt(
+    process.env.OAUTH2_DISCOVERY_MAX_RETRY_DELAY_MS || "180000",
+    10,
+  );
+  return {
+    maxRetries:
+      Number.isFinite(maxRetries) && maxRetries >= -1 ? maxRetries : -1,
+    initialDelayMs:
+      Number.isFinite(initialDelayMs) && initialDelayMs > 0
+        ? initialDelayMs
+        : 30000,
+    maxDelayMs:
+      Number.isFinite(maxDelayMs) && maxDelayMs > 0 ? maxDelayMs : 180000,
+  };
+}
+
 export function deriveAuthorizationServerUrl(baseUrl: string): string {
   return `${stripTrailingSlashes(baseUrl)}/o`;
 }
@@ -166,6 +195,101 @@ export async function probeOidcDiscovery(
     const message = error instanceof Error ? error.message : String(error);
     return { ok: false, reason: `OIDC Discovery failed: ${message}` };
   }
+}
+
+// --- OIDC Discovery probe with retry ---
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+export async function probeOidcDiscoveryWithRetry(
+  baseUrl: string,
+  timeoutSeconds: number,
+  retryConfig: RetryConfig,
+): Promise<{ ok: true; issuer: string } | { ok: false; reason: string }> {
+  const unbounded = retryConfig.maxRetries < 0;
+  let delay = retryConfig.initialDelayMs;
+
+  for (
+    let attempt = 1;
+    unbounded || attempt <= retryConfig.maxRetries;
+    attempt++
+  ) {
+    const label = unbounded
+      ? `${attempt}`
+      : `${attempt}/${retryConfig.maxRetries}`;
+    console.log(
+      `  OIDC Discovery retry ${label} in ${Math.round(delay / 1000)}s...`,
+    );
+    await sleep(delay);
+
+    const result = await probeOidcDiscovery(baseUrl, timeoutSeconds);
+    if (result.ok) {
+      return result;
+    }
+
+    console.warn(`  Retry ${attempt} failed: ${result.reason}`);
+    delay = Math.min(delay * 2, retryConfig.maxDelayMs);
+  }
+
+  return {
+    ok: false,
+    reason: `OIDC Discovery failed after ${retryConfig.maxRetries} retries`,
+  };
+}
+
+// --- OIDC Discovery orchestration ---
+
+export async function initOAuth2Discovery(
+  baseUrl: string,
+  onEnabled: () => void,
+): Promise<void> {
+  const discoveryTimeout = getDiscoveryTimeout();
+  const probeResult = await probeOidcDiscovery(baseUrl, discoveryTimeout);
+
+  if (probeResult.ok) {
+    onEnabled();
+    return;
+  }
+
+  const retryConfig = getRetryConfig();
+  console.warn(`  WARNING: OIDC Discovery failed — ${probeResult.reason}`);
+  console.warn(
+    "  Protected Resource Metadata and WWW-Authenticate headers will not be served until discovery succeeds.",
+  );
+
+  if (retryConfig.maxRetries === 0) {
+    console.error(
+      "  OAUTH2_DISCOVERY_MAX_RETRIES=0 — no background retries. OAuth 2.1 disabled.",
+    );
+    return;
+  }
+
+  const retryLabel =
+    retryConfig.maxRetries < 0
+      ? "indefinitely"
+      : `max ${retryConfig.maxRetries} retries`;
+  console.log(
+    `  Retrying in background (${retryLabel}, initial delay ${retryConfig.initialDelayMs}ms, cap ${retryConfig.maxDelayMs}ms)...`,
+  );
+
+  probeOidcDiscoveryWithRetry(baseUrl, discoveryTimeout, retryConfig)
+    .then((retryResult) => {
+      if (retryResult.ok) {
+        console.log(
+          `  OIDC Discovery recovered after background retry — enabling OAuth 2.1`,
+        );
+        onEnabled();
+      } else {
+        console.error(
+          `  OIDC Discovery failed after ${retryConfig.maxRetries} retries. OAuth 2.1 permanently disabled.`,
+        );
+      }
+    })
+    .catch((err) => {
+      console.error(`  OIDC Discovery retry unexpected error:`, err);
+    });
 }
 
 // --- Metadata builders ---
