@@ -44,6 +44,7 @@
   "overrides": {
     "express-rate-limit": ">=8.2.2",
     "fast-uri": "~3.1.4",
+    "ip-address": ">=10.2.1",
     "@hono/node-server": ">=2.0.5"
   },
   "devDependencies": {
