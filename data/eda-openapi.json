@@ -2,7 +2,7 @@
     "openapi": "3.0.3",
     "info": {
         "title": "Event Driven Ansible API",
-        "version": "1.3.0"
+        "version": "0.2.0"
     },
     "paths": {
         "/activation-instances/": {
@@ -4752,6 +4752,15 @@
                         "schema": {
                             "type": "integer"
                         }
+                    },
+                    {
+                        "name": "page_size",
+                        "required": false,
+                        "in": "query",
+                        "description": "Number of results to return per page.",
+                        "schema": {
+                            "type": "integer"
+                        }
                     }
                 ],
                 "tags": [
@@ -4853,13 +4862,22 @@
         "/service-index/resources/": {
             "get": {
                 "operationId": "service_index_resources_list",
-                "description": "Index of all the resources in the system.",
+                "description": "List all resources. Accepts an optional 'extra_fields' query parameter (comma-separated) to include additional fields in the response. Supported values: resource_data.",
                 "parameters": [
                     {
                         "name": "page",
                         "required": false,
                         "in": "query",
                         "description": "A page number within the paginated result set.",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "page_size",
+                        "required": false,
+                        "in": "query",
+                        "description": "Number of results to return per page.",
                         "schema": {
                             "type": "integer"
                         }
@@ -5535,7 +5553,7 @@
                                 }
                             }
                         },
-                        "description": ""
+                        "description": "EDA is healthy or degraded (workers down but database is available)."
                     },
                     "500": {
                         "content": {
@@ -5545,7 +5563,7 @@
                                 }
                             }
                         },
-                        "description": ""
+                        "description": "EDA is unavailable (database failure)."
                     }
                 }
             }
@@ -6105,7 +6123,15 @@
                     "rule_engine_credential_id": {
                         "type": "integer",
                         "nullable": true
-                    }
+                    },
+                    "k8s_pod_service_account_name": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "k8s_pod_labels": {},
+                    "k8s_pod_annotations": {},
+                    "k8s_pod_node_selector": {},
+                    "k8s_pod_tolerations": {}
                 },
                 "required": [
                     "decision_environment_id",
@@ -6397,6 +6423,17 @@
                         "nullable": true,
                         "description": "The Rule Engine Credential to use, if empty use the default system rule engine credential.",
                         "readOnly": true
+                    },
+                    "k8s_pod_service_account_name": {
+                        "type": "string",
+                        "nullable": true,
+                        "description": "Kubernetes ServiceAccount for activation job pods"
+                    },
+                    "k8s_pod_labels": {},
+                    "k8s_pod_annotations": {},
+                    "k8s_pod_node_selector": {},
+                    "k8s_pod_tolerations": {
+                        "description": "Kubernetes tolerations applied to activation job pods so they can be scheduled onto tainted nodes."
                     }
                 },
                 "required": [
@@ -6604,6 +6641,14 @@
                         "nullable": true,
                         "description": "Service name of the activation"
                     },
+                    "k8s_pod_service_account_name": {
+                        "type": "string",
+                        "nullable": true,
+                        "description": "Kubernetes ServiceAccount for activation job pods"
+                    },
+                    "k8s_pod_labels": {},
+                    "k8s_pod_annotations": {},
+                    "k8s_pod_node_selector": {},
                     "event_streams": {
                         "type": "array",
                         "items": {
@@ -6641,6 +6686,9 @@
                             }
                         ],
                         "nullable": true
+                    },
+                    "k8s_pod_tolerations": {
+                        "description": "Kubernetes tolerations applied to activation job pods so they can be scheduled onto tainted nodes."
                     }
                 },
                 "required": [
@@ -6810,6 +6858,11 @@
                         },
                         "readOnly": true
                     },
+                    "fired_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "description": "The fired timestamp of the rule"
+                    },
                     "ruleset_name": {
                         "type": "string",
                         "description": "Name of the related ruleset"
@@ -6818,11 +6871,6 @@
                         "type": "string",
                         "format": "date-time",
                         "description": "The created timestamp of the action"
-                    },
-                    "fired_at": {
-                        "type": "string",
-                        "format": "date-time",
-                        "description": "The fired timestamp of the rule"
                     }
                 },
                 "required": [
@@ -9419,7 +9467,15 @@
                     "rule_engine_credential_id": {
                         "type": "integer",
                         "nullable": true
-                    }
+                    },
+                    "k8s_pod_service_account_name": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "k8s_pod_labels": {},
+                    "k8s_pod_annotations": {},
+                    "k8s_pod_node_selector": {},
+                    "k8s_pod_tolerations": {}
                 }
             },
             "PatchedCredentialInputSourceUpdate": {
@@ -10247,7 +10303,8 @@
                         "readOnly": true
                     },
                     "resource_data": {
-                        "writeOnly": true
+                        "writeOnly": true,
+                        "default": {}
                     },
                     "url": {
                         "type": "string",
@@ -10258,7 +10315,6 @@
                     "has_serializer",
                     "name",
                     "object_id",
-                    "resource_data",
                     "url"
                 ]
             },
