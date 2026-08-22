@@ -156,7 +156,7 @@
                         "description": ""
                     }
                 },
-                "x-ai-description": "Retrieve a audit trail entry for tracking system changes"
+                "x-ai-description": "Retrieve an audit trail entry for tracking all changes within the system"
             }
         },
         "/api/v2/ad_hoc_command_events/{id}/": {
@@ -187,8 +187,7 @@
                         },
                         "description": ""
                     }
-                },
-                "x-ai-description": "Retrieve a ad hoc command event detail"
+                }
             }
         },
         "/api/v2/ad_hoc_commands/": {
@@ -270,7 +269,7 @@
                         "description": ""
                     }
                 },
-                "x-ai-description": "List ad hoc commands"
+                "x-ai-description": "Returns a paginated list of all ad hoc command runs. Ad hoc commands execute a single Ansible module without a playbook."
             },
             "post": {
                 "operationId": "ad_hoc_commands_create",
@@ -298,7 +297,7 @@
                         "description": ""
                     }
                 },
-                "x-ai-description": "Create a ad hoc command"
+                "x-ai-description": "Run an ad hoc command. Executes a single Ansible module on specified hosts without a playbook."
             }
         },
         "/api/v2/ad_hoc_commands/{id}/": {
@@ -331,7 +330,7 @@
                         "description": ""
                     }
                 },
-                "x-ai-description": "Retrieve a ad hoc command"
+                "x-ai-description": "Retrieve an ad hoc command"
             },
             "delete": {
                 "operationId": "ad_hoc_commands_destroy",
@@ -355,7 +354,7 @@
                         "description": "No response body"
                     }
                 },
-                "x-ai-description": "Delete a ad hoc command"
+                "x-ai-description": "Delete an ad hoc command"
             }
         },
         "/api/v2/ad_hoc_commands/{id}/activity_stream/": {
@@ -809,7 +808,7 @@
                         "description": "No response body"
                     }
                 },
-                "x-ai-description": "A list of additional API endpoints related to analytics"
+                "x-ai-description": "Returns available analytics API endpoints and their descriptions."
             }
         },
         "/api/v2/analytics/adoption_rate/": {
@@ -1473,7 +1472,7 @@
                         "description": "No response body"
                     }
                 },
-                "x-ai-description": "Return various configuration settings"
+                "x-ai-description": "Returns platform-level configuration and license info."
             },
             "post": {
                 "operationId": "config_create",
@@ -1852,7 +1851,7 @@
                         "description": ""
                     }
                 },
-                "x-ai-description": "List credential input sources"
+                "x-ai-description": "Returns a paginated list of external secret management input sources."
             },
             "post": {
                 "operationId": "credential_input_sources_create",
@@ -2097,7 +2096,7 @@
                         "description": ""
                     }
                 },
-                "x-ai-description": "A list of credential types"
+                "x-ai-description": "Returns a paginated list of all credential types (machine, vault, cloud, etc.)."
             },
             "post": {
                 "operationId": "credential_types_create",
@@ -3162,7 +3161,7 @@
                         "description": ""
                     }
                 },
-                "x-ai-description": "Create new source for a credential"
+                "x-ai-description": "Link an external secret source (Vault, CyberArk) to a credential field."
             }
         },
         "/api/v2/credentials/{id}/object_roles/": {
@@ -3485,7 +3484,7 @@
                         "description": "No response body"
                     }
                 },
-                "x-ai-description": "Test update the input values and metadata of an external credential"
+                "x-ai-description": "Test update the input values and metadata of an external credential.\n        This endpoint supports testing credentials that connect to external secret management systems\n        such as CyberArk AIM, CyberArk Conjur, HashiCorp Vault, AWS Secrets Manager, Azure Key Vault,\n        Centrify Vault, Thycotic DevOps Secrets Vault, and GitHub App Installation Access Token Lookup.\n        It does not support standard credential types such as Machine, SCM, and Cloud."
             }
         },
         "/api/v2/dashboard/": {
@@ -3625,7 +3624,7 @@
                         "description": ""
                     }
                 },
-                "x-ai-description": "Create a new execution environment. Once associated with JT/org/etc"
+                "x-ai-description": "Create a new execution environment container image reference."
             }
         },
         "/api/v2/execution_environments/{id}/": {
@@ -3657,7 +3656,7 @@
                         "description": ""
                     }
                 },
-                "x-ai-description": "Retrieve a execution environment"
+                "x-ai-description": "Retrieve an execution environment"
             },
             "put": {
                 "operationId": "execution_environments_update",
@@ -4095,7 +4094,7 @@
                         "description": ""
                     }
                 },
-                "x-ai-description": "A list of groups."
+                "x-ai-description": "Returns a paginated list of all host groups."
             },
             "post": {
                 "operationId": "groups_create",
@@ -4124,7 +4123,7 @@
                         "description": ""
                     }
                 },
-                "x-ai-description": "Create a new group."
+                "x-ai-description": "Create a new host group within an inventory."
             }
         },
         "/api/v2/groups/{id}/": {
@@ -4479,7 +4478,7 @@
                         "description": ""
                     }
                 },
-                "x-ai-description": "Create a ad hoc command for a group"
+                "x-ai-description": "Run an ad hoc command against all hosts in a group. Executes a single Ansible module without a playbook."
             }
         },
         "/api/v2/groups/{id}/all_hosts/": {
@@ -5699,7 +5698,7 @@
                         "description": ""
                     }
                 },
-                "x-ai-description": "Create a host"
+                "x-ai-description": "Create a host entry in an inventory. Hosts are managed nodes that Ansible automation can execute against."
             }
         },
         "/api/v2/hosts/{id}/": {
@@ -6145,7 +6144,7 @@
                         "description": ""
                     }
                 },
-                "x-ai-description": "Create a ad hoc command of a host"
+                "x-ai-description": "Run an ad hoc command against a specific host. Executes a single Ansible module without a playbook."
             }
         },
         "/api/v2/hosts/{id}/all_groups/": {
@@ -6402,7 +6401,7 @@
                         "description": ""
                     }
                 },
-                "x-ai-description": "Create a the list of groups a host is directly a member of"
+                "x-ai-description": "Create the list of groups a host is directly a member of"
             }
         },
         "/api/v2/hosts/{id}/inventory_sources/": {
@@ -6814,7 +6813,7 @@
                         "description": ""
                     }
                 },
-                "x-ai-description": "The extra variable configuration for this host."
+                "x-ai-description": "Returns the extra variables (YAML/JSON) configured for a specific host by ID."
             },
             "put": {
                 "operationId": "hosts_variable_data_update",
@@ -7077,7 +7076,7 @@
                         "description": ""
                     }
                 },
-                "x-ai-description": "Retrieve a instance group"
+                "x-ai-description": "Retrieve an instance group"
             },
             "put": {
                 "operationId": "instance_groups_update",
@@ -7117,7 +7116,7 @@
                         "description": ""
                     }
                 },
-                "x-ai-description": "Update a instance group"
+                "x-ai-description": "Update an instance group"
             },
             "patch": {
                 "operationId": "instance_groups_partial_update",
@@ -7156,7 +7155,7 @@
                         "description": ""
                     }
                 },
-                "x-ai-description": "Update a instance group"
+                "x-ai-description": "Update an instance group"
             },
             "delete": {
                 "operationId": "instance_groups_destroy",
@@ -7179,7 +7178,7 @@
                         "description": "No response body"
                     }
                 },
-                "x-ai-description": "Delete a instance group"
+                "x-ai-description": "Delete an instance group"
             }
         },
         "/api/v2/instance_groups/{id}/access_list/": {
@@ -7403,7 +7402,7 @@
                         "description": ""
                     }
                 },
-                "x-ai-description": "Create a instance of an instance group"
+                "x-ai-description": "Create an instance of an instance group"
             }
         },
         "/api/v2/instance_groups/{id}/jobs/": {
@@ -7591,6 +7590,7 @@
         "/api/v2/instances/": {
             "get": {
                 "operationId": "instances_list",
+                "description": "Creates an instance if used on a Kubernetes or OpenShift deployment of Ansible Automation Platform.",
                 "parameters": [
                     {
                         "in": "query",
@@ -7671,6 +7671,7 @@
             },
             "post": {
                 "operationId": "instances_create",
+                "description": "Creates an instance if used on a Kubernetes or OpenShift deployment of Ansible Automation Platform.",
                 "tags": [
                     "instances"
                 ],
@@ -7728,7 +7729,7 @@
                         "description": ""
                     }
                 },
-                "x-ai-description": "Retrieve a instance"
+                "x-ai-description": "Retrieve an instance"
             },
             "put": {
                 "operationId": "instances_update",
@@ -7768,7 +7769,7 @@
                         "description": ""
                     }
                 },
-                "x-ai-description": "Update a instance"
+                "x-ai-description": "Update an instance"
             },
             "patch": {
                 "operationId": "instances_partial_update",
@@ -7807,7 +7808,7 @@
                         "description": ""
                     }
                 },
-                "x-ai-description": "Update a instance"
+                "x-ai-description": "Update an instance"
             }
         },
         "/api/v2/instances/{id}/health_check/": {
@@ -8034,7 +8035,7 @@
                         "description": ""
                     }
                 },
-                "x-ai-description": "Create a instance group of an instance"
+                "x-ai-description": "Create an instance group of an instance"
             }
         },
         "/api/v2/instances/{id}/jobs/": {
@@ -8418,7 +8419,7 @@
                         "description": ""
                     }
                 },
-                "x-ai-description": "Create a inventory"
+                "x-ai-description": "Create an inventory to define the set of hosts that jobs can target."
             }
         },
         "/api/v2/inventories/{id}/": {
@@ -8450,7 +8451,7 @@
                         "description": ""
                     }
                 },
-                "x-ai-description": "Retrieve a inventory"
+                "x-ai-description": "Retrieve an inventory"
             },
             "put": {
                 "operationId": "inventories_update",
@@ -8490,7 +8491,7 @@
                         "description": ""
                     }
                 },
-                "x-ai-description": "Update a inventory"
+                "x-ai-description": "Update an inventory"
             },
             "patch": {
                 "operationId": "inventories_partial_update",
@@ -8529,7 +8530,7 @@
                         "description": ""
                     }
                 },
-                "x-ai-description": "Update a inventory"
+                "x-ai-description": "Update an inventory"
             },
             "delete": {
                 "operationId": "inventories_destroy",
@@ -8552,7 +8553,7 @@
                         "description": "No response body"
                     }
                 },
-                "x-ai-description": "Delete a inventory"
+                "x-ai-description": "Delete an inventory"
             }
         },
         "/api/v2/inventories/{id}/access_list/": {
@@ -8864,7 +8865,7 @@
                         "description": ""
                     }
                 },
-                "x-ai-description": "Create a ad hoc command for an inventory"
+                "x-ai-description": "Run an ad hoc command against all hosts in an inventory. Executes a single Ansible module without a playbook."
             }
         },
         "/api/v2/inventories/{id}/copy/": {
@@ -9464,7 +9465,7 @@
                         "description": ""
                     }
                 },
-                "x-ai-description": "Create a instance group of an inventory"
+                "x-ai-description": "Create an instance group of an inventory"
             }
         },
         "/api/v2/inventories/{id}/inventory_sources/": {
@@ -9595,7 +9596,7 @@
                         "description": ""
                     }
                 },
-                "x-ai-description": "Create a inventory source"
+                "x-ai-description": "Create an inventory source"
             }
         },
         "/api/v2/inventories/{id}/job_templates/": {
@@ -10439,7 +10440,7 @@
                         "description": ""
                     }
                 },
-                "x-ai-description": "Create a inventory source"
+                "x-ai-description": "Create an inventory source to sync host data from external systems."
             }
         },
         "/api/v2/inventory_sources/{id}/": {
@@ -10471,7 +10472,7 @@
                         "description": ""
                     }
                 },
-                "x-ai-description": "Retrieve a inventory source"
+                "x-ai-description": "Retrieve an inventory source"
             },
             "put": {
                 "operationId": "inventory_sources_update",
@@ -10511,7 +10512,7 @@
                         "description": ""
                     }
                 },
-                "x-ai-description": "Update a inventory source"
+                "x-ai-description": "Update an inventory source"
             },
             "patch": {
                 "operationId": "inventory_sources_partial_update",
@@ -10550,7 +10551,7 @@
                         "description": ""
                     }
                 },
-                "x-ai-description": "Update a inventory source"
+                "x-ai-description": "Update an inventory source"
             },
             "delete": {
                 "operationId": "inventory_sources_destroy",
@@ -10573,7 +10574,7 @@
                         "description": "No response body"
                     }
                 },
-                "x-ai-description": "Delete a inventory source"
+                "x-ai-description": "Delete an inventory source"
             }
         },
         "/api/v2/inventory_sources/{id}/activity_stream/": {
@@ -11676,7 +11677,7 @@
                         "description": ""
                     }
                 },
-                "x-ai-description": "Retrieve a update an inventory source"
+                "x-ai-description": "Retrieve an update for an inventory source"
             },
             "post": {
                 "operationId": "inventory_sources_update_create",
@@ -11706,7 +11707,7 @@
                         "description": ""
                     }
                 },
-                "x-ai-description": "Sync the inventory source"
+                "x-ai-description": "Trigger a sync of an inventory source by ID. Pulls latest host data from the external source."
             }
         },
         "/api/v2/inventory_updates/": {
@@ -11821,7 +11822,7 @@
                         "description": ""
                     }
                 },
-                "x-ai-description": "Retrieve a inventory update"
+                "x-ai-description": "Retrieve an inventory update"
             },
             "delete": {
                 "operationId": "inventory_updates_destroy",
@@ -11845,7 +11846,7 @@
                         "description": "No response body"
                     }
                 },
-                "x-ai-description": "Delete a inventory update"
+                "x-ai-description": "Delete an inventory update"
             }
         },
         "/api/v2/inventory_updates/{id}/cancel/": {
@@ -12474,7 +12475,7 @@
                         "description": ""
                     }
                 },
-                "x-ai-description": "A list of job templates."
+                "x-ai-description": "Returns a paginated list of all job templates. A job template defines the playbook, inventory, credentials, and settings for launching a job."
             },
             "post": {
                 "operationId": "job_templates_create",
@@ -12503,7 +12504,7 @@
                         "description": ""
                     }
                 },
-                "x-ai-description": "Create a job template"
+                "x-ai-description": "Create a new job template. A job template defines the playbook, inventory, credentials, variables, and settings needed to launch an automation job."
             }
         },
         "/api/v2/job_templates/{id}/": {
@@ -13098,7 +13099,7 @@
                         "description": ""
                     }
                 },
-                "x-ai-description": "Create a credential of a job template"
+                "x-ai-description": "Associate a credential with a job template. The credential will be used when launching jobs from this template."
             }
         },
         "/api/v2/job_templates/{id}/github/": {
@@ -13287,7 +13288,7 @@
                         "description": ""
                     }
                 },
-                "x-ai-description": "Create a instance group of a job template"
+                "x-ai-description": "Create an instance group of a job template"
             }
         },
         "/api/v2/job_templates/{id}/jobs/": {
@@ -13543,7 +13544,7 @@
                         "description": ""
                     }
                 },
-                "x-ai-description": "Retrieve single launch for a job_template"
+                "x-ai-description": "Returns the launch configuration and required fields needed to launch a specific job template by ID."
             },
             "post": {
                 "operationId": "job_templates_launch_create",
@@ -13582,7 +13583,7 @@
                         "description": ""
                     }
                 },
-                "x-ai-description": "Launch the job template"
+                "x-ai-description": "Launch a job from a job template by ID. Starts execution of the playbook defined in the template."
             }
         },
         "/api/v2/job_templates/{id}/notification_templates_error/": {
@@ -13713,7 +13714,7 @@
                         "description": ""
                     }
                 },
-                "x-ai-description": "Create a notification templates triggered on job error"
+                "x-ai-description": "Attach a notification template to trigger when a job from this template fails."
             }
         },
         "/api/v2/job_templates/{id}/notification_templates_started/": {
@@ -13844,7 +13845,7 @@
                         "description": ""
                     }
                 },
-                "x-ai-description": "Create a notification templates triggered on job start"
+                "x-ai-description": "Attach a notification template to trigger when a job from this template starts."
             }
         },
         "/api/v2/job_templates/{id}/notification_templates_success/": {
@@ -13975,7 +13976,7 @@
                         "description": ""
                     }
                 },
-                "x-ai-description": "Create a notification templates triggered on job success"
+                "x-ai-description": "Attach a notification template to trigger when a job from this template succeeds."
             }
         },
         "/api/v2/job_templates/{id}/object_roles/": {
@@ -14376,7 +14377,7 @@
                         "description": "No response body"
                     }
                 },
-                "x-ai-description": "Update job template survey specification"
+                "x-ai-description": "Create or update the survey specification for a job template. Surveys prompt users for input variables at launch time."
             },
             "delete": {
                 "operationId": "job_templates_survey_spec_destroy",
@@ -14983,7 +14984,7 @@
                         "description": ""
                     }
                 },
-                "x-ai-description": "List job events of a job"
+                "x-ai-description": "Returns a paginated list of execution events for a specific job run. Use to inspect task-level output."
             }
         },
         "/api/v2/jobs/{id}/job_events/children_summary/": {
@@ -15099,7 +15100,7 @@
                         "description": ""
                     }
                 },
-                "x-ai-description": "List job host summaries of a job"
+                "x-ai-description": "Returns a paginated list of per-host result summaries (ok, changed, failed counts) for a specific job."
             }
         },
         "/api/v2/jobs/{id}/labels/": {
@@ -15313,7 +15314,7 @@
                         "description": ""
                     }
                 },
-                "x-ai-description": "Retrieve single relaunch for a job"
+                "x-ai-description": "Returns the list of credential passwords required to relaunch a specific job by ID."
             },
             "post": {
                 "operationId": "jobs_relaunch_create",
@@ -15338,8 +15339,7 @@
                                 "$ref": "#/components/schemas/JobRelaunchRequest"
                             }
                         }
-                    },
-                    "required": true
+                    }
                 },
                 "responses": {
                     "200": {
@@ -15353,7 +15353,7 @@
                         "description": ""
                     }
                 },
-                "x-ai-description": "Relaunch a job"
+                "x-ai-description": "Relaunch a previously completed or failed job using the same parameters as the original run."
             }
         },
         "/api/v2/jobs/{id}/stdout/": {
@@ -15867,7 +15867,7 @@
                         "description": ""
                     }
                 },
-                "x-ai-description": "Create a new notification template."
+                "x-ai-description": "Create a new notification template (email, Slack, webhook, etc.)."
             }
         },
         "/api/v2/notification_templates/{id}/": {
@@ -16318,7 +16318,7 @@
                         "description": "No response body"
                     }
                 },
-                "x-ai-description": "Retrieve a organization"
+                "x-ai-description": "Retrieve an organization"
             },
             "post": {
                 "operationId": "organizations_create",
@@ -16330,7 +16330,7 @@
                         "description": "No response body"
                     }
                 },
-                "x-ai-description": "Create a organization"
+                "x-ai-description": "Create an organization"
             }
         },
         "/api/v2/organizations/{id}/": {
@@ -16362,7 +16362,7 @@
                         "description": ""
                     }
                 },
-                "x-ai-description": "Retrieve a organization"
+                "x-ai-description": "Retrieve an organization"
             },
             "put": {
                 "operationId": "organizations_update",
@@ -16402,7 +16402,7 @@
                         "description": ""
                     }
                 },
-                "x-ai-description": "Update a organization"
+                "x-ai-description": "Update an organization"
             },
             "patch": {
                 "operationId": "organizations_partial_update",
@@ -16441,7 +16441,7 @@
                         "description": ""
                     }
                 },
-                "x-ai-description": "Update a organization"
+                "x-ai-description": "Update an organization"
             },
             "delete": {
                 "operationId": "organizations_destroy",
@@ -16464,7 +16464,7 @@
                         "description": "No response body"
                     }
                 },
-                "x-ai-description": "Delete a organization"
+                "x-ai-description": "Delete an organization"
             }
         },
         "/api/v2/organizations/{id}/access_list/": {
@@ -17039,7 +17039,7 @@
                         "description": ""
                     }
                 },
-                "x-ai-description": "Create a execution environment of an organization"
+                "x-ai-description": "Associate an execution environment with an organization by default."
             }
         },
         "/api/v2/organizations/{id}/galaxy_credentials/": {
@@ -17172,7 +17172,7 @@
                         "description": ""
                     }
                 },
-                "x-ai-description": "Create new credential for an organization"
+                "x-ai-description": "Associate a Galaxy credential with an organization for syncing content."
             }
         },
         "/api/v2/organizations/{id}/instance_groups/": {
@@ -17305,7 +17305,7 @@
                         "description": ""
                     }
                 },
-                "x-ai-description": "Create a instance group of an organization"
+                "x-ai-description": "Associate an instance group with an organization."
             }
         },
         "/api/v2/organizations/{id}/inventories/": {
@@ -19428,7 +19428,7 @@
                         "description": ""
                     }
                 },
-                "x-ai-description": "A list of projects."
+                "x-ai-description": "Returns a paginated list of all projects. Projects represent playbook collections sourced from version control."
             },
             "post": {
                 "operationId": "projects_create",
@@ -19457,7 +19457,7 @@
                         "description": ""
                     }
                 },
-                "x-ai-description": "Create a project"
+                "x-ai-description": "Create a new project. Projects represent a collection of Ansible playbooks and related files sourced from a version control system."
             }
         },
         "/api/v2/projects/{id}/": {
@@ -19877,7 +19877,7 @@
                         "description": ""
                     }
                 },
-                "x-ai-description": "Retrieve a inventory from a project"
+                "x-ai-description": "Retrieve an inventory from a project"
             }
         },
         "/api/v2/projects/{id}/notification_templates_error/": {
@@ -20393,7 +20393,7 @@
                         "description": ""
                     }
                 },
-                "x-ai-description": "Retrieve single playbook for a project"
+                "x-ai-description": "Returns the list of playbook files available in a specific project by ID."
             }
         },
         "/api/v2/projects/{id}/project_updates/": {
@@ -21464,7 +21464,7 @@
                         "description": ""
                     }
                 },
-                "x-ai-description": "Create a schedule"
+                "x-ai-description": "Create a schedule for recurring automated execution of a job template, workflow job template, project sync, inventory sync or management job."
             }
         },
         "/api/v2/schedules/{id}/": {
@@ -21864,7 +21864,7 @@
                         "description": ""
                     }
                 },
-                "x-ai-description": "Create a instance group of a schedule"
+                "x-ai-description": "Create an instance group of a schedule"
             }
         },
         "/api/v2/schedules/{id}/jobs/": {
@@ -22174,7 +22174,7 @@
                         "description": ""
                     }
                 },
-                "x-ai-description": "A list of additional API endpoints related to settings."
+                "x-ai-description": "Returns a paginated list of Controller setting categories."
             }
         },
         "/api/v2/settings/{category_slug}/": {
@@ -22206,7 +22206,7 @@
                         "description": ""
                     }
                 },
-                "x-ai-description": "Retrieve single setting"
+                "x-ai-description": "Returns Controller settings for a specific category by slug."
             },
             "put": {
                 "operationId": "settings_update",
@@ -24573,7 +24573,7 @@
                         "description": ""
                     }
                 },
-                "x-ai-description": "List unified job templates"
+                "x-ai-description": "Returns a paginated list of all unified job templates. Combines job templates, workflow templates, and project updates in a single view."
             }
         },
         "/api/v2/unified_jobs/": {
@@ -25263,7 +25263,7 @@
                         "description": "No response body"
                     }
                 },
-                "x-ai-description": "Retrieve a organization of a user"
+                "x-ai-description": "Retrieve an organization of a user"
             }
         },
         "/api/v2/users/{id}/projects/": {
@@ -26548,7 +26548,7 @@
                         "description": ""
                     }
                 },
-                "x-ai-description": "Create a instance group of a workflow job node"
+                "x-ai-description": "Create an instance group of a workflow job node"
             }
         },
         "/api/v2/workflow_job_nodes/{id}/labels/": {
@@ -27579,7 +27579,7 @@
                         "description": ""
                     }
                 },
-                "x-ai-description": "Create a instance group of a workflow job template node"
+                "x-ai-description": "Create an instance group of a workflow job template node"
             }
         },
         "/api/v2/workflow_job_template_nodes/{id}/labels/": {
@@ -27927,7 +27927,7 @@
                         "description": ""
                     }
                 },
-                "x-ai-description": "A list of workflow job templates."
+                "x-ai-description": "Returns a paginated list of all workflow job templates. Workflow templates chain multiple node types—job templates, other workflows, project syncs, inventory syncs, management jobs, and approval gates—into a single automated workflow."
             },
             "post": {
                 "operationId": "workflow_job_templates_create",
@@ -29426,7 +29426,7 @@
                         "description": "No response body"
                     }
                 },
-                "x-ai-description": "Update job template survey specification"
+                "x-ai-description": "Create or update the survey specification for a job template. Surveys prompt users for input variables at launch time."
             },
             "delete": {
                 "operationId": "workflow_job_templates_survey_spec_destroy",
@@ -30241,7 +30241,7 @@
                         "description": "No response body"
                     }
                 },
-                "x-ai-description": "Relaunch a workflow job"
+                "x-ai-description": "Relaunch a previously completed or failed workflow job using the same parameters as the original run."
             }
         },
         "/api/v2/workflow_jobs/{id}/workflow_nodes/": {
@@ -32440,6 +32440,15 @@
                         }
                     },
                     {
+                        "name": "page_size",
+                        "required": false,
+                        "in": "query",
+                        "description": "Number of results to return per page.",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
                         "in": "query",
                         "name": "role_level",
                         "schema": {
@@ -32543,7 +32552,7 @@
         "/api/v2/service-index/resources/": {
             "get": {
                 "operationId": "service_index_resources_list",
-                "description": "Index of all the resources in the system.",
+                "description": "List all resources. Accepts an optional 'extra_fields' query parameter (comma-separated) to include additional fields in the response. Supported values: resource_data.",
                 "parameters": [
                     {
                         "in": "query",
@@ -32670,6 +32679,15 @@
                         "required": false,
                         "in": "query",
                         "description": "A page number within the paginated result set.",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "page_size",
+                        "required": false,
+                        "in": "query",
+                        "description": "Number of results to return per page.",
                         "schema": {
                             "type": "integer"
                         }
@@ -32889,6 +32907,37 @@
                 "x-ai-description": "Delete existing service index resource"
             }
         },
+        "/api/v2/service-index/resources/bulk-update/": {
+            "post": {
+                "operationId": "service_index_resources_bulk_update_create",
+                "description": "Bulk-update resource metadata (new_service_id, new_ansible_id, is_partially_migrated, resource_data).\n\nAccepts a JSON object with an ``items`` key containing a list of update objects.\nEach object must contain at minimum an ``ansible_id`` identifying the resource\nto update plus one or more fields to change.\nEach item is applied in its own savepoint so that a failure in one item\ndoes not roll back others.\n\nReturns a summary with the count of updated resources and any per-item errors.\n\nPerformance note:\n    This endpoint uses a loop-of-singles pattern (one savepoint + update_resource()\n    per item) rather than Django's QuerySet.bulk_update(). This is an intentional\n    trade-off: ResourceTypeProcessor.save() is a per-service plugin point with\n    custom logic (e.g. M2M permission handling in RoleDefinitionProcessor) that\n    cannot be expressed as a single bulk SQL statement. The primary performance\n    gain of this endpoint comes from eliminating N HTTP round-trips — the DB query\n    overhead of per-item saves is negligible on a local connection for typical\n    batch sizes (100-1000 items). True DB-level batching can be explored as a\n    future optimization for metadata-only fields.",
+                "tags": [
+                    "service-index"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ResourceRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Resource"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
         "/api/v2/service-index/role-permissions/": {
             "get": {
                 "operationId": "service_index_role_permissions_list",
@@ -33075,134 +33124,6 @@
                 "parameters": [
                     {
                         "in": "query",
-                        "name": "content_object",
-                        "schema": {
-                            "type": "string"
-                        },
-                        "description": "Filter by content_object (exact match)"
-                    },
-                    {
-                        "in": "query",
-                        "name": "content_type",
-                        "schema": {
-                            "type": "string"
-                        },
-                        "description": "Filter by content_type (exact match)"
-                    },
-                    {
-                        "in": "query",
-                        "name": "created",
-                        "schema": {
-                            "type": "string"
-                        },
-                        "description": "Filter by created (exact match)"
-                    },
-                    {
-                        "in": "query",
-                        "name": "created__gt",
-                        "schema": {
-                            "type": "string"
-                        },
-                        "description": "Filter by created (gt)"
-                    },
-                    {
-                        "in": "query",
-                        "name": "created__gte",
-                        "schema": {
-                            "type": "string"
-                        },
-                        "description": "Filter by created (gte)"
-                    },
-                    {
-                        "in": "query",
-                        "name": "created__lt",
-                        "schema": {
-                            "type": "string"
-                        },
-                        "description": "Filter by created (lt)"
-                    },
-                    {
-                        "in": "query",
-                        "name": "created__lte",
-                        "schema": {
-                            "type": "string"
-                        },
-                        "description": "Filter by created (lte)"
-                    },
-                    {
-                        "in": "query",
-                        "name": "created_by",
-                        "schema": {
-                            "type": "string"
-                        },
-                        "description": "Filter by created_by (exact match)"
-                    },
-                    {
-                        "in": "query",
-                        "name": "id",
-                        "schema": {
-                            "type": "string"
-                        },
-                        "description": "Filter by id (exact match)"
-                    },
-                    {
-                        "in": "query",
-                        "name": "id__gt",
-                        "schema": {
-                            "type": "string"
-                        },
-                        "description": "Filter by id (gt)"
-                    },
-                    {
-                        "in": "query",
-                        "name": "id__gte",
-                        "schema": {
-                            "type": "string"
-                        },
-                        "description": "Filter by id (gte)"
-                    },
-                    {
-                        "in": "query",
-                        "name": "id__lt",
-                        "schema": {
-                            "type": "string"
-                        },
-                        "description": "Filter by id (lt)"
-                    },
-                    {
-                        "in": "query",
-                        "name": "id__lte",
-                        "schema": {
-                            "type": "string"
-                        },
-                        "description": "Filter by id (lte)"
-                    },
-                    {
-                        "in": "query",
-                        "name": "object_id",
-                        "schema": {
-                            "type": "string"
-                        },
-                        "description": "Filter by object_id (exact match)"
-                    },
-                    {
-                        "in": "query",
-                        "name": "object_id__icontains",
-                        "schema": {
-                            "type": "string"
-                        },
-                        "description": "Filter by object_id (case-insensitive partial match)"
-                    },
-                    {
-                        "in": "query",
-                        "name": "object_role",
-                        "schema": {
-                            "type": "string"
-                        },
-                        "description": "Filter by object_role (exact match)"
-                    },
-                    {
-                        "in": "query",
                         "name": "order",
                         "schema": {
                             "type": "string"
@@ -33237,14 +33158,6 @@
                     },
                     {
                         "in": "query",
-                        "name": "role_definition",
-                        "schema": {
-                            "type": "string"
-                        },
-                        "description": "Filter by role_definition (exact match)"
-                    },
-                    {
-                        "in": "query",
                         "name": "role_level",
                         "schema": {
                             "type": "string"
@@ -33259,14 +33172,6 @@
                         "schema": {
                             "type": "string"
                         }
-                    },
-                    {
-                        "in": "query",
-                        "name": "team",
-                        "schema": {
-                            "type": "string"
-                        },
-                        "description": "Filter by team (exact match)"
                     },
                     {
                         "in": "query",
@@ -33577,134 +33482,6 @@
                 "parameters": [
                     {
                         "in": "query",
-                        "name": "content_object",
-                        "schema": {
-                            "type": "string"
-                        },
-                        "description": "Filter by content_object (exact match)"
-                    },
-                    {
-                        "in": "query",
-                        "name": "content_type",
-                        "schema": {
-                            "type": "string"
-                        },
-                        "description": "Filter by content_type (exact match)"
-                    },
-                    {
-                        "in": "query",
-                        "name": "created",
-                        "schema": {
-                            "type": "string"
-                        },
-                        "description": "Filter by created (exact match)"
-                    },
-                    {
-                        "in": "query",
-                        "name": "created__gt",
-                        "schema": {
-                            "type": "string"
-                        },
-                        "description": "Filter by created (gt)"
-                    },
-                    {
-                        "in": "query",
-                        "name": "created__gte",
-                        "schema": {
-                            "type": "string"
-                        },
-                        "description": "Filter by created (gte)"
-                    },
-                    {
-                        "in": "query",
-                        "name": "created__lt",
-                        "schema": {
-                            "type": "string"
-                        },
-                        "description": "Filter by created (lt)"
-                    },
-                    {
-                        "in": "query",
-                        "name": "created__lte",
-                        "schema": {
-                            "type": "string"
-                        },
-                        "description": "Filter by created (lte)"
-                    },
-                    {
-                        "in": "query",
-                        "name": "created_by",
-                        "schema": {
-                            "type": "string"
-                        },
-                        "description": "Filter by created_by (exact match)"
-                    },
-                    {
-                        "in": "query",
-                        "name": "id",
-                        "schema": {
-                            "type": "string"
-                        },
-                        "description": "Filter by id (exact match)"
-                    },
-                    {
-                        "in": "query",
-                        "name": "id__gt",
-                        "schema": {
-                            "type": "string"
-                        },
-                        "description": "Filter by id (gt)"
-                    },
-                    {
-                        "in": "query",
-                        "name": "id__gte",
-                        "schema": {
-                            "type": "string"
-                        },
-                        "description": "Filter by id (gte)"
-                    },
-                    {
-                        "in": "query",
-                        "name": "id__lt",
-                        "schema": {
-                            "type": "string"
-                        },
-                        "description": "Filter by id (lt)"
-                    },
-                    {
-                        "in": "query",
-                        "name": "id__lte",
-                        "schema": {
-                            "type": "string"
-                        },
-                        "description": "Filter by id (lte)"
-                    },
-                    {
-                        "in": "query",
-                        "name": "object_id",
-                        "schema": {
-                            "type": "string"
-                        },
-                        "description": "Filter by object_id (exact match)"
-                    },
-                    {
-                        "in": "query",
-                        "name": "object_id__icontains",
-                        "schema": {
-                            "type": "string"
-                        },
-                        "description": "Filter by object_id (case-insensitive partial match)"
-                    },
-                    {
-                        "in": "query",
-                        "name": "object_role",
-                        "schema": {
-                            "type": "string"
-                        },
-                        "description": "Filter by object_role (exact match)"
-                    },
-                    {
-                        "in": "query",
                         "name": "order",
                         "schema": {
                             "type": "string"
@@ -33739,14 +33516,6 @@
                     },
                     {
                         "in": "query",
-                        "name": "role_definition",
-                        "schema": {
-                            "type": "string"
-                        },
-                        "description": "Filter by role_definition (exact match)"
-                    },
-                    {
-                        "in": "query",
                         "name": "role_level",
                         "schema": {
                             "type": "string"
@@ -33769,14 +33538,6 @@
                             "type": "string"
                         },
                         "description": "Filter by object type. Supports comma-separated values for multiple types."
-                    },
-                    {
-                        "in": "query",
-                        "name": "user",
-                        "schema": {
-                            "type": "string"
-                        },
-                        "description": "Filter by user (exact match)"
                     }
                 ],
                 "tags": [
@@ -35837,22 +35598,11 @@
                     },
                     "kind": {
                         "enum": [
-                            "ssh",
-                            "vault",
-                            "net",
-                            "scm",
                             "cloud",
-                            "registry",
-                            "token",
-                            "insights",
-                            "external",
-                            "kubernetes",
-                            "galaxy",
-                            "cryptography",
-                            null
+                            "net"
                         ],
                         "type": "string",
-                        "description": "* `ssh` - Machine\n* `vault` - Vault\n* `net` - Network\n* `scm` - Source Control\n* `cloud` - Cloud\n* `registry` - Container Registry\n* `token` - Personal Access Token\n* `insights` - Insights\n* `external` - External\n* `kubernetes` - Kubernetes\n* `galaxy` - Galaxy/Automation Hub\n* `cryptography` - Cryptography",
+                        "description": "* `cloud` - Cloud\\n* `net` - Network",
                         "x-spec-enum-id": "8c34823df94b101f",
                         "nullable": true
                     },
@@ -38463,8 +38213,7 @@
                     "skip_tags": {
                         "type": "string",
                         "nullable": true,
-                        "default": "",
-                        "maxLength": 1024
+                        "default": ""
                     },
                     "start_at_task": {
                         "type": "string",
@@ -39402,8 +39151,7 @@
                     "skip_tags": {
                         "type": "string",
                         "nullable": true,
-                        "default": "",
-                        "maxLength": 1024
+                        "default": ""
                     },
                     "start_at_task": {
                         "type": "string",
@@ -39443,6 +39191,10 @@
                         "type": "boolean",
                         "nullable": true,
                         "default": false
+                    },
+                    "artifacts": {
+                        "type": "string",
+                        "readOnly": true
                     },
                     "scm_revision": {
                         "type": "string",
@@ -39550,10 +39302,7 @@
                         "type": "string",
                         "writeOnly": true
                     }
-                },
-                "required": [
-                    "credential_passwords"
-                ]
+                }
             },
             "JobTemplate": {
                 "type": "object",
@@ -39676,8 +39425,7 @@
                     "skip_tags": {
                         "type": "string",
                         "nullable": true,
-                        "default": "",
-                        "maxLength": 1024
+                        "default": ""
                     },
                     "start_at_task": {
                         "type": "string",
@@ -39993,8 +39741,7 @@
                     "skip_tags": {
                         "type": "string",
                         "nullable": true,
-                        "default": "",
-                        "maxLength": 1024
+                        "default": ""
                     },
                     "start_at_task": {
                         "type": "string",
@@ -42801,22 +42548,12 @@
                     },
                     "kind": {
                         "enum": [
-                            "ssh",
-                            "vault",
-                            "net",
-                            "scm",
                             "cloud",
-                            "registry",
-                            "token",
-                            "insights",
-                            "external",
-                            "kubernetes",
-                            "galaxy",
-                            "cryptography",
+                            "net",
                             null
                         ],
                         "type": "string",
-                        "description": "* `ssh` - Machine\n* `vault` - Vault\n* `net` - Network\n* `scm` - Source Control\n* `cloud` - Cloud\n* `registry` - Container Registry\n* `token` - Personal Access Token\n* `insights` - Insights\n* `external` - External\n* `kubernetes` - Kubernetes\n* `galaxy` - Galaxy/Automation Hub\n* `cryptography` - Cryptography",
+                        "description": "* `cloud` - Cloud\\n* `net` - Network",
                         "x-spec-enum-id": "8c34823df94b101f",
                         "nullable": true
                     },
@@ -43398,8 +43135,7 @@
                     "skip_tags": {
                         "type": "string",
                         "nullable": true,
-                        "default": "",
-                        "maxLength": 1024
+                        "default": ""
                     },
                     "start_at_task": {
                         "type": "string",
@@ -44066,6 +43802,25 @@
                         "description": "This setting is used to to configure the upload URL for data collection for Automation Analytics.",
                         "format": "uri"
                     },
+                    "AWX_ANALYTICS_CANDLEPIN_CA": {
+                        "type": "string",
+                        "default": "/etc/rhsm/ca/redhat-uep.pem",
+                        "title": "Candlepin CA Certificate Path",
+                        "description": "Path to the CA certificate file for verifying TLS connections to Candlepin. Leave blank to use system certificates."
+                    },
+                    "AWX_ANALYTICS_CANDLEPIN_RENEWAL_THRESHOLD_DAYS": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "default": 90,
+                        "title": "Candlepin Certificate Renewal Threshold",
+                        "description": "Number of days before certificate expiry to trigger automatic renewal of Candlepin identity certificates."
+                    },
+                    "AWX_ANALYTICS_CANDLEPIN_PROXY_URL": {
+                        "type": "string",
+                        "default": "",
+                        "title": "Candlepin Proxy URL",
+                        "description": "HTTP/HTTPS proxy URL for Candlepin API requests (e.g., http://proxy.example.com:8080). Leave blank for no proxy."
+                    },
                     "DEFAULT_EXECUTION_ENVIRONMENT": {
                         "type": "integer",
                         "nullable": true,
@@ -44123,6 +43878,12 @@
                         "default": "template",
                         "title": "When can extra variables contain Jinja templates?",
                         "description": "Ansible allows variable substitution via the Jinja2 templating language for --extra-vars. This poses a potential security risk where users with the ability to specify extra vars at job launch time can use Jinja2 templates to run arbitrary Python.  It is recommended that this value be set to \"template\" or \"never\".\n\n* `always` - Always\n* `never` - Never\n* `template` - Only On Job Template Definitions"
+                    },
+                    "INCLUDE_DEPRECATED_AWX_VAR_PREFIX": {
+                        "type": "boolean",
+                        "default": true,
+                        "title": "Include Deprecated AWX Variable Prefix",
+                        "description": "When enabled (default), auto-generated job variables are emitted with both the tower_ prefix and the deprecated awx_ prefix for backward compatibility. Disable to emit only tower_ prefixed variables and eliminate duplicates. The awx_ prefix is deprecated and this setting will default to False in a future release."
                     },
                     "AWX_ISOLATION_BASE_PATH": {
                         "type": "string",
@@ -44451,6 +44212,29 @@
                         "default": 14400,
                         "description": "Interval (in seconds) between data gathering."
                     },
+                    "CANDLEPIN_CONSUMER_UUID": {
+                        "type": "string",
+                        "default": "",
+                        "description": "UUID of the registered Candlepin consumer for this AAP instance."
+                    },
+                    "CANDLEPIN_CERT_PEM": {
+                        "type": "string",
+                        "default": "",
+                        "title": "Candlepin Identity Certificate",
+                        "description": "PEM-encoded Candlepin identity certificate for mTLS authentication."
+                    },
+                    "CANDLEPIN_KEY_PEM": {
+                        "type": "string",
+                        "default": "",
+                        "title": "Candlepin Identity Key",
+                        "description": "PEM-encoded private key for Candlepin identity certificate."
+                    },
+                    "CANDLEPIN_SERIAL_NUMBER": {
+                        "type": "string",
+                        "default": "",
+                        "title": "Candlepin Certificate Serial Number",
+                        "description": "Serial number of the Candlepin identity certificate for tracking."
+                    },
                     "BULK_JOB_MAX_LAUNCH": {
                         "type": "integer",
                         "default": 100,
@@ -44726,7 +44510,6 @@
                     },
                     "password": {
                         "type": "string",
-                        "minLength": 1,
                         "default": "",
                         "description": "Field used to change the password."
                     }
@@ -46666,7 +46449,8 @@
                         "description": "The role definition which defines permissions conveyed by this assignment."
                     },
                     "team": {
-                        "type": "integer"
+                        "type": "integer",
+                        "nullable": true
                     },
                     "team_ansible_id": {
                         "type": "string",
@@ -46698,7 +46482,8 @@
                         "description": "The role definition which defines permissions conveyed by this assignment."
                     },
                     "team": {
-                        "type": "integer"
+                        "type": "integer",
+                        "nullable": true
                     },
                     "team_ansible_id": {
                         "type": "string",
@@ -46770,7 +46555,8 @@
                         "description": "The role definition which defines permissions conveyed by this assignment."
                     },
                     "user": {
-                        "type": "integer"
+                        "type": "integer",
+                        "nullable": true
                     },
                     "user_ansible_id": {
                         "type": "string",
@@ -47090,6 +46876,10 @@
             "ServiceRoleTeamAssignment": {
                 "type": "object",
                 "properties": {
+                    "id": {
+                        "type": "integer",
+                        "readOnly": true
+                    },
                     "created": {
                         "type": "string",
                         "format": "date-time",
@@ -47162,6 +46952,10 @@
             "ServiceRoleUserAssignment": {
                 "type": "object",
                 "properties": {
+                    "id": {
+                        "type": "integer",
+                        "readOnly": true
+                    },
                     "created": {
                         "type": "string",
                         "format": "date-time",
@@ -47361,6 +47155,25 @@
                         "description": "This setting is used to to configure the upload URL for data collection for Automation Analytics.",
                         "format": "uri"
                     },
+                    "AWX_ANALYTICS_CANDLEPIN_CA": {
+                        "type": "string",
+                        "default": "/etc/rhsm/ca/redhat-uep.pem",
+                        "title": "Candlepin CA Certificate Path",
+                        "description": "Path to the CA certificate file for verifying TLS connections to Candlepin. Leave blank to use system certificates."
+                    },
+                    "AWX_ANALYTICS_CANDLEPIN_RENEWAL_THRESHOLD_DAYS": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "default": 90,
+                        "title": "Candlepin Certificate Renewal Threshold",
+                        "description": "Number of days before certificate expiry to trigger automatic renewal of Candlepin identity certificates."
+                    },
+                    "AWX_ANALYTICS_CANDLEPIN_PROXY_URL": {
+                        "type": "string",
+                        "default": "",
+                        "title": "Candlepin Proxy URL",
+                        "description": "HTTP/HTTPS proxy URL for Candlepin API requests (e.g., http://proxy.example.com:8080). Leave blank for no proxy."
+                    },
                     "INSTALL_UUID": {
                         "type": "string",
                         "readOnly": true,
@@ -47434,6 +47247,12 @@
                         "default": "template",
                         "title": "When can extra variables contain Jinja templates?",
                         "description": "Ansible allows variable substitution via the Jinja2 templating language for --extra-vars. This poses a potential security risk where users with the ability to specify extra vars at job launch time can use Jinja2 templates to run arbitrary Python.  It is recommended that this value be set to \"template\" or \"never\".\n\n* `always` - Always\n* `never` - Never\n* `template` - Only On Job Template Definitions"
+                    },
+                    "INCLUDE_DEPRECATED_AWX_VAR_PREFIX": {
+                        "type": "boolean",
+                        "default": true,
+                        "title": "Include Deprecated AWX Variable Prefix",
+                        "description": "When enabled (default), auto-generated job variables are emitted with both the tower_ prefix and the deprecated awx_ prefix for backward compatibility. Disable to emit only tower_ prefixed variables and eliminate duplicates. The awx_ prefix is deprecated and this setting will default to False in a future release."
                     },
                     "AWX_ISOLATION_BASE_PATH": {
                         "type": "string",
@@ -47752,6 +47571,29 @@
                         "minimum": 1800,
                         "default": 14400,
                         "description": "Interval (in seconds) between data gathering."
+                    },
+                    "CANDLEPIN_CONSUMER_UUID": {
+                        "type": "string",
+                        "default": "",
+                        "description": "UUID of the registered Candlepin consumer for this AAP instance."
+                    },
+                    "CANDLEPIN_CERT_PEM": {
+                        "type": "string",
+                        "default": "",
+                        "title": "Candlepin Identity Certificate",
+                        "description": "PEM-encoded Candlepin identity certificate for mTLS authentication."
+                    },
+                    "CANDLEPIN_KEY_PEM": {
+                        "type": "string",
+                        "default": "",
+                        "title": "Candlepin Identity Key",
+                        "description": "PEM-encoded private key for Candlepin identity certificate."
+                    },
+                    "CANDLEPIN_SERIAL_NUMBER": {
+                        "type": "string",
+                        "default": "",
+                        "title": "Candlepin Certificate Serial Number",
+                        "description": "Serial number of the Candlepin identity certificate for tracking."
                     },
                     "IS_K8S": {
                         "type": "boolean",
@@ -48307,6 +48149,25 @@
                         "description": "This setting is used to to configure the upload URL for data collection for Automation Analytics.",
                         "format": "uri"
                     },
+                    "AWX_ANALYTICS_CANDLEPIN_CA": {
+                        "type": "string",
+                        "default": "/etc/rhsm/ca/redhat-uep.pem",
+                        "title": "Candlepin CA Certificate Path",
+                        "description": "Path to the CA certificate file for verifying TLS connections to Candlepin. Leave blank to use system certificates."
+                    },
+                    "AWX_ANALYTICS_CANDLEPIN_RENEWAL_THRESHOLD_DAYS": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "default": 90,
+                        "title": "Candlepin Certificate Renewal Threshold",
+                        "description": "Number of days before certificate expiry to trigger automatic renewal of Candlepin identity certificates."
+                    },
+                    "AWX_ANALYTICS_CANDLEPIN_PROXY_URL": {
+                        "type": "string",
+                        "default": "",
+                        "title": "Candlepin Proxy URL",
+                        "description": "HTTP/HTTPS proxy URL for Candlepin API requests (e.g., http://proxy.example.com:8080). Leave blank for no proxy."
+                    },
                     "DEFAULT_EXECUTION_ENVIRONMENT": {
                         "type": "integer",
                         "nullable": true,
@@ -48364,6 +48225,12 @@
                         "default": "template",
                         "title": "When can extra variables contain Jinja templates?",
                         "description": "Ansible allows variable substitution via the Jinja2 templating language for --extra-vars. This poses a potential security risk where users with the ability to specify extra vars at job launch time can use Jinja2 templates to run arbitrary Python.  It is recommended that this value be set to \"template\" or \"never\".\n\n* `always` - Always\n* `never` - Never\n* `template` - Only On Job Template Definitions"
+                    },
+                    "INCLUDE_DEPRECATED_AWX_VAR_PREFIX": {
+                        "type": "boolean",
+                        "default": true,
+                        "title": "Include Deprecated AWX Variable Prefix",
+                        "description": "When enabled (default), auto-generated job variables are emitted with both the tower_ prefix and the deprecated awx_ prefix for backward compatibility. Disable to emit only tower_ prefixed variables and eliminate duplicates. The awx_ prefix is deprecated and this setting will default to False in a future release."
                     },
                     "AWX_ISOLATION_BASE_PATH": {
                         "type": "string",
@@ -48691,6 +48558,29 @@
                         "minimum": 1800,
                         "default": 14400,
                         "description": "Interval (in seconds) between data gathering."
+                    },
+                    "CANDLEPIN_CONSUMER_UUID": {
+                        "type": "string",
+                        "default": "",
+                        "description": "UUID of the registered Candlepin consumer for this AAP instance."
+                    },
+                    "CANDLEPIN_CERT_PEM": {
+                        "type": "string",
+                        "default": "",
+                        "title": "Candlepin Identity Certificate",
+                        "description": "PEM-encoded Candlepin identity certificate for mTLS authentication."
+                    },
+                    "CANDLEPIN_KEY_PEM": {
+                        "type": "string",
+                        "default": "",
+                        "title": "Candlepin Identity Key",
+                        "description": "PEM-encoded private key for Candlepin identity certificate."
+                    },
+                    "CANDLEPIN_SERIAL_NUMBER": {
+                        "type": "string",
+                        "default": "",
+                        "title": "Candlepin Certificate Serial Number",
+                        "description": "Serial number of the Candlepin identity certificate for tracking."
                     },
                     "BULK_JOB_MAX_LAUNCH": {
                         "type": "integer",
@@ -49568,7 +49458,8 @@
                         "description": "The role definition which defines permissions conveyed by this assignment."
                     },
                     "team": {
-                        "type": "integer"
+                        "type": "integer",
+                        "nullable": true
                     },
                     "team_ansible_id": {
                         "type": "string",
@@ -50127,7 +50018,8 @@
                         "description": "The role definition which defines permissions conveyed by this assignment."
                     },
                     "user": {
-                        "type": "integer"
+                        "type": "integer",
+                        "nullable": true
                     },
                     "user_ansible_id": {
                         "type": "string",
@@ -50336,7 +50228,6 @@
                     },
                     "password": {
                         "type": "string",
-                        "minLength": 1,
                         "default": "",
                         "description": "Field used to change the password."
                     }

@@ -5538,7 +5538,7 @@
                         "description": ""
                     }
                 },
-                "x-ai-description": "Retrieve single feature flag"
+                "x-ai-description": "Returns the current state of all feature flags on the Gateway platform."
             },
             "patch": {
                 "operationId": "feature_flags_partial_update",
@@ -20071,7 +20071,7 @@
                         "description": ""
                     }
                 },
-                "x-ai-description": "Retrieve single status"
+                "x-ai-description": "Returns the current Gateway platform status, including service health and version."
             }
         },
         "/api/gateway/v1/teams/": {
@@ -24678,24 +24678,24 @@
                     },
                     "type": {
                         "enum": [
-                            "ansible_base.authentication.authenticator_plugins.ldap",
+                            "ansible_base.authentication.authenticator_plugins.github_enterprise",
+                            "ansible_base.authentication.authenticator_plugins.github_enterprise_team",
+                            "ansible_base.authentication.authenticator_plugins.saml",
+                            "ansible_base.authentication.authenticator_plugins.tacacs",
+                            "ansible_base.authentication.authenticator_plugins.oidc",
+                            "ansible_base.authentication.authenticator_plugins.github_enterprise_org",
+                            "ansible_base.authentication.authenticator_plugins.radius",
+                            "ansible_base.authentication.authenticator_plugins.github",
+                            "ansible_base.authentication.authenticator_plugins.local",
+                            "ansible_base.authentication.authenticator_plugins.github_org",
                             "ansible_base.authentication.authenticator_plugins.keycloak",
                             "ansible_base.authentication.authenticator_plugins.google_oauth2",
-                            "ansible_base.authentication.authenticator_plugins.radius",
-                            "ansible_base.authentication.authenticator_plugins.local",
-                            "ansible_base.authentication.authenticator_plugins.github",
-                            "ansible_base.authentication.authenticator_plugins.github_team",
+                            "ansible_base.authentication.authenticator_plugins.ldap",
                             "ansible_base.authentication.authenticator_plugins.azuread",
-                            "ansible_base.authentication.authenticator_plugins.oidc",
-                            "ansible_base.authentication.authenticator_plugins.tacacs",
-                            "ansible_base.authentication.authenticator_plugins.github_enterprise_org",
-                            "ansible_base.authentication.authenticator_plugins.github_enterprise",
-                            "ansible_base.authentication.authenticator_plugins.saml",
-                            "ansible_base.authentication.authenticator_plugins.github_org",
-                            "ansible_base.authentication.authenticator_plugins.github_enterprise_team"
+                            "ansible_base.authentication.authenticator_plugins.github_team"
                         ],
                         "type": "string",
-                        "description": "* `ansible_base.authentication.authenticator_plugins.ldap` - ansible_base.authentication.authenticator_plugins.ldap\n* `ansible_base.authentication.authenticator_plugins.keycloak` - ansible_base.authentication.authenticator_plugins.keycloak\n* `ansible_base.authentication.authenticator_plugins.google_oauth2` - ansible_base.authentication.authenticator_plugins.google_oauth2\n* `ansible_base.authentication.authenticator_plugins.radius` - ansible_base.authentication.authenticator_plugins.radius\n* `ansible_base.authentication.authenticator_plugins.local` - ansible_base.authentication.authenticator_plugins.local\n* `ansible_base.authentication.authenticator_plugins.github` - ansible_base.authentication.authenticator_plugins.github\n* `ansible_base.authentication.authenticator_plugins.github_team` - ansible_base.authentication.authenticator_plugins.github_team\n* `ansible_base.authentication.authenticator_plugins.azuread` - ansible_base.authentication.authenticator_plugins.azuread\n* `ansible_base.authentication.authenticator_plugins.oidc` - ansible_base.authentication.authenticator_plugins.oidc\n* `ansible_base.authentication.authenticator_plugins.tacacs` - ansible_base.authentication.authenticator_plugins.tacacs\n* `ansible_base.authentication.authenticator_plugins.github_enterprise_org` - ansible_base.authentication.authenticator_plugins.github_enterprise_org\n* `ansible_base.authentication.authenticator_plugins.github_enterprise` - ansible_base.authentication.authenticator_plugins.github_enterprise\n* `ansible_base.authentication.authenticator_plugins.saml` - ansible_base.authentication.authenticator_plugins.saml\n* `ansible_base.authentication.authenticator_plugins.github_org` - ansible_base.authentication.authenticator_plugins.github_org\n* `ansible_base.authentication.authenticator_plugins.github_enterprise_team` - ansible_base.authentication.authenticator_plugins.github_enterprise_team",
+                        "description": "* `ansible_base.authentication.authenticator_plugins.github_enterprise` - ansible_base.authentication.authenticator_plugins.github_enterprise\n* `ansible_base.authentication.authenticator_plugins.github_enterprise_team` - ansible_base.authentication.authenticator_plugins.github_enterprise_team\n* `ansible_base.authentication.authenticator_plugins.saml` - ansible_base.authentication.authenticator_plugins.saml\n* `ansible_base.authentication.authenticator_plugins.tacacs` - ansible_base.authentication.authenticator_plugins.tacacs\n* `ansible_base.authentication.authenticator_plugins.oidc` - ansible_base.authentication.authenticator_plugins.oidc\n* `ansible_base.authentication.authenticator_plugins.github_enterprise_org` - ansible_base.authentication.authenticator_plugins.github_enterprise_org\n* `ansible_base.authentication.authenticator_plugins.radius` - ansible_base.authentication.authenticator_plugins.radius\n* `ansible_base.authentication.authenticator_plugins.github` - ansible_base.authentication.authenticator_plugins.github\n* `ansible_base.authentication.authenticator_plugins.local` - ansible_base.authentication.authenticator_plugins.local\n* `ansible_base.authentication.authenticator_plugins.github_org` - ansible_base.authentication.authenticator_plugins.github_org\n* `ansible_base.authentication.authenticator_plugins.keycloak` - ansible_base.authentication.authenticator_plugins.keycloak\n* `ansible_base.authentication.authenticator_plugins.google_oauth2` - ansible_base.authentication.authenticator_plugins.google_oauth2\n* `ansible_base.authentication.authenticator_plugins.ldap` - ansible_base.authentication.authenticator_plugins.ldap\n* `ansible_base.authentication.authenticator_plugins.azuread` - ansible_base.authentication.authenticator_plugins.azuread\n* `ansible_base.authentication.authenticator_plugins.github_team` - ansible_base.authentication.authenticator_plugins.github_team",
                         "x-spec-enum-id": "ac765e9996806d56"
                     },
                     "order": {
@@ -24935,26 +24935,26 @@
                     },
                     "type": {
                         "enum": [
-                            "ansible_base.authentication.authenticator_plugins.ldap",
+                            "ansible_base.authentication.authenticator_plugins.github_enterprise",
+                            "ansible_base.authentication.authenticator_plugins.github_enterprise_team",
+                            "ansible_base.authentication.authenticator_plugins.saml",
+                            "ansible_base.authentication.authenticator_plugins.tacacs",
+                            "ansible_base.authentication.authenticator_plugins.oidc",
+                            "ansible_base.authentication.authenticator_plugins.github_enterprise_org",
+                            "ansible_base.authentication.authenticator_plugins.radius",
+                            "ansible_base.authentication.authenticator_plugins.github",
+                            "ansible_base.authentication.authenticator_plugins.local",
+                            "ansible_base.authentication.authenticator_plugins.github_org",
                             "ansible_base.authentication.authenticator_plugins.keycloak",
                             "ansible_base.authentication.authenticator_plugins.google_oauth2",
-                            "ansible_base.authentication.authenticator_plugins.radius",
-                            "ansible_base.authentication.authenticator_plugins.local",
-                            "ansible_base.authentication.authenticator_plugins.github",
-                            "ansible_base.authentication.authenticator_plugins.github_team",
+                            "ansible_base.authentication.authenticator_plugins.ldap",
                             "ansible_base.authentication.authenticator_plugins.azuread",
-                            "ansible_base.authentication.authenticator_plugins.oidc",
-                            "ansible_base.authentication.authenticator_plugins.tacacs",
-                            "ansible_base.authentication.authenticator_plugins.github_enterprise_org",
-                            "ansible_base.authentication.authenticator_plugins.github_enterprise",
-                            "ansible_base.authentication.authenticator_plugins.saml",
-                            "ansible_base.authentication.authenticator_plugins.github_org",
-                            "ansible_base.authentication.authenticator_plugins.github_enterprise_team"
+                            "ansible_base.authentication.authenticator_plugins.github_team"
                         ],
                         "type": "string",
                         "x-spec-enum-id": "ac765e9996806d56",
                         "readOnly": true,
-                        "description": "The type of authentication service this is.\n\n* `ansible_base.authentication.authenticator_plugins.ldap` - ansible_base.authentication.authenticator_plugins.ldap\n* `ansible_base.authentication.authenticator_plugins.keycloak` - ansible_base.authentication.authenticator_plugins.keycloak\n* `ansible_base.authentication.authenticator_plugins.google_oauth2` - ansible_base.authentication.authenticator_plugins.google_oauth2\n* `ansible_base.authentication.authenticator_plugins.radius` - ansible_base.authentication.authenticator_plugins.radius\n* `ansible_base.authentication.authenticator_plugins.local` - ansible_base.authentication.authenticator_plugins.local\n* `ansible_base.authentication.authenticator_plugins.github` - ansible_base.authentication.authenticator_plugins.github\n* `ansible_base.authentication.authenticator_plugins.github_team` - ansible_base.authentication.authenticator_plugins.github_team\n* `ansible_base.authentication.authenticator_plugins.azuread` - ansible_base.authentication.authenticator_plugins.azuread\n* `ansible_base.authentication.authenticator_plugins.oidc` - ansible_base.authentication.authenticator_plugins.oidc\n* `ansible_base.authentication.authenticator_plugins.tacacs` - ansible_base.authentication.authenticator_plugins.tacacs\n* `ansible_base.authentication.authenticator_plugins.github_enterprise_org` - ansible_base.authentication.authenticator_plugins.github_enterprise_org\n* `ansible_base.authentication.authenticator_plugins.github_enterprise` - ansible_base.authentication.authenticator_plugins.github_enterprise\n* `ansible_base.authentication.authenticator_plugins.saml` - ansible_base.authentication.authenticator_plugins.saml\n* `ansible_base.authentication.authenticator_plugins.github_org` - ansible_base.authentication.authenticator_plugins.github_org\n* `ansible_base.authentication.authenticator_plugins.github_enterprise_team` - ansible_base.authentication.authenticator_plugins.github_enterprise_team"
+                        "description": "The type of authentication service this is.\n\n* `ansible_base.authentication.authenticator_plugins.github_enterprise` - ansible_base.authentication.authenticator_plugins.github_enterprise\n* `ansible_base.authentication.authenticator_plugins.github_enterprise_team` - ansible_base.authentication.authenticator_plugins.github_enterprise_team\n* `ansible_base.authentication.authenticator_plugins.saml` - ansible_base.authentication.authenticator_plugins.saml\n* `ansible_base.authentication.authenticator_plugins.tacacs` - ansible_base.authentication.authenticator_plugins.tacacs\n* `ansible_base.authentication.authenticator_plugins.oidc` - ansible_base.authentication.authenticator_plugins.oidc\n* `ansible_base.authentication.authenticator_plugins.github_enterprise_org` - ansible_base.authentication.authenticator_plugins.github_enterprise_org\n* `ansible_base.authentication.authenticator_plugins.radius` - ansible_base.authentication.authenticator_plugins.radius\n* `ansible_base.authentication.authenticator_plugins.github` - ansible_base.authentication.authenticator_plugins.github\n* `ansible_base.authentication.authenticator_plugins.local` - ansible_base.authentication.authenticator_plugins.local\n* `ansible_base.authentication.authenticator_plugins.github_org` - ansible_base.authentication.authenticator_plugins.github_org\n* `ansible_base.authentication.authenticator_plugins.keycloak` - ansible_base.authentication.authenticator_plugins.keycloak\n* `ansible_base.authentication.authenticator_plugins.google_oauth2` - ansible_base.authentication.authenticator_plugins.google_oauth2\n* `ansible_base.authentication.authenticator_plugins.ldap` - ansible_base.authentication.authenticator_plugins.ldap\n* `ansible_base.authentication.authenticator_plugins.azuread` - ansible_base.authentication.authenticator_plugins.azuread\n* `ansible_base.authentication.authenticator_plugins.github_team` - ansible_base.authentication.authenticator_plugins.github_team"
                     },
                     "order": {
                         "type": "integer",
@@ -27444,26 +27444,26 @@
                     },
                     "type": {
                         "enum": [
-                            "ansible_base.authentication.authenticator_plugins.ldap",
+                            "ansible_base.authentication.authenticator_plugins.github_enterprise",
+                            "ansible_base.authentication.authenticator_plugins.github_enterprise_team",
+                            "ansible_base.authentication.authenticator_plugins.saml",
+                            "ansible_base.authentication.authenticator_plugins.tacacs",
+                            "ansible_base.authentication.authenticator_plugins.oidc",
+                            "ansible_base.authentication.authenticator_plugins.github_enterprise_org",
+                            "ansible_base.authentication.authenticator_plugins.radius",
+                            "ansible_base.authentication.authenticator_plugins.github",
+                            "ansible_base.authentication.authenticator_plugins.local",
+                            "ansible_base.authentication.authenticator_plugins.github_org",
                             "ansible_base.authentication.authenticator_plugins.keycloak",
                             "ansible_base.authentication.authenticator_plugins.google_oauth2",
-                            "ansible_base.authentication.authenticator_plugins.radius",
-                            "ansible_base.authentication.authenticator_plugins.local",
-                            "ansible_base.authentication.authenticator_plugins.github",
-                            "ansible_base.authentication.authenticator_plugins.github_team",
+                            "ansible_base.authentication.authenticator_plugins.ldap",
                             "ansible_base.authentication.authenticator_plugins.azuread",
-                            "ansible_base.authentication.authenticator_plugins.oidc",
-                            "ansible_base.authentication.authenticator_plugins.tacacs",
-                            "ansible_base.authentication.authenticator_plugins.github_enterprise_org",
-                            "ansible_base.authentication.authenticator_plugins.github_enterprise",
-                            "ansible_base.authentication.authenticator_plugins.saml",
-                            "ansible_base.authentication.authenticator_plugins.github_org",
-                            "ansible_base.authentication.authenticator_plugins.github_enterprise_team"
+                            "ansible_base.authentication.authenticator_plugins.github_team"
                         ],
                         "type": "string",
                         "x-spec-enum-id": "ac765e9996806d56",
                         "readOnly": true,
-                        "description": "The type of authentication service this is.\n\n* `ansible_base.authentication.authenticator_plugins.ldap` - ansible_base.authentication.authenticator_plugins.ldap\n* `ansible_base.authentication.authenticator_plugins.keycloak` - ansible_base.authentication.authenticator_plugins.keycloak\n* `ansible_base.authentication.authenticator_plugins.google_oauth2` - ansible_base.authentication.authenticator_plugins.google_oauth2\n* `ansible_base.authentication.authenticator_plugins.radius` - ansible_base.authentication.authenticator_plugins.radius\n* `ansible_base.authentication.authenticator_plugins.local` - ansible_base.authentication.authenticator_plugins.local\n* `ansible_base.authentication.authenticator_plugins.github` - ansible_base.authentication.authenticator_plugins.github\n* `ansible_base.authentication.authenticator_plugins.github_team` - ansible_base.authentication.authenticator_plugins.github_team\n* `ansible_base.authentication.authenticator_plugins.azuread` - ansible_base.authentication.authenticator_plugins.azuread\n* `ansible_base.authentication.authenticator_plugins.oidc` - ansible_base.authentication.authenticator_plugins.oidc\n* `ansible_base.authentication.authenticator_plugins.tacacs` - ansible_base.authentication.authenticator_plugins.tacacs\n* `ansible_base.authentication.authenticator_plugins.github_enterprise_org` - ansible_base.authentication.authenticator_plugins.github_enterprise_org\n* `ansible_base.authentication.authenticator_plugins.github_enterprise` - ansible_base.authentication.authenticator_plugins.github_enterprise\n* `ansible_base.authentication.authenticator_plugins.saml` - ansible_base.authentication.authenticator_plugins.saml\n* `ansible_base.authentication.authenticator_plugins.github_org` - ansible_base.authentication.authenticator_plugins.github_org\n* `ansible_base.authentication.authenticator_plugins.github_enterprise_team` - ansible_base.authentication.authenticator_plugins.github_enterprise_team"
+                        "description": "The type of authentication service this is.\n\n* `ansible_base.authentication.authenticator_plugins.github_enterprise` - ansible_base.authentication.authenticator_plugins.github_enterprise\n* `ansible_base.authentication.authenticator_plugins.github_enterprise_team` - ansible_base.authentication.authenticator_plugins.github_enterprise_team\n* `ansible_base.authentication.authenticator_plugins.saml` - ansible_base.authentication.authenticator_plugins.saml\n* `ansible_base.authentication.authenticator_plugins.tacacs` - ansible_base.authentication.authenticator_plugins.tacacs\n* `ansible_base.authentication.authenticator_plugins.oidc` - ansible_base.authentication.authenticator_plugins.oidc\n* `ansible_base.authentication.authenticator_plugins.github_enterprise_org` - ansible_base.authentication.authenticator_plugins.github_enterprise_org\n* `ansible_base.authentication.authenticator_plugins.radius` - ansible_base.authentication.authenticator_plugins.radius\n* `ansible_base.authentication.authenticator_plugins.github` - ansible_base.authentication.authenticator_plugins.github\n* `ansible_base.authentication.authenticator_plugins.local` - ansible_base.authentication.authenticator_plugins.local\n* `ansible_base.authentication.authenticator_plugins.github_org` - ansible_base.authentication.authenticator_plugins.github_org\n* `ansible_base.authentication.authenticator_plugins.keycloak` - ansible_base.authentication.authenticator_plugins.keycloak\n* `ansible_base.authentication.authenticator_plugins.google_oauth2` - ansible_base.authentication.authenticator_plugins.google_oauth2\n* `ansible_base.authentication.authenticator_plugins.ldap` - ansible_base.authentication.authenticator_plugins.ldap\n* `ansible_base.authentication.authenticator_plugins.azuread` - ansible_base.authentication.authenticator_plugins.azuread\n* `ansible_base.authentication.authenticator_plugins.github_team` - ansible_base.authentication.authenticator_plugins.github_team"
                     },
                     "order": {
                         "type": "integer",
@@ -29082,16 +29082,14 @@
                         "readOnly": true
                     },
                     "resource_data": {
-                        "writeOnly": true
+                        "writeOnly": true,
+                        "default": {}
                     },
                     "url": {
                         "type": "string",
                         "readOnly": true
                     }
-                },
-                "required": [
-                    "resource_data"
-                ]
+                }
             },
             "ResourceType": {
                 "type": "object",
@@ -30253,7 +30251,7 @@
                         "type": "boolean",
                         "default": false,
                         "title": "Allow External Users to Create OAuth2 Tokens",
-                        "description": "Enabling this feature allows users who log in via an external provider (e.g., LDAP, SAML) to create OAuth 2.0 tokens for use with the AAP API. An AAP token’s lifecycle is managed independently from the external authentication session. Refer to the 'Manage OAuth2 token creation for external users' section in the Red Hat Ansible documentation for details."
+                        "description": "Enabling this feature allows users who log in via an external provider (e.g., LDAP, SAML) to create OAuth 2.0 tokens for use with the gateway API. A token’s lifecycle is managed independently from the external authentication session. "
                     },
                     "INSIGHTS_TRACKING_STATE": {
                         "type": "boolean",
