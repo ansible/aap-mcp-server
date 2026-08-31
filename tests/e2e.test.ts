@@ -3,8 +3,7 @@ import { createServer, type Server } from "node:http";
 import { parse as parseUrl } from "node:url";
 import { copyFileSync, existsSync } from "node:fs";
 import { join } from "node:path";
-import { Client } from "@modelcontextprotocol/sdk/client/index.js";
-import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
+import { Client, StreamableHTTPClientTransport } from "@modelcontextprotocol/client";
 
 // Use unique ports to avoid conflicts with other running instances
 const MOCK_AAP_PORT = 18080;
