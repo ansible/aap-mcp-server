@@ -498,19 +498,18 @@ app.use((req, res, next) => {
   // lgtm[js/missing-rate-limiting] rate limiting handled at infrastructure level
   // Only apply to POST requests to MCP endpoints
   if (req.method === "POST" && req.path.includes("/mcp")) {
-    const sessionId = req.headers["mcp-session-id"];
     const authHeader =
       req.headers["authorization"] || req.headers["x-authorization"];
 
-    // Reject requests without session ID or Authorization header immediately
-    // This prevents expensive JSON parsing and session creation for unauthenticated requests
-    if (!sessionId && !authHeader) {
+    // Reject requests without Authorization header immediately
+    // This prevents expensive JSON parsing for unauthenticated requests
+    if (!authHeader) {
       applyWwwAuthenticate(res, req.path);
       res.status(401).json({
         jsonrpc: "2.0",
         error: {
           code: -32000,
-          message: "Unauthorized: Bearer token or session ID required",
+          message: "Unauthorized: Bearer token required",
         },
         id: null,
       });
