@@ -299,12 +299,12 @@ describe("Unauthenticated DoS Prevention (E2E)", () => {
       // Verify success
       expect(response.status).toBe(200);
 
-      // Stateless mode: no session ID should be returned
+      // Verify stateless protocol: deprecated session header should not be present
       const sessionId = response.headers.get("mcp-session-id");
       expect(sessionId).toBeFalsy();
 
       console.log(
-        `✓ Valid token accepted, request processed (stateless, no session ID)`,
+        `✓ Valid token accepted, request processed (stateless, no deprecated session header)`,
       );
     }, 15000);
   });
