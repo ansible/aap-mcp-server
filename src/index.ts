@@ -4,12 +4,8 @@ import OASNormalize from "oas-normalize";
 import { config } from "dotenv";
 import express from "express";
 import cors from "cors";
-import { Server } from "@modelcontextprotocol/sdk/server/index.js";
-import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
-import {
-  CallToolRequestSchema,
-  ListToolsRequestSchema,
-} from "@modelcontextprotocol/sdk/types.js";
+import { NodeStreamableHTTPServerTransport } from "@modelcontextprotocol/node";
+import { Server } from "@modelcontextprotocol/server";
 import {
   extractToolsFromApi,
   getDefaultPageSize,
@@ -285,13 +281,14 @@ const generateTools = async (): Promise<AAPMcpToolDefinition[]> => {
   return toolsWithSize;
 };
 
-// Helper to extract RequestContext from the extra.authInfo provided by the SDK
-const getRequestContext = (extra: any): RequestContext => {
-  const ctx = extra?.authInfo?.extra as RequestContext | undefined;
-  if (!ctx) {
+// Helper to extract RequestContext from the authInfo provided by the SDK
+const getRequestContext = (ctx: any): RequestContext => {
+  // SDK v2: auth info moved to ctx.http.authInfo (not ctx.authInfo)
+  const requestCtx = ctx?.http?.authInfo?.extra as RequestContext | undefined;
+  if (!requestCtx) {
     throw new Error("Missing request context");
   }
-  return ctx;
+  return requestCtx;
 };
 
 export const buildToolUrl = (
@@ -396,7 +393,7 @@ const executeToolRequest = async (
   tool: AAPMcpToolDefinition,
   args: Record<string, unknown>,
   ctx: RequestContext,
-): Promise<{ content: Array<{ type: string; text: string }> }> => {
+): Promise<{ content: Array<{ type: "text"; text: string }> }> => {
   const startTime = Date.now();
   const toolToolset = getToolsetForTool(tool.name);
   let response: Response | undefined;
@@ -446,14 +443,14 @@ const createMcpServer = (): Server => {
     },
   );
 
-  server.setRequestHandler(ListToolsRequestSchema, async (request, extra) => {
-    const ctx = getRequestContext(extra);
+  server.setRequestHandler('tools/list', async (request, ctx) => {
+    const requestCtx = getRequestContext(ctx);
 
-    if (ctx.toolset === "discover") {
-      return { tools: DISCOVER_TOOLS };
+    if (requestCtx.toolset === "discover") {
+      return { tools: DISCOVER_TOOLS } as any;
     }
 
-    const availableTools = getToolsByToolset(ctx.toolset);
+    const availableTools = getToolsByToolset(requestCtx.toolset);
 
     return {
       tools: availableTools.map((tool) => ({
@@ -461,20 +458,20 @@ const createMcpServer = (): Server => {
         description: tool.description,
         inputSchema: tool.inputSchema,
       })),
-    };
+    } as any;
   });
 
-  server.setRequestHandler(CallToolRequestSchema, async (request, extra) => {
+  server.setRequestHandler('tools/call', async (request, ctx) => {
     const { name, arguments: args = {} } = request.params;
-    const ctx = getRequestContext(extra);
+    const requestCtx = getRequestContext(ctx);
 
-    if (ctx.toolset === "discover") {
+    if (requestCtx.toolset === "discover") {
       return handleDiscoverTool(name, args, allToolsets, (tool, toolArgs) =>
-        executeToolRequest(tool, toolArgs, ctx),
+        executeToolRequest(tool, toolArgs, requestCtx),
       );
     }
 
-    const availableTools = getToolsByToolset(ctx.toolset);
+    const availableTools = getToolsByToolset(requestCtx.toolset);
     const tool = availableTools.find((t) => t.name === name);
     if (!tool) {
       throw new Error(`Unknown tool: ${name}`);
@@ -488,7 +485,7 @@ const createMcpServer = (): Server => {
       };
     }
 
-    return executeToolRequest(tool, args, ctx);
+    return executeToolRequest(tool, args, requestCtx);
   });
 
   return server;
@@ -502,19 +499,18 @@ app.use((req, res, next) => {
   // lgtm[js/missing-rate-limiting] rate limiting handled at infrastructure level
   // Only apply to POST requests to MCP endpoints
   if (req.method === "POST" && req.path.includes("/mcp")) {
-    const sessionId = req.headers["mcp-session-id"];
     const authHeader =
       req.headers["authorization"] || req.headers["x-authorization"];
 
-    // Reject requests without session ID or Authorization header immediately
-    // This prevents expensive JSON parsing and session creation for unauthenticated requests
-    if (!sessionId && !authHeader) {
+    // Reject requests without Authorization header immediately
+    // This prevents expensive JSON parsing for unauthenticated requests
+    if (!authHeader) {
       applyWwwAuthenticate(res, req.path);
       res.status(401).json({
         jsonrpc: "2.0",
         error: {
           code: -32000,
-          message: "Unauthorized: Bearer token or session ID required",
+          message: "Unauthorized: Bearer token required",
         },
         id: null,
       });
@@ -624,7 +620,7 @@ const mcpPostHandler = async (
     const ctx = authResult.ctx;
 
     // Create a fresh stateless transport for each request
-    const transport = new StreamableHTTPServerTransport({
+    const transport = new NodeStreamableHTTPServerTransport({
       sessionIdGenerator: undefined,
     });
 

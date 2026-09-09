@@ -15,7 +15,15 @@ export const TOOLSET_DESCRIPTIONS: Record<string, string> = {
     "Search Ansible collections, execution environments, and AI-assisted content",
 };
 
-export const DISCOVER_TOOLS = [
+export const DISCOVER_TOOLS: Array<{
+  name: string;
+  description: string;
+  inputSchema: {
+    type: "object";
+    properties: Record<string, unknown>;
+    required: string[];
+  };
+}> = [
   {
     name: "discover",
     description:
@@ -56,7 +64,7 @@ export const DISCOVER_TOOLS = [
   },
 ];
 
-type ToolCallResult = { content: Array<{ type: string; text: string }> };
+type ToolCallResult = { content: Array<{ type: "text"; text: string }> };
 
 export const handleDiscoverTool = async (
   name: string,

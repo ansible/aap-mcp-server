@@ -3,8 +3,7 @@ import { createServer, type Server } from "node:http";
 import { parse as parseUrl } from "node:url";
 import { copyFileSync, existsSync } from "node:fs";
 import { join } from "node:path";
-import { Client } from "@modelcontextprotocol/sdk/client/index.js";
-import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
+import { Client, StreamableHTTPClientTransport } from "@modelcontextprotocol/client";
 
 // Use unique ports to avoid conflicts with other running instances
 const MOCK_AAP_PORT = 18080;
@@ -195,10 +194,8 @@ describe("End-to-End: MCP Server", () => {
       expect(response.status).toBe(404);
     });
 
-    it("should return 404 for GET with invalid session ID", async () => {
-      const response = await fetch(`${MCP_BASE_URL}/mcp/job_management`, {
-        headers: { "mcp-session-id": "non-existent-session" },
-      });
+    it("should return 404 for GET on toolset endpoint", async () => {
+      const response = await fetch(`${MCP_BASE_URL}/mcp/job_management`);
       expect(response.status).toBe(404);
     });
   });
@@ -211,7 +208,6 @@ describe("End-to-End: MCP Server", () => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "mcp-session-id": "non-existent-session",
         },
         body: JSON.stringify({
           jsonrpc: "2.0",
@@ -271,10 +267,9 @@ describe("End-to-End: MCP Server", () => {
       expect(response.status).toBe(404);
     });
 
-    it("should return 404 for DELETE with invalid session ID", async () => {
+    it("should return 404 for DELETE request", async () => {
       const response = await fetch(`${MCP_BASE_URL}/mcp`, {
         method: "DELETE",
-        headers: { "mcp-session-id": "non-existent-session" },
       });
       expect(response.status).toBe(404);
     });
@@ -500,10 +495,9 @@ describe("End-to-End: MCP Server", () => {
       expect(response.ok).toBe(true);
     });
 
-    it("should reject DELETE on /mcp/:toolset with invalid session", async () => {
+    it("should reject DELETE on /mcp/:toolset", async () => {
       const response = await fetch(`${MCP_BASE_URL}/job_management/mcp`, {
         method: "DELETE",
-        headers: { "mcp-session-id": "bad-session" },
       });
       expect(response.status).toBe(404);
     });
