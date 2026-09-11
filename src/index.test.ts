@@ -254,6 +254,40 @@ describe("buildToolUrl", () => {
     });
     expect(buildToolUrl(tool, {})).toBe("/api/v2/jobs/{id}/");
   });
+
+  it("should skip query parameters that are empty strings", () => {
+    const tool = createMockTool({
+      pathTemplate: "/api/v2/jobs/",
+      parameters: [
+        { name: "page", in: "query" },
+        { name: "search", in: "query" },
+      ] as any,
+    });
+    expect(buildToolUrl(tool, { page: 1, search: "" })).toBe(
+      "/api/v2/jobs/?page=1",
+    );
+  });
+
+  it("should skip query parameters that are null", () => {
+    const tool = createMockTool({
+      pathTemplate: "/api/v2/jobs/",
+      parameters: [
+        { name: "page", in: "query" },
+        { name: "search", in: "query" },
+      ] as any,
+    });
+    expect(buildToolUrl(tool, { page: 1, search: null })).toBe(
+      "/api/v2/jobs/?page=1",
+    );
+  });
+
+  it("should still forward falsy-but-valid query values (0)", () => {
+    const tool = createMockTool({
+      pathTemplate: "/api/v2/jobs/",
+      parameters: [{ name: "page", in: "query" }] as any,
+    });
+    expect(buildToolUrl(tool, { page: 0 })).toBe("/api/v2/jobs/?page=0");
+  });
 });
 
 describe("buildRequestOptions", () => {
