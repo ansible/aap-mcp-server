@@ -21,6 +21,7 @@ import {
   validateIssuerUrl,
   type ProtectedResourceConfig,
 } from "./protected-resource-metadata.js";
+import { JsonRpcErrorCode } from "../error-codes.js";
 
 // --- isOAuth2Enabled ---
 
@@ -563,7 +564,10 @@ describe("backward compatibility when OAuth is disabled", () => {
     app.post("/mcp", (req, res) => {
       res.status(401).json({
         jsonrpc: "2.0",
-        error: { code: -32000, message: "Unauthorized: Bearer token required" },
+        error: {
+          code: JsonRpcErrorCode.INVALID_REQUEST,
+          message: "Unauthorized: Bearer token required",
+        },
         id: null,
       });
     });

@@ -2,6 +2,7 @@ import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import { createServer, type Server } from "node:http";
 import { copyFileSync, existsSync } from "node:fs";
 import { join } from "node:path";
+import { JsonRpcErrorCode } from "../../src/error-codes.js";
 
 // Use unique ports to avoid conflicts with main e2e tests
 const MOCK_AAP_PORT = 18082;
@@ -185,7 +186,7 @@ describe("Unauthenticated DoS Prevention (E2E)", () => {
       expect(body).toMatchObject({
         jsonrpc: "2.0",
         error: {
-          code: -32000,
+          code: JsonRpcErrorCode.INVALID_REQUEST,
           message: expect.stringContaining("Unauthorized"),
         },
       });
@@ -249,7 +250,7 @@ describe("Unauthenticated DoS Prevention (E2E)", () => {
       expect(body).toMatchObject({
         jsonrpc: "2.0",
         error: {
-          code: -32000,
+          code: JsonRpcErrorCode.INVALID_REQUEST,
           message: expect.stringMatching(
             /Unauthorized.*Invalid.*expired.*token/i,
           ),
