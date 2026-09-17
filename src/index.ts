@@ -308,8 +308,18 @@ export const buildToolUrl = (
 
   const queryParams = new URLSearchParams();
   for (const param of tool.parameters || []) {
-    if (param.in === "query" && args[param.name] !== undefined) {
-      queryParams.append(param.name, String(args[param.name]));
+    const value = args[param.name];
+    // Only forward query params that carry a real value. Empty string and
+    // null are omitted optional args — forwarding them as `?name=` makes the
+    // AAP Controller reject the request (HTTP 500) instead of applying its
+    // own defaults, so treat them the same as undefined.
+    if (
+      param.in === "query" &&
+      value !== undefined &&
+      value !== null &&
+      value !== ""
+    ) {
+      queryParams.append(param.name, String(value));
     }
   }
   if (queryParams.toString()) {
