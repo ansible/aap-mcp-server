@@ -679,6 +679,23 @@ app.post("/mcp/:toolset", (req, res) => {
   return mcpPostHandler(req, res, toolset);
 });
 
+// MCP endpoints are POST-only in this stateless server: there are no sessions
+// to stream over GET or to terminate via DELETE. Per the MCP Streamable HTTP
+// spec, a server on this revision that receives such traffic (e.g. from an
+// older, session-based client) SHOULD reply 405 Method Not Allowed so the
+// client fails fast instead of hanging. The Allow header (required by RFC 9110
+// for any 405) advertises the methods that ARE accepted here.
+const mcpMethodNotAllowed = (
+  _req: express.Request,
+  res: express.Response,
+): void => {
+  res.status(405).set("Allow", "POST, OPTIONS").send("Method Not Allowed");
+};
+for (const mcpPath of ["/mcp", "/:toolset/mcp", "/mcp/:toolset"]) {
+  app.get(mcpPath, mcpMethodNotAllowed);
+  app.delete(mcpPath, mcpMethodNotAllowed);
+}
+
 // Health check endpoint (always enabled)
 app.get("/api/v1/health", (req, res) => {
   res.json({ status: "ok" });

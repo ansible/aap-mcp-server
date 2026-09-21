@@ -182,21 +182,33 @@ describe("End-to-End: MCP Server", () => {
   });
 
   // --- GET handler ---
+  // MCP endpoints are POST-only (stateless server). Per the MCP Streamable HTTP
+  // spec, GET/DELETE MUST get 405 Method Not Allowed with an Allow header, not
+  // the Express default 404.
 
   describe("GET handler", () => {
-    it("should reject GET requests on /mcp", async () => {
+    it("should return 405 with Allow header for GET on /mcp", async () => {
       const response = await fetch(`${MCP_BASE_URL}/mcp`);
-      expect(response.status).toBe(404);
+      expect(response.status).toBe(405);
+      expect(response.headers.get("allow")).toBe("POST, OPTIONS");
     });
 
-    it("should return 404 for GET on /mcp/toolset without session", async () => {
+    it("should return 405 for GET on /mcp/:toolset", async () => {
       const response = await fetch(`${MCP_BASE_URL}/mcp/job_management`);
-      expect(response.status).toBe(404);
+      expect(response.status).toBe(405);
+      expect(response.headers.get("allow")).toBe("POST, OPTIONS");
     });
 
-    it("should return 404 for GET on toolset endpoint", async () => {
-      const response = await fetch(`${MCP_BASE_URL}/mcp/job_management`);
-      expect(response.status).toBe(404);
+    it("should return 405 for GET on /:toolset/mcp", async () => {
+      const response = await fetch(`${MCP_BASE_URL}/job_management/mcp`);
+      expect(response.status).toBe(405);
+      expect(response.headers.get("allow")).toBe("POST, OPTIONS");
+    });
+
+    it("should return 405 for GET on /mcp/discover", async () => {
+      const response = await fetch(`${MCP_BASE_URL}/mcp/discover`);
+      expect(response.status).toBe(405);
+      expect(response.headers.get("allow")).toBe("POST, OPTIONS");
     });
   });
 
@@ -260,26 +272,61 @@ describe("End-to-End: MCP Server", () => {
   // --- DELETE handler ---
 
   describe("DELETE handler", () => {
-    it("should return 404 for DELETE without session", async () => {
+    it("should return 405 with Allow header for DELETE on /mcp", async () => {
       const response = await fetch(`${MCP_BASE_URL}/mcp`, {
         method: "DELETE",
       });
-      expect(response.status).toBe(404);
+      expect(response.status).toBe(405);
+      expect(response.headers.get("allow")).toBe("POST, OPTIONS");
     });
 
-    it("should return 404 for DELETE request", async () => {
-      const response = await fetch(`${MCP_BASE_URL}/mcp`, {
-        method: "DELETE",
-      });
-      expect(response.status).toBe(404);
-    });
-
-    it("should return 404 for toolset-specific DELETE without session", async () => {
+    it("should return 405 for DELETE on /mcp/:toolset", async () => {
       const response = await fetch(`${MCP_BASE_URL}/mcp/job_management`, {
         method: "DELETE",
       });
-      expect(response.status).toBe(404);
+      expect(response.status).toBe(405);
+      expect(response.headers.get("allow")).toBe("POST, OPTIONS");
     });
+  });
+
+  // --- SSE response headers ---
+  // Per the MCP Streamable HTTP spec, SSE responses SHOULD carry
+  // X-Accel-Buffering: no so reverse proxies (nginx) don't buffer the stream.
+  // Our server delegates SSE to the SDK transport, which sets this header. This
+  // test is a regression tripwire: if an SDK upgrade ever drops the header, it
+  // fails here instead of silently breaking streaming behind a proxy.
+
+  describe("SSE response headers", () => {
+    it("should include X-Accel-Buffering: no on SSE responses", async () => {
+      const response = await fetch(`${MCP_BASE_URL}/mcp`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json, text/event-stream",
+          Authorization: `Bearer ${BEARER_TOKEN}`,
+          "mcp-protocol-version": "2025-06-18",
+        },
+        body: JSON.stringify({
+          jsonrpc: "2.0",
+          id: 1,
+          method: "initialize",
+          params: {
+            protocolVersion: "2025-06-18",
+            capabilities: {},
+            clientInfo: { name: "sse-header-test", version: "1.0.0" },
+          },
+        }),
+      });
+
+      expect(response.status).toBe(200);
+      expect(response.headers.get("content-type")).toContain(
+        "text/event-stream",
+      );
+      expect(response.headers.get("x-accel-buffering")).toBe("no");
+
+      // Release the streaming connection so the test doesn't hang.
+      await response.body?.cancel();
+    }, 15000);
   });
 
   // --- MCP Protocol Flow ---
@@ -495,11 +542,12 @@ describe("End-to-End: MCP Server", () => {
       expect(response.ok).toBe(true);
     });
 
-    it("should reject DELETE on /mcp/:toolset", async () => {
+    it("should return 405 for DELETE on /:toolset/mcp", async () => {
       const response = await fetch(`${MCP_BASE_URL}/job_management/mcp`, {
         method: "DELETE",
       });
-      expect(response.status).toBe(404);
+      expect(response.status).toBe(405);
+      expect(response.headers.get("allow")).toBe("POST, OPTIONS");
     });
 
     it("should return 401 for POST on /:toolset/mcp without auth token", async () => {
