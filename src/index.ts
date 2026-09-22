@@ -693,6 +693,13 @@ app.post("/mcp/:toolset", (req, res) => {
   return mcpPostHandler(req, res, toolset);
 });
 
+app.get(["/mcp", "/mcp/:toolset", "/:toolset/mcp"], (_req, res) => {
+  res.status(405).set("Allow", "POST").send("Method Not Allowed");
+});
+app.delete(["/mcp", "/mcp/:toolset", "/:toolset/mcp"], (_req, res) => {
+  res.status(405).set("Allow", "POST").send("Method Not Allowed");
+});
+
 // Health check endpoint (always enabled)
 app.get("/api/v1/health", (req, res) => {
   res.json({ status: "ok" });

@@ -187,19 +187,22 @@ describe("End-to-End: MCP Server", () => {
   describe("GET handler", () => {
     it("should reject GET requests on /mcp", async () => {
       const response = await fetch(`${MCP_BASE_URL}/mcp`);
-      expect(response.status).toBe(404);
+      expect(response.status).toBe(405);
+      expect(response.headers.get("allow")).toBe("POST");
     });
 
-    it("should return 404 for GET on /mcp/toolset without session", async () => {
+    it("should return 405 for GET on /mcp/toolset without session", async () => {
       const response = await fetch(`${MCP_BASE_URL}/mcp/job_management`);
-      expect(response.status).toBe(404);
+      expect(response.status).toBe(405);
+      expect(response.headers.get("allow")).toBe("POST");
     });
 
-    it("should return 404 for GET with invalid session ID", async () => {
+    it("should return 405 for GET with invalid session ID", async () => {
       const response = await fetch(`${MCP_BASE_URL}/mcp/job_management`, {
         headers: { "mcp-session-id": "non-existent-session" },
       });
-      expect(response.status).toBe(404);
+      expect(response.status).toBe(405);
+      expect(response.headers.get("allow")).toBe("POST");
     });
   });
 
@@ -264,26 +267,29 @@ describe("End-to-End: MCP Server", () => {
   // --- DELETE handler ---
 
   describe("DELETE handler", () => {
-    it("should return 404 for DELETE without session", async () => {
+    it("should return 405 for DELETE without session", async () => {
       const response = await fetch(`${MCP_BASE_URL}/mcp`, {
         method: "DELETE",
       });
-      expect(response.status).toBe(404);
+      expect(response.status).toBe(405);
+      expect(response.headers.get("allow")).toBe("POST");
     });
 
-    it("should return 404 for DELETE with invalid session ID", async () => {
+    it("should return 405 for DELETE with invalid session ID", async () => {
       const response = await fetch(`${MCP_BASE_URL}/mcp`, {
         method: "DELETE",
         headers: { "mcp-session-id": "non-existent-session" },
       });
-      expect(response.status).toBe(404);
+      expect(response.status).toBe(405);
+      expect(response.headers.get("allow")).toBe("POST");
     });
 
-    it("should return 404 for toolset-specific DELETE without session", async () => {
+    it("should return 405 for toolset-specific DELETE without session", async () => {
       const response = await fetch(`${MCP_BASE_URL}/mcp/job_management`, {
         method: "DELETE",
       });
-      expect(response.status).toBe(404);
+      expect(response.status).toBe(405);
+      expect(response.headers.get("allow")).toBe("POST");
     });
   });
 
@@ -505,7 +511,8 @@ describe("End-to-End: MCP Server", () => {
         method: "DELETE",
         headers: { "mcp-session-id": "bad-session" },
       });
-      expect(response.status).toBe(404);
+      expect(response.status).toBe(405);
+      expect(response.headers.get("allow")).toBe("POST");
     });
 
     it("should return 401 for POST on /:toolset/mcp without auth token", async () => {
