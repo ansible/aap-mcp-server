@@ -82,6 +82,10 @@ toolsets:
     - controller.workflow_jobs_workflow_nodes_list
     - controller.job_templates_create
     - controller.schedules_create
+    - controller.schedules_list
+    - controller.schedules_retrieve
+    - controller.schedules_update
+    - controller.schedules_destroy
     - controller.projects_create
     - controller.job_templates_credentials_create
     - controller.job_templates_credentials_list
