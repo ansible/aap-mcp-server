@@ -4,8 +4,13 @@ import OASNormalize from "oas-normalize";
 import { config } from "dotenv";
 import express from "express";
 import cors from "cors";
-import { NodeStreamableHTTPServerTransport } from "@modelcontextprotocol/node";
-import { Server } from "@modelcontextprotocol/server";
+import { toNodeHandler } from "@modelcontextprotocol/node";
+import {
+  createMcpHandler,
+  createRequestStateCodec,
+  McpServer,
+  type McpRequestContext,
+} from "@modelcontextprotocol/server";
 import {
   extractToolsFromApi,
   getDefaultPageSize,
@@ -77,6 +82,16 @@ const CONFIG = {
     .map((origin) => origin.trim())
     .filter((origin) => origin.length > 0),
 } as const;
+
+// Multi-round-trip (MRTR) requestState integrity codec (2026-07-28). requestState
+// round-trips through the client and is attacker-controlled, so the spec requires
+// the server to integrity-protect it (basic/patterns/mrtr, server requirements 4-5).
+// Gated on REQUEST_STATE_SECRET: when set we wire the SDK's HMAC-SHA256 verify hook;
+// when unset the codec is absent (passthrough). Inert until a handler returns
+// input_required — we have none today — so this is forward-looking hardening.
+const requestStateCodec = process.env.REQUEST_STATE_SECRET
+  ? createRequestStateCodec({ key: process.env.REQUEST_STATE_SECRET })
+  : undefined;
 
 // Initialize analytics service (always instantiated, but only enabled if key provided)
 const analyticsService = new AnalyticsService();
@@ -290,16 +305,6 @@ const generateTools = async (): Promise<AAPMcpToolDefinition[]> => {
   return toolsWithSize;
 };
 
-// Helper to extract RequestContext from the authInfo provided by the SDK
-const getRequestContext = (ctx: any): RequestContext => {
-  // SDK v2: auth info moved to ctx.http.authInfo (not ctx.authInfo)
-  const requestCtx = ctx?.http?.authInfo?.extra as RequestContext | undefined;
-  if (!requestCtx) {
-    throw new Error("Missing request context");
-  }
-  return requestCtx;
-};
-
 export const buildToolUrl = (
   tool: AAPMcpToolDefinition,
   args: Record<string, unknown>,
@@ -438,9 +443,11 @@ const executeToolRequest = async (
   }
 };
 
-// Factory function to create a new Server instance with request handlers
-const createMcpServer = (): Server => {
-  const server = new Server(
+// Factory function to create a new McpServer instance with request handlers.
+// Called once per request by createMcpHandler; closes over the per-request
+// RequestContext (toolset + identity) resolved from authInfo.extra.
+const createMcpServer = (requestCtx: RequestContext): McpServer => {
+  const server = new McpServer(
     {
       name: "aap",
       version: "0.1.0",
@@ -449,12 +456,21 @@ const createMcpServer = (): Server => {
       capabilities: {
         tools: {},
       },
+      // Cache hint for the SDK-built tools/list result (2026-07-28). The tool set
+      // is static per process, so a short shared TTL is safe. cacheScope is
+      // 'public' | 'private' ('shared' does not exist); tools/call is not a
+      // cacheable method and already defaults to ttlMs:0/private.
+      cacheHints: {
+        "tools/list": { ttlMs: 300_000, cacheScope: "public" },
+      },
+      // MRTR requestState integrity hook, wired only when a secret is configured.
+      ...(requestStateCodec
+        ? { requestState: { verify: requestStateCodec.verify } }
+        : {}),
     },
   );
 
-  server.setRequestHandler('tools/list', async (request, ctx) => {
-    const requestCtx = getRequestContext(ctx);
-
+  server.server.setRequestHandler("tools/list", async () => {
     if (requestCtx.toolset === "discover") {
       return { tools: DISCOVER_TOOLS } as any;
     }
@@ -470,9 +486,8 @@ const createMcpServer = (): Server => {
     } as any;
   });
 
-  server.setRequestHandler('tools/call', async (request, ctx) => {
+  server.server.setRequestHandler("tools/call", async (request) => {
     const { name, arguments: args = {} } = request.params;
-    const requestCtx = getRequestContext(ctx);
 
     if (requestCtx.toolset === "discover") {
       return handleDiscoverTool(name, args, allToolsets, (tool, toolArgs) =>
@@ -606,6 +621,31 @@ const applyWwwAuthenticate = (
   );
 };
 
+// 2026-07-28 serving entry. createMcpHandler builds a fresh McpServer per request
+// (stateless idiom) and serves both modern (2026-07-28) and legacy (2025-era)
+// clients via legacy:'stateless' — a dual-era server selects its behavior from how
+// the client opens (initialize => legacy; per-request _meta => modern). The factory
+// closes over the per-request RequestContext resolved from authInfo.extra, which
+// toNodeHandler forwards from req.auth. The entry performs no token verification —
+// that stays in authenticateRequest below.
+const mcpHandler = createMcpHandler(
+  (ctx: McpRequestContext) => {
+    const requestCtx = ctx.authInfo?.extra as unknown as
+      | RequestContext
+      | undefined;
+    if (!requestCtx) {
+      throw new Error("Missing request context");
+    }
+    return createMcpServer(requestCtx);
+  },
+  {
+    legacy: "stateless",
+    onerror: (error) =>
+      console.error(`${getTimestamp()} MCP handler error:`, error),
+  },
+);
+const mcpNodeHandler = toNodeHandler(mcpHandler);
+
 // MCP POST endpoint handler - stateless, no sessions
 const mcpPostHandler = async (
   req: express.Request,
@@ -639,15 +679,8 @@ const mcpPostHandler = async (
 
     const ctx = authResult.ctx;
 
-    // Create a fresh stateless transport for each request
-    const transport = new NodeStreamableHTTPServerTransport({
-      sessionIdGenerator: undefined,
-    });
-
-    const server = createMcpServer();
-    await server.connect(transport);
-
-    // The SDK reads authInfo from req.auth
+    // toNodeHandler forwards req.auth as the factory's pass-through authInfo;
+    // authInfo.extra carries our per-request context (token + toolset + identity).
     (req as any).auth = {
       token: ctx.token,
       clientId: "aap-mcp",
@@ -655,11 +688,9 @@ const mcpPostHandler = async (
       extra: ctx as unknown as Record<string, unknown>,
     };
 
-    await transport.handleRequest(req, res, req.body);
-
-    // Clean up after request
-    await transport.close();
-    await server.close();
+    // Hand off to the shared MCP handler. Pass req.body as parsedBody since
+    // express.json() has already consumed the request stream.
+    await mcpNodeHandler(req, res, req.body);
   } catch (error) {
     console.error(`${getTimestamp()} Error handling MCP request:`, error);
     if (!res.headersSent) {
