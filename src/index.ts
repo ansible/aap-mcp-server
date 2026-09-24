@@ -24,6 +24,7 @@ import { PseudoIdentityService, type UserInfo } from "./pseudo-identity.js";
 import { AapMcpConfig, loadToolsetsFromCfg } from "./config-utils.js";
 import { DISCOVER_TOOLS, handleDiscoverTool } from "./discover.js";
 import { JsonRpcErrorCode } from "./error-codes.js";
+import { createOriginValidationMiddleware } from "./middleware/origin-validation.js";
 import {
   buildConfig,
   buildResourceMetadataUrl,
@@ -67,6 +68,14 @@ const CONFIG = {
     localConfig.analytics_key ||
     ""
   ).trim(),
+  // Extra browser origins for DNS-rebinding protection (comma-separated env var).
+  // Gateway (BASE_URL) and localhost are always allowed; this is additive.
+  ALLOWED_ORIGINS: (process.env.ALLOWED_ORIGINS
+    ? process.env.ALLOWED_ORIGINS.split(",")
+    : localConfig.allowed_origins || []
+  )
+    .map((origin) => origin.trim())
+    .filter((origin) => origin.length > 0),
 } as const;
 
 // Initialize analytics service (always instantiated, but only enabled if key provided)
@@ -492,6 +501,17 @@ const createMcpServer = (): Server => {
 };
 
 const app = express();
+
+// Security: validate the Origin header to prevent DNS rebinding (MCP spec MUST,
+// AAP-90952). Runs first. Gateway (BASE_URL), own origin (MCP_SERVER_URL), and
+// localhost are always allowed; ALLOWED_ORIGINS adds extra browser origins.
+app.use(
+  createOriginValidationMiddleware([
+    CONFIG.BASE_URL,
+    CONFIG.MCP_SERVER_URL,
+    ...CONFIG.ALLOWED_ORIGINS,
+  ]),
+);
 
 // Security: Check authorization BEFORE parsing request body
 // This prevents unauthenticated DoS via resource exhaustion (AAP-70224)
