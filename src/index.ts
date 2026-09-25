@@ -642,8 +642,7 @@ const applyWwwAuthenticate = (
 const mcpHandler = createMcpHandler(
   (ctx: McpRequestContext) => {
     const requestCtx = ctx.authInfo?.extra as unknown as
-      | RequestContext
-      | undefined;
+      RequestContext | undefined;
     if (!requestCtx) {
       throw new Error("Missing request context");
     }

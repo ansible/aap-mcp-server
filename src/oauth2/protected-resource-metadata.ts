@@ -1,5 +1,5 @@
 import express from "express";
-import { getOAuthProtectedResourceMetadataUrl } from "@modelcontextprotocol/express"
+import { getOAuthProtectedResourceMetadataUrl } from "@modelcontextprotocol/express";
 
 // --- Constants ---
 

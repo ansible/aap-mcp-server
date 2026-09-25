@@ -137,7 +137,6 @@ describe("mcpGetHandler", () => {
       expect(shouldBlock).toBe(false);
     });
   });
-
 });
 
 const createMockTool = (

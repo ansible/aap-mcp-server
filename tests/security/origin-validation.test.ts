@@ -128,7 +128,10 @@ describe("Origin Validation (DNS rebinding protection, E2E)", () => {
 
   it("rejects a disallowed browser Origin with 403 before auth", async () => {
     // Even with a valid token, a disallowed Origin is rejected first.
-    const response = await postInitialize("https://evil.example.com", VALID_TOKEN);
+    const response = await postInitialize(
+      "https://evil.example.com",
+      VALID_TOKEN,
+    );
 
     expect(response.status).toBe(403);
     const body = await response.json();

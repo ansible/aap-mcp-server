@@ -113,9 +113,7 @@ const readResult = async (response: Response): Promise<any> => {
   const text = await response.text();
   if (contentType.includes("text/event-stream")) {
     // Grab the first `data:` payload from the SSE frame.
-    const dataLine = text
-      .split("\n")
-      .find((line) => line.startsWith("data:"));
+    const dataLine = text.split("\n").find((line) => line.startsWith("data:"));
     if (!dataLine) throw new Error(`No SSE data frame in response: ${text}`);
     return JSON.parse(dataLine.slice("data:".length).trim());
   }
@@ -194,7 +192,9 @@ describe("End-to-End: Modern protocol (2026-07-28)", () => {
 
   afterAll(async () => {
     if (mockAapServer) {
-      await new Promise<void>((resolve) => mockAapServer.close(() => resolve()));
+      await new Promise<void>((resolve) =>
+        mockAapServer.close(() => resolve()),
+      );
     }
   }, 10000);
 
@@ -293,7 +293,11 @@ describe("End-to-End: Modern protocol (2026-07-28)", () => {
         jsonrpc: "2.0",
         id: 6,
         method: "tools/call",
-        params: { name: noParamTool.name, arguments: {}, _meta: modernEnvelope() },
+        params: {
+          name: noParamTool.name,
+          arguments: {},
+          _meta: modernEnvelope(),
+        },
       });
 
       expect(callResponse.status).toBe(200);
