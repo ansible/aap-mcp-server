@@ -90,6 +90,10 @@ const CONFIG = {
 // Gated on REQUEST_STATE_SECRET: when set we wire the SDK's HMAC-SHA256 verify hook;
 // when unset the codec is absent (passthrough). Inert until a handler returns
 // input_required — we have none today — so this is forward-looking hardening.
+//
+// IMPORTANT: verify is wired globally. Any future handler that returns
+// input_required MUST seal its requestState via requestStateCodec.mint(...);
+// a hand-rolled string will fail verification and the client's retry is rejected.
 const requestStateCodec = process.env.REQUEST_STATE_SECRET
   ? createRequestStateCodec({ key: process.env.REQUEST_STATE_SECRET })
   : undefined;
@@ -465,7 +469,11 @@ const createMcpServer = (requestCtx: RequestContext): McpServer => {
     },
     {
       capabilities: {
-        tools: {},
+        // listChanged:false — we register tools statically and never emit
+        // notifications/tools/list_changed. Registering a tools/list handler makes
+        // the SDK default listChanged to true, which would advertise a capability
+        // we don't honor on server/discover; pin it false.
+        tools: { listChanged: false },
       },
       // Cache hint for the SDK-built tools/list result (2026-07-28). The tool set
       // is static per process, so a short shared TTL is safe. cacheScope is

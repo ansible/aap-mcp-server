@@ -104,6 +104,28 @@ const postModern = (
 };
 
 /**
+ * POST with fully manual headers (no auto Mcp-Method / Mcp-Name). Used by the
+ * negative header tests that need to omit or deliberately mismatch a required
+ * per-request header.
+ */
+const postRaw = (
+  path: string,
+  message: Record<string, unknown>,
+  headers: Record<string, string> = {},
+  token: string | null = BEARER_TOKEN,
+) =>
+  fetch(`${MCP_BASE_URL}${path}`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Accept: "application/json, text/event-stream",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...headers,
+    },
+    body: JSON.stringify(message),
+  });
+
+/**
  * Read a JSON-RPC response whether the server answered as plain application/json
  * (the modern single-response default) or as an SSE stream. Returns the parsed
  * JSON-RPC message.
@@ -327,7 +349,10 @@ describe("End-to-End: Modern protocol (2026-07-28)", () => {
       expect(message.error.code).toBe(-32602);
     });
 
-    it("rejects a header/body protocol-version mismatch", async () => {
+    it("rejects a header/body protocol-version mismatch with -32020", async () => {
+      // Header says 2025-06-18, body envelope claims 2026-07-28: the header and
+      // body disagree, so the SDK returns HeaderMismatch (-32020), not a generic
+      // 4xx. Pinning the exact code — it's the compliance surface.
       const response = await postModern(
         "/mcp/job_management",
         {
@@ -339,9 +364,104 @@ describe("End-to-End: Modern protocol (2026-07-28)", () => {
         { headers: { "mcp-protocol-version": "2025-06-18" } },
       );
 
-      expect(response.status).toBeGreaterThanOrEqual(400);
+      expect(response.status).toBe(400);
       const message = await readResult(response);
-      expect(message.error).toBeDefined();
+      expect(message.error.code).toBe(-32020);
+    });
+
+    it("rejects a request missing the Mcp-Method header with -32020", async () => {
+      // Modern requests MUST carry Mcp-Method matching the body method. Omit it.
+      const response = await postRaw("/mcp/job_management", {
+        jsonrpc: "2.0",
+        id: 10,
+        method: "tools/list",
+        params: { _meta: modernEnvelope() },
+      });
+
+      expect(response.status).toBe(400);
+      const message = await readResult(response);
+      expect(message.error.code).toBe(-32020);
+    });
+
+    it("rejects an Mcp-Name that disagrees with the body with -32020", async () => {
+      // tools/call is name-bearing: Mcp-Name MUST mirror params.name. Send a
+      // header name that disagrees with the body name → HeaderMismatch (-32020).
+      const response = await postRaw(
+        "/mcp/job_management",
+        {
+          jsonrpc: "2.0",
+          id: 11,
+          method: "tools/call",
+          params: {
+            name: "controller.jobs_list",
+            arguments: {},
+            _meta: modernEnvelope(),
+          },
+        },
+        {
+          "mcp-protocol-version": MODERN_VERSION,
+          "mcp-method": "tools/call",
+          "mcp-name": "not-the-tool-in-the-body",
+        },
+      );
+
+      expect(response.status).toBe(400);
+      const message = await readResult(response);
+      expect(message.error.code).toBe(-32020);
+    });
+
+    it("rejects an unsupported protocol version with -32022", async () => {
+      // A modern-shaped but unsupported version (>= 2026-07-28, not in the
+      // supported set) → UnsupportedProtocolVersion (-32022) listing what's ok.
+      const version = "2099-01-01";
+      const response = await postRaw(
+        "/mcp/job_management",
+        {
+          jsonrpc: "2.0",
+          id: 13,
+          method: "tools/list",
+          params: {
+            _meta: modernEnvelope({
+              [PROTOCOL_VERSION_META_KEY]: version,
+            }),
+          },
+        },
+        { "mcp-protocol-version": version, "mcp-method": "tools/list" },
+      );
+
+      expect(response.status).toBe(400);
+      const message = await readResult(response);
+      expect(message.error.code).toBe(-32022);
+    });
+  });
+
+  // --- Method dispatch ---
+
+  describe("method dispatch", () => {
+    it("returns 404 + -32601 for an unknown method", async () => {
+      const response = await postModern("/mcp/job_management", {
+        jsonrpc: "2.0",
+        id: 14,
+        method: "does/not/exist",
+        params: { _meta: modernEnvelope() },
+      });
+
+      expect(response.status).toBe(404);
+      const message = await readResult(response);
+      expect(message.error.code).toBe(-32601);
+    });
+
+    it("returns 202 with no body for a notification", async () => {
+      // A JSON-RPC notification (no id) gets acknowledged with 202 and empty body.
+      const response = await postModern("/mcp/job_management", {
+        jsonrpc: "2.0",
+        method: "notifications/initialized",
+        params: { _meta: modernEnvelope() },
+      });
+
+      expect(response.status).toBe(202);
+      const text = await response.text();
+      expect(text).toBe("");
     });
   });
 
