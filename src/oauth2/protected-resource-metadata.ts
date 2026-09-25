@@ -1,5 +1,5 @@
 import express from "express";
-import { getOAuthProtectedResourceMetadataUrl } from "@modelcontextprotocol/sdk/server/auth/router.js";
+import { getOAuthProtectedResourceMetadataUrl } from "@modelcontextprotocol/server";
 
 // --- Constants ---
 

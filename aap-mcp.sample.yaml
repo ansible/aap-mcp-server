@@ -23,6 +23,12 @@
 # Allow write operation (POST, DELETE and PATCH)
 # allow_write_operations: false
 
+# Extra browser origins for DNS-rebinding protection (Origin validation). The
+# gateway (base_url) and localhost are always allowed; list only additional
+# origins here. Lower priority than the ALLOWED_ORIGINS env var (comma-separated).
+# allowed_origins:
+#   - "https://chatbot.example.com"
+
 # Global default page size for all list operations (1-200)
 # Priority: DEFAULT_PAGE_SIZE env var > this setting > hard-coded default (10)
 # OpenAPI schema defaults take precedence over this value

@@ -119,6 +119,19 @@ MCP_PORT=3000
 
 # Change this to true to get access to the write operations
 #ALLOW_WRITE_OPERATIONS=true
+
+# Extra browser origins allowed for DNS-rebinding protection (comma-separated).
+# The gateway (BASE_URL) and localhost are always allowed; this is additive.
+# Also settable via `allowed_origins` in aap-mcp.yaml (env var takes precedence).
+#ALLOWED_ORIGINS=https://chatbot.example.com,https://console.example.com
+
+# Secret for the multi-round-trip (MRTR) requestState integrity codec.
+# Optional and forward-looking: when set, the server HMAC-signs and verifies the
+# `requestState` blobs used by `input_required` handlers (MCP 2026-07-28). No
+# handler returns `input_required` today, so leaving this unset changes nothing.
+# NOTE: if you add such a handler, its `requestState` MUST be produced via
+# `requestStateCodec.mint(...)` or verification will reject the client's retry.
+#REQUEST_STATE_SECRET=<random-high-entropy-string>
 ```
 
 ### Configuration Priority

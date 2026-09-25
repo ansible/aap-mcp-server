@@ -1,7 +1,9 @@
 #!/usr/bin/env node
 
-import { Client } from "@modelcontextprotocol/sdk/client/index.js";
-import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
+import {
+  Client,
+  StreamableHTTPClientTransport,
+} from "@modelcontextprotocol/client";
 import { readFileSync } from "fs";
 import { load as yamlLoad } from "js-yaml";
 

@@ -4,12 +4,13 @@ import OASNormalize from "oas-normalize";
 import { config } from "dotenv";
 import express from "express";
 import cors from "cors";
-import { Server } from "@modelcontextprotocol/sdk/server/index.js";
-import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
+import { toNodeHandler } from "@modelcontextprotocol/node";
 import {
-  CallToolRequestSchema,
-  ListToolsRequestSchema,
-} from "@modelcontextprotocol/sdk/types.js";
+  createMcpHandler,
+  createRequestStateCodec,
+  McpServer,
+  type McpRequestContext,
+} from "@modelcontextprotocol/server";
 import {
   extractToolsFromApi,
   getDefaultPageSize,
@@ -27,6 +28,8 @@ import { AnalyticsService } from "./analytics.js";
 import { PseudoIdentityService, type UserInfo } from "./pseudo-identity.js";
 import { AapMcpConfig, loadToolsetsFromCfg } from "./config-utils.js";
 import { DISCOVER_TOOLS, handleDiscoverTool } from "./discover.js";
+import { JsonRpcErrorCode } from "./error-codes.js";
+import { createOriginValidationMiddleware } from "./middleware/origin-validation.js";
 import { resolveMcpPort } from "./port.js";
 import {
   buildConfig,
@@ -71,7 +74,29 @@ const CONFIG = {
     localConfig.analytics_key ||
     ""
   ).trim(),
+  // Extra browser origins for DNS-rebinding protection (comma-separated env var).
+  // Gateway (BASE_URL) and localhost are always allowed; this is additive.
+  ALLOWED_ORIGINS: (process.env.ALLOWED_ORIGINS
+    ? process.env.ALLOWED_ORIGINS.split(",")
+    : localConfig.allowed_origins || []
+  )
+    .map((origin) => origin.trim())
+    .filter((origin) => origin.length > 0),
 } as const;
+
+// Multi-round-trip (MRTR) requestState integrity codec (2026-07-28). requestState
+// round-trips through the client and is attacker-controlled, so the spec requires
+// the server to integrity-protect it (basic/patterns/mrtr, server requirements 4-5).
+// Gated on REQUEST_STATE_SECRET: when set we wire the SDK's HMAC-SHA256 verify hook;
+// when unset the codec is absent (passthrough). Inert until a handler returns
+// input_required — we have none today — so this is forward-looking hardening.
+//
+// IMPORTANT: verify is wired globally. Any future handler that returns
+// input_required MUST seal its requestState via requestStateCodec.mint(...);
+// a hand-rolled string will fail verification and the client's retry is rejected.
+const requestStateCodec = process.env.REQUEST_STATE_SECRET
+  ? createRequestStateCodec({ key: process.env.REQUEST_STATE_SECRET })
+  : undefined;
 
 // Initialize analytics service (always instantiated, but only enabled if key provided)
 const analyticsService = new AnalyticsService();
@@ -285,15 +310,6 @@ const generateTools = async (): Promise<AAPMcpToolDefinition[]> => {
   return toolsWithSize;
 };
 
-// Helper to extract RequestContext from the extra.authInfo provided by the SDK
-const getRequestContext = (extra: any): RequestContext => {
-  const ctx = extra?.authInfo?.extra as RequestContext | undefined;
-  if (!ctx) {
-    throw new Error("Missing request context");
-  }
-  return ctx;
-};
-
 export const buildToolUrl = (
   tool: AAPMcpToolDefinition,
   args: Record<string, unknown>,
@@ -406,7 +422,7 @@ const executeToolRequest = async (
   tool: AAPMcpToolDefinition,
   args: Record<string, unknown>,
   ctx: RequestContext,
-): Promise<{ content: Array<{ type: string; text: string }> }> => {
+): Promise<{ content: Array<{ type: "text"; text: string }> }> => {
   const startTime = Date.now();
   const toolToolset = getToolsetForTool(tool.name);
   let response: Response | undefined;
@@ -442,28 +458,43 @@ const executeToolRequest = async (
   }
 };
 
-// Factory function to create a new Server instance with request handlers
-const createMcpServer = (): Server => {
-  const server = new Server(
+// Factory function to create a new McpServer instance with request handlers.
+// Called once per request by createMcpHandler; closes over the per-request
+// RequestContext (toolset + identity) resolved from authInfo.extra.
+const createMcpServer = (requestCtx: RequestContext): McpServer => {
+  const server = new McpServer(
     {
       name: "aap",
       version: "0.1.0",
     },
     {
       capabilities: {
-        tools: {},
+        // listChanged:false — we register tools statically and never emit
+        // notifications/tools/list_changed. Registering a tools/list handler makes
+        // the SDK default listChanged to true, which would advertise a capability
+        // we don't honor on server/discover; pin it false.
+        tools: { listChanged: false },
       },
+      // Cache hint for the SDK-built tools/list result (2026-07-28). The tool set
+      // is static per process, so a short shared TTL is safe. cacheScope is
+      // 'public' | 'private' ('shared' does not exist); tools/call is not a
+      // cacheable method and already defaults to ttlMs:0/private.
+      cacheHints: {
+        "tools/list": { ttlMs: 300_000, cacheScope: "public" },
+      },
+      // MRTR requestState integrity hook, wired only when a secret is configured.
+      ...(requestStateCodec
+        ? { requestState: { verify: requestStateCodec.verify } }
+        : {}),
     },
   );
 
-  server.setRequestHandler(ListToolsRequestSchema, async (request, extra) => {
-    const ctx = getRequestContext(extra);
-
-    if (ctx.toolset === "discover") {
-      return { tools: DISCOVER_TOOLS };
+  server.server.setRequestHandler("tools/list", async () => {
+    if (requestCtx.toolset === "discover") {
+      return { tools: DISCOVER_TOOLS } as any;
     }
 
-    const availableTools = getToolsByToolset(ctx.toolset);
+    const availableTools = getToolsByToolset(requestCtx.toolset);
 
     return {
       tools: availableTools.map((tool) => ({
@@ -471,20 +502,19 @@ const createMcpServer = (): Server => {
         description: tool.description,
         inputSchema: tool.inputSchema,
       })),
-    };
+    } as any;
   });
 
-  server.setRequestHandler(CallToolRequestSchema, async (request, extra) => {
+  server.server.setRequestHandler("tools/call", async (request) => {
     const { name, arguments: args = {} } = request.params;
-    const ctx = getRequestContext(extra);
 
-    if (ctx.toolset === "discover") {
+    if (requestCtx.toolset === "discover") {
       return handleDiscoverTool(name, args, allToolsets, (tool, toolArgs) =>
-        executeToolRequest(tool, toolArgs, ctx),
+        executeToolRequest(tool, toolArgs, requestCtx),
       );
     }
 
-    const availableTools = getToolsByToolset(ctx.toolset);
+    const availableTools = getToolsByToolset(requestCtx.toolset);
     const tool = availableTools.find((t) => t.name === name);
     if (!tool) {
       throw new Error(`Unknown tool: ${name}`);
@@ -498,7 +528,7 @@ const createMcpServer = (): Server => {
       };
     }
 
-    return executeToolRequest(tool, args, ctx);
+    return executeToolRequest(tool, args, requestCtx);
   });
 
   return server;
@@ -506,25 +536,35 @@ const createMcpServer = (): Server => {
 
 const app = express();
 
+// Security: validate the Origin header to prevent DNS rebinding (MCP spec MUST,
+// AAP-90952). Runs first. Gateway (BASE_URL), own origin (MCP_SERVER_URL), and
+// localhost are always allowed; ALLOWED_ORIGINS adds extra browser origins.
+app.use(
+  createOriginValidationMiddleware([
+    CONFIG.BASE_URL,
+    CONFIG.MCP_SERVER_URL,
+    ...CONFIG.ALLOWED_ORIGINS,
+  ]),
+);
+
 // Security: Check authorization BEFORE parsing request body
 // This prevents unauthenticated DoS via resource exhaustion (AAP-70224)
 app.use((req, res, next) => {
   // lgtm[js/missing-rate-limiting] rate limiting handled at infrastructure level
   // Only apply to POST requests to MCP endpoints
   if (req.method === "POST" && req.path.includes("/mcp")) {
-    const sessionId = req.headers["mcp-session-id"];
     const authHeader =
       req.headers["authorization"] || req.headers["x-authorization"];
 
-    // Reject requests without session ID or Authorization header immediately
-    // This prevents expensive JSON parsing and session creation for unauthenticated requests
-    if (!sessionId && !authHeader) {
+    // Reject requests without Authorization header immediately
+    // This prevents expensive JSON parsing for unauthenticated requests
+    if (!authHeader) {
       applyWwwAuthenticate(res, req.path);
       res.status(401).json({
         jsonrpc: "2.0",
         error: {
-          code: -32000,
-          message: "Unauthorized: Bearer token or session ID required",
+          code: JsonRpcErrorCode.INVALID_REQUEST,
+          message: "Unauthorized: Bearer token required",
         },
         id: null,
       });
@@ -600,6 +640,30 @@ const applyWwwAuthenticate = (
   );
 };
 
+// 2026-07-28 serving entry. createMcpHandler builds a fresh McpServer per request
+// (stateless idiom) and serves both modern (2026-07-28) and legacy (2025-era)
+// clients via legacy:'stateless' — a dual-era server selects its behavior from how
+// the client opens (initialize => legacy; per-request _meta => modern). The factory
+// closes over the per-request RequestContext resolved from authInfo.extra, which
+// toNodeHandler forwards from req.auth. The entry performs no token verification —
+// that stays in authenticateRequest below.
+const mcpHandler = createMcpHandler(
+  (ctx: McpRequestContext) => {
+    const requestCtx = ctx.authInfo?.extra as unknown as
+      RequestContext | undefined;
+    if (!requestCtx) {
+      throw new Error("Missing request context");
+    }
+    return createMcpServer(requestCtx);
+  },
+  {
+    legacy: "stateless",
+    onerror: (error) =>
+      console.error(`${getTimestamp()} MCP handler error:`, error),
+  },
+);
+const mcpNodeHandler = toNodeHandler(mcpHandler);
+
 // MCP POST endpoint handler - stateless, no sessions
 const mcpPostHandler = async (
   req: express.Request,
@@ -621,7 +685,7 @@ const mcpPostHandler = async (
       res.status(401).json({
         jsonrpc: "2.0",
         error: {
-          code: -32000,
+          code: JsonRpcErrorCode.INVALID_REQUEST,
           message: isInvalidToken
             ? "Unauthorized: Invalid or expired token"
             : "Unauthorized: Bearer token required",
@@ -633,15 +697,8 @@ const mcpPostHandler = async (
 
     const ctx = authResult.ctx;
 
-    // Create a fresh stateless transport for each request
-    const transport = new StreamableHTTPServerTransport({
-      sessionIdGenerator: undefined,
-    });
-
-    const server = createMcpServer();
-    await server.connect(transport);
-
-    // The SDK reads authInfo from req.auth
+    // toNodeHandler forwards req.auth as the factory's pass-through authInfo;
+    // authInfo.extra carries our per-request context (token + toolset + identity).
     (req as any).auth = {
       token: ctx.token,
       clientId: "aap-mcp",
@@ -649,18 +706,16 @@ const mcpPostHandler = async (
       extra: ctx as unknown as Record<string, unknown>,
     };
 
-    await transport.handleRequest(req, res, req.body);
-
-    // Clean up after request
-    await transport.close();
-    await server.close();
+    // Hand off to the shared MCP handler. Pass req.body as parsedBody since
+    // express.json() has already consumed the request stream.
+    await mcpNodeHandler(req, res, req.body);
   } catch (error) {
     console.error(`${getTimestamp()} Error handling MCP request:`, error);
     if (!res.headersSent) {
       res.status(500).json({
         jsonrpc: "2.0",
         error: {
-          code: -32603,
+          code: JsonRpcErrorCode.INTERNAL_ERROR,
           message: "Internal server error",
           data: error instanceof Error ? error.message : String(error),
         },
@@ -692,6 +747,23 @@ app.post("/mcp/:toolset", (req, res) => {
   );
   return mcpPostHandler(req, res, toolset);
 });
+
+// MCP endpoints are POST-only in this stateless server: there are no sessions
+// to stream over GET or to terminate via DELETE. Per the MCP Streamable HTTP
+// spec, a server on this revision that receives such traffic (e.g. from an
+// older, session-based client) SHOULD reply 405 Method Not Allowed so the
+// client fails fast instead of hanging. The Allow header (required by RFC 9110
+// for any 405) advertises the methods that ARE accepted here.
+const mcpMethodNotAllowed = (
+  _req: express.Request,
+  res: express.Response,
+): void => {
+  res.status(405).set("Allow", "POST, OPTIONS").send("Method Not Allowed");
+};
+for (const mcpPath of ["/mcp", "/:toolset/mcp", "/mcp/:toolset"]) {
+  app.get(mcpPath, mcpMethodNotAllowed);
+  app.delete(mcpPath, mcpMethodNotAllowed);
+}
 
 // Health check endpoint (always enabled)
 app.get("/api/v1/health", (req, res) => {
