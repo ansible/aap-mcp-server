@@ -30,6 +30,7 @@ import { AapMcpConfig, loadToolsetsFromCfg } from "./config-utils.js";
 import { DISCOVER_TOOLS, handleDiscoverTool } from "./discover.js";
 import { JsonRpcErrorCode } from "./error-codes.js";
 import { createOriginValidationMiddleware } from "./middleware/origin-validation.js";
+import { resolveMcpPort } from "./port.js";
 import {
   buildConfig,
   buildResourceMetadataUrl,
@@ -61,13 +62,13 @@ const loadConfig = (): AapMcpConfig => {
 // Load configuration
 const localConfig = loadConfig();
 
+const MCP_PORT = resolveMcpPort(process.env.MCP_PORT);
+
 // Configuration constants (with priority: env var > config file > default)
 const CONFIG = {
   BASE_URL: process.env.BASE_URL || localConfig.base_url || "https://localhost",
-  MCP_PORT: process.env.MCP_PORT ? parseInt(process.env.MCP_PORT, 10) : 3000,
-  MCP_SERVER_URL:
-    process.env.MCP_SERVER_URL ||
-    `http://localhost:${process.env.MCP_PORT || 3000}`,
+  MCP_PORT,
+  MCP_SERVER_URL: process.env.MCP_SERVER_URL || `http://localhost:${MCP_PORT}`,
   ANALYTICS_KEY: (
     process.env.ANALYTICS_KEY ||
     localConfig.analytics_key ||
@@ -319,8 +320,18 @@ export const buildToolUrl = (
 
   const queryParams = new URLSearchParams();
   for (const param of tool.parameters || []) {
-    if (param.in === "query" && args[param.name] !== undefined) {
-      queryParams.append(param.name, String(args[param.name]));
+    const value = args[param.name];
+    // Only forward query params that carry a real value. Empty string and
+    // null are omitted optional args — forwarding them as `?name=` makes the
+    // AAP Controller reject the request (HTTP 500) instead of applying its
+    // own defaults, so treat them the same as undefined.
+    if (
+      param.in === "query" &&
+      value !== undefined &&
+      value !== null &&
+      value !== ""
+    ) {
+      queryParams.append(param.name, String(value));
     }
   }
   if (queryParams.toString()) {
@@ -866,7 +877,7 @@ async function main(): Promise<void> {
   console.log("");
   console.log("═══════════════════════════════════════════════════════════");
 
-  const PORT = process.env.MCP_PORT || 3000;
+  const PORT = CONFIG.MCP_PORT;
 
   app.listen(PORT, () => {
     console.log(`Server ready on port ${PORT}`);
