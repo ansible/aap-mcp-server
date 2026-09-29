@@ -16309,25 +16309,109 @@
         },
         "/api/v2/organizations/": {
             "get": {
-                "operationId": "organizations_retrieve",
+                "operationId": "organizations_list",
+                "parameters": [
+                    {
+                        "in": "query",
+                        "name": "order",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Order results by field name. Prefix with '-' for descending order. Supports comma-separated values for multiple fields."
+                    },
+                    {
+                        "in": "query",
+                        "name": "order_by",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Order results by field name. Prefix with '-' for descending order. Supports comma-separated values for multiple fields."
+                    },
+                    {
+                        "name": "page",
+                        "required": false,
+                        "in": "query",
+                        "description": "A page number within the paginated result set.",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "page_size",
+                        "required": false,
+                        "in": "query",
+                        "description": "Number of results to return per page.",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "role_level",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by role level for RBAC"
+                    },
+                    {
+                        "name": "search",
+                        "required": false,
+                        "in": "query",
+                        "description": "A search term.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "type",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by object type. Supports comma-separated values for multiple types."
+                    }
+                ],
                 "tags": [
                     "organizations"
                 ],
                 "responses": {
                     "200": {
-                        "description": "No response body"
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PaginatedOrganizationList"
+                                }
+                            }
+                        },
+                        "description": ""
                     }
-                },
-                "x-ai-description": "Retrieve an organization"
+                }
             },
             "post": {
                 "operationId": "organizations_create",
                 "tags": [
                     "organizations"
                 ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/OrganizationRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
                 "responses": {
                     "201": {
-                        "description": "No response body"
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Organization"
+                                }
+                            }
+                        },
+                        "description": ""
                     }
                 },
                 "x-ai-description": "Create an organization"
@@ -16335,7 +16419,7 @@
         },
         "/api/v2/organizations/{id}/": {
             "get": {
-                "operationId": "organizations_retrieve_2",
+                "operationId": "organizations_retrieve",
                 "parameters": [
                     {
                         "in": "path",
@@ -25087,7 +25171,7 @@
         },
         "/api/v2/users/{id}/admin_of_organizations/": {
             "get": {
-                "operationId": "users_admin_of_organizations_retrieve",
+                "operationId": "users_admin_of_organizations_list",
                 "parameters": [
                     {
                         "in": "path",
@@ -25097,6 +25181,65 @@
                             "pattern": "^[0-9]+$"
                         },
                         "required": true
+                    },
+                    {
+                        "in": "query",
+                        "name": "order",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Order results by field name. Prefix with '-' for descending order. Supports comma-separated values for multiple fields."
+                    },
+                    {
+                        "in": "query",
+                        "name": "order_by",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Order results by field name. Prefix with '-' for descending order. Supports comma-separated values for multiple fields."
+                    },
+                    {
+                        "name": "page",
+                        "required": false,
+                        "in": "query",
+                        "description": "A page number within the paginated result set.",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "page_size",
+                        "required": false,
+                        "in": "query",
+                        "description": "Number of results to return per page.",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "role_level",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by role level for RBAC"
+                    },
+                    {
+                        "name": "search",
+                        "required": false,
+                        "in": "query",
+                        "description": "A search term.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "type",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by object type. Supports comma-separated values for multiple types."
                     }
                 ],
                 "tags": [
@@ -25104,10 +25247,16 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "No response body"
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PaginatedOrganizationList"
+                                }
+                            }
+                        },
+                        "description": ""
                     }
-                },
-                "x-ai-description": "Retrieve single organization for an user"
+                }
             }
         },
         "/api/v2/users/{id}/credentials/": {
@@ -25243,7 +25392,7 @@
         },
         "/api/v2/users/{id}/organizations/": {
             "get": {
-                "operationId": "users_organizations_retrieve",
+                "operationId": "users_organizations_list",
                 "parameters": [
                     {
                         "in": "path",
@@ -25253,6 +25402,65 @@
                             "pattern": "^[0-9]+$"
                         },
                         "required": true
+                    },
+                    {
+                        "in": "query",
+                        "name": "order",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Order results by field name. Prefix with '-' for descending order. Supports comma-separated values for multiple fields."
+                    },
+                    {
+                        "in": "query",
+                        "name": "order_by",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Order results by field name. Prefix with '-' for descending order. Supports comma-separated values for multiple fields."
+                    },
+                    {
+                        "name": "page",
+                        "required": false,
+                        "in": "query",
+                        "description": "A page number within the paginated result set.",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "page_size",
+                        "required": false,
+                        "in": "query",
+                        "description": "Number of results to return per page.",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "role_level",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by role level for RBAC"
+                    },
+                    {
+                        "name": "search",
+                        "required": false,
+                        "in": "query",
+                        "description": "A search term.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "type",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Filter by object type. Supports comma-separated values for multiple types."
                     }
                 ],
                 "tags": [
@@ -25260,10 +25468,16 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "No response body"
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PaginatedOrganizationList"
+                                }
+                            }
+                        },
+                        "description": ""
                     }
-                },
-                "x-ai-description": "Retrieve an organization of a user"
+                }
             }
         },
         "/api/v2/users/{id}/projects/": {
@@ -33706,6 +33920,7 @@
             },
             "AdHocCommandCancel": {
                 "type": "object",
+                "description": "Drop-in mixin for DRF ModelSerializer that rejects unsafe text input.\nMust appear before ModelSerializer in MRO.\n\nUsage::\n\n    from ansible_base.lib.serializers.mixins import CleanTextMixin\n\n    class MySerializer(CleanTextMixin, serializers.ModelSerializer):\n        class Meta:\n            model = MyModel\n            fields = '__all__'\n\nTier 1 (name fields): strict character allowlist via validate_resource_name.\nTier 2 (all other CharField/TextField): dangerous-pattern blocklist via validate_free_text.\nOn update, unchanged fields are grandfathered (skipped).\n\nConfigurable attributes:\n    name_fields: field names routed to Tier 1 (default: name, username, hostname).\n    excluded_fields: field names skipped entirely — use for fields that legitimately\n        contain HTML or template syntax (e.g. Jinja2 templates, custom login HTML).\n        Also skips entire JSONFields when listed here.\n    excluded_json_keys: mapping of JSONField name to a frozenset of sub-keys\n        that should be skipped during validation (e.g. PEM keys, template content).\n        Example: {'inputs': frozenset({'ssh_key_data'})}\n\nSee docs/lib/validation.md for the full contract.",
                 "properties": {
                     "can_cancel": {
                         "type": "boolean",
@@ -33715,6 +33930,7 @@
             },
             "AdHocCommandDetail": {
                 "type": "object",
+                "description": "Drop-in mixin for DRF ModelSerializer that rejects unsafe text input.\nMust appear before ModelSerializer in MRO.\n\nUsage::\n\n    from ansible_base.lib.serializers.mixins import CleanTextMixin\n\n    class MySerializer(CleanTextMixin, serializers.ModelSerializer):\n        class Meta:\n            model = MyModel\n            fields = '__all__'\n\nTier 1 (name fields): strict character allowlist via validate_resource_name.\nTier 2 (all other CharField/TextField): dangerous-pattern blocklist via validate_free_text.\nOn update, unchanged fields are grandfathered (skipped).\n\nConfigurable attributes:\n    name_fields: field names routed to Tier 1 (default: name, username, hostname).\n    excluded_fields: field names skipped entirely — use for fields that legitimately\n        contain HTML or template syntax (e.g. Jinja2 templates, custom login HTML).\n        Also skips entire JSONFields when listed here.\n    excluded_json_keys: mapping of JSONField name to a frozenset of sub-keys\n        that should be skipped during validation (e.g. PEM keys, template content).\n        Example: {'inputs': frozenset({'ssh_key_data'})}\n\nSee docs/lib/validation.md for the full contract.",
                 "properties": {
                     "id": {
                         "type": "integer",
@@ -34079,6 +34295,7 @@
             },
             "AdHocCommandList": {
                 "type": "object",
+                "description": "Drop-in mixin for DRF ModelSerializer that rejects unsafe text input.\nMust appear before ModelSerializer in MRO.\n\nUsage::\n\n    from ansible_base.lib.serializers.mixins import CleanTextMixin\n\n    class MySerializer(CleanTextMixin, serializers.ModelSerializer):\n        class Meta:\n            model = MyModel\n            fields = '__all__'\n\nTier 1 (name fields): strict character allowlist via validate_resource_name.\nTier 2 (all other CharField/TextField): dangerous-pattern blocklist via validate_free_text.\nOn update, unchanged fields are grandfathered (skipped).\n\nConfigurable attributes:\n    name_fields: field names routed to Tier 1 (default: name, username, hostname).\n    excluded_fields: field names skipped entirely — use for fields that legitimately\n        contain HTML or template syntax (e.g. Jinja2 templates, custom login HTML).\n        Also skips entire JSONFields when listed here.\n    excluded_json_keys: mapping of JSONField name to a frozenset of sub-keys\n        that should be skipped during validation (e.g. PEM keys, template content).\n        Example: {'inputs': frozenset({'ssh_key_data'})}\n\nSee docs/lib/validation.md for the full contract.",
                 "properties": {
                     "id": {
                         "type": "integer",
@@ -34307,6 +34524,7 @@
             },
             "AdHocCommandListRequest": {
                 "type": "object",
+                "description": "Drop-in mixin for DRF ModelSerializer that rejects unsafe text input.\nMust appear before ModelSerializer in MRO.\n\nUsage::\n\n    from ansible_base.lib.serializers.mixins import CleanTextMixin\n\n    class MySerializer(CleanTextMixin, serializers.ModelSerializer):\n        class Meta:\n            model = MyModel\n            fields = '__all__'\n\nTier 1 (name fields): strict character allowlist via validate_resource_name.\nTier 2 (all other CharField/TextField): dangerous-pattern blocklist via validate_free_text.\nOn update, unchanged fields are grandfathered (skipped).\n\nConfigurable attributes:\n    name_fields: field names routed to Tier 1 (default: name, username, hostname).\n    excluded_fields: field names skipped entirely — use for fields that legitimately\n        contain HTML or template syntax (e.g. Jinja2 templates, custom login HTML).\n        Also skips entire JSONFields when listed here.\n    excluded_json_keys: mapping of JSONField name to a frozenset of sub-keys\n        that should be skipped during validation (e.g. PEM keys, template content).\n        Example: {'inputs': frozenset({'ssh_key_data'})}\n\nSee docs/lib/validation.md for the full contract.",
                 "properties": {
                     "execution_environment": {
                         "type": "integer",
@@ -34458,6 +34676,7 @@
             },
             "BulkHost": {
                 "type": "object",
+                "description": "Drop-in mixin for DRF ModelSerializer that rejects unsafe text input.\nMust appear before ModelSerializer in MRO.\n\nUsage::\n\n    from ansible_base.lib.serializers.mixins import CleanTextMixin\n\n    class MySerializer(CleanTextMixin, serializers.ModelSerializer):\n        class Meta:\n            model = MyModel\n            fields = '__all__'\n\nTier 1 (name fields): strict character allowlist via validate_resource_name.\nTier 2 (all other CharField/TextField): dangerous-pattern blocklist via validate_free_text.\nOn update, unchanged fields are grandfathered (skipped).\n\nConfigurable attributes:\n    name_fields: field names routed to Tier 1 (default: name, username, hostname).\n    excluded_fields: field names skipped entirely — use for fields that legitimately\n        contain HTML or template syntax (e.g. Jinja2 templates, custom login HTML).\n        Also skips entire JSONFields when listed here.\n    excluded_json_keys: mapping of JSONField name to a frozenset of sub-keys\n        that should be skipped during validation (e.g. PEM keys, template content).\n        Example: {'inputs': frozenset({'ssh_key_data'})}\n\nSee docs/lib/validation.md for the full contract.",
                 "properties": {
                     "name": {
                         "type": "string",
@@ -34533,6 +34752,7 @@
             },
             "BulkHostRequest": {
                 "type": "object",
+                "description": "Drop-in mixin for DRF ModelSerializer that rejects unsafe text input.\nMust appear before ModelSerializer in MRO.\n\nUsage::\n\n    from ansible_base.lib.serializers.mixins import CleanTextMixin\n\n    class MySerializer(CleanTextMixin, serializers.ModelSerializer):\n        class Meta:\n            model = MyModel\n            fields = '__all__'\n\nTier 1 (name fields): strict character allowlist via validate_resource_name.\nTier 2 (all other CharField/TextField): dangerous-pattern blocklist via validate_free_text.\nOn update, unchanged fields are grandfathered (skipped).\n\nConfigurable attributes:\n    name_fields: field names routed to Tier 1 (default: name, username, hostname).\n    excluded_fields: field names skipped entirely — use for fields that legitimately\n        contain HTML or template syntax (e.g. Jinja2 templates, custom login HTML).\n        Also skips entire JSONFields when listed here.\n    excluded_json_keys: mapping of JSONField name to a frozenset of sub-keys\n        that should be skipped during validation (e.g. PEM keys, template content).\n        Example: {'inputs': frozenset({'ssh_key_data'})}\n\nSee docs/lib/validation.md for the full contract.",
                 "properties": {
                     "name": {
                         "type": "string",
@@ -34571,6 +34791,7 @@
             },
             "BulkJobLaunchRequest": {
                 "type": "object",
+                "description": "CleanTextMixin for serializers whose Meta.model derives from\nLaunchTimeConfigBase (WorkflowJobTemplate, WorkflowJobTemplateNode,\nWorkflowJobNode, Schedule). Those models store scm_branch/limit/job_tags/\nskip_tags as NullablePromptPseudoField descriptors backed by the\nchar_prompts JSONField, not real django.db.models.Field instances, so\nCleanTextMixin's model._meta.get_fields() auto-discovery can never see\nthem (AAP-78694). This adds them back in explicitly as Tier 2 free-text\nfields. They are always declared as plain serializer CharFields (see\nLaunchConfigurationBaseSerializer below), so self.fields has them\nwhenever applicable, and grandfathering still works because the\npseudo-field descriptor's __get__ correctly returns the stored\nchar_prompts value via getattr(self.instance, name).",
                 "properties": {
                     "name": {
                         "type": "string",
@@ -34631,6 +34852,7 @@
             },
             "BulkJobNode": {
                 "type": "object",
+                "description": "CleanTextMixin for serializers whose Meta.model derives from\nLaunchTimeConfigBase (WorkflowJobTemplate, WorkflowJobTemplateNode,\nWorkflowJobNode, Schedule). Those models store scm_branch/limit/job_tags/\nskip_tags as NullablePromptPseudoField descriptors backed by the\nchar_prompts JSONField, not real django.db.models.Field instances, so\nCleanTextMixin's model._meta.get_fields() auto-discovery can never see\nthem (AAP-78694). This adds them back in explicitly as Tier 2 free-text\nfields. They are always declared as plain serializer CharFields (see\nLaunchConfigurationBaseSerializer below), so self.fields has them\nwhenever applicable, and grandfathering still works because the\npseudo-field descriptor's __get__ correctly returns the stored\nchar_prompts value via getattr(self.instance, name).",
                 "properties": {
                     "id": {
                         "type": "integer",
@@ -34812,6 +35034,7 @@
             },
             "BulkJobNodeRequest": {
                 "type": "object",
+                "description": "CleanTextMixin for serializers whose Meta.model derives from\nLaunchTimeConfigBase (WorkflowJobTemplate, WorkflowJobTemplateNode,\nWorkflowJobNode, Schedule). Those models store scm_branch/limit/job_tags/\nskip_tags as NullablePromptPseudoField descriptors backed by the\nchar_prompts JSONField, not real django.db.models.Field instances, so\nCleanTextMixin's model._meta.get_fields() auto-discovery can never see\nthem (AAP-78694). This adds them back in explicitly as Tier 2 free-text\nfields. They are always declared as plain serializer CharFields (see\nLaunchConfigurationBaseSerializer below), so self.fields has them\nwhenever applicable, and grandfathering still works because the\npseudo-field descriptor's __get__ correctly returns the stored\nchar_prompts value via getattr(self.instance, name).",
                 "properties": {
                     "extra_data": {
                         "default": {}
@@ -34944,6 +35167,7 @@
             },
             "ConstructedInventory": {
                 "type": "object",
+                "description": "Drop-in mixin for DRF ModelSerializer that rejects unsafe text input.\nMust appear before ModelSerializer in MRO.\n\nUsage::\n\n    from ansible_base.lib.serializers.mixins import CleanTextMixin\n\n    class MySerializer(CleanTextMixin, serializers.ModelSerializer):\n        class Meta:\n            model = MyModel\n            fields = '__all__'\n\nTier 1 (name fields): strict character allowlist via validate_resource_name.\nTier 2 (all other CharField/TextField): dangerous-pattern blocklist via validate_free_text.\nOn update, unchanged fields are grandfathered (skipped).\n\nConfigurable attributes:\n    name_fields: field names routed to Tier 1 (default: name, username, hostname).\n    excluded_fields: field names skipped entirely — use for fields that legitimately\n        contain HTML or template syntax (e.g. Jinja2 templates, custom login HTML).\n        Also skips entire JSONFields when listed here.\n    excluded_json_keys: mapping of JSONField name to a frozenset of sub-keys\n        that should be skipped during validation (e.g. PEM keys, template content).\n        Example: {'inputs': frozenset({'ssh_key_data'})}\n\nSee docs/lib/validation.md for the full contract.",
                 "properties": {
                     "id": {
                         "type": "integer",
@@ -35093,6 +35317,7 @@
             },
             "ConstructedInventoryRequest": {
                 "type": "object",
+                "description": "Drop-in mixin for DRF ModelSerializer that rejects unsafe text input.\nMust appear before ModelSerializer in MRO.\n\nUsage::\n\n    from ansible_base.lib.serializers.mixins import CleanTextMixin\n\n    class MySerializer(CleanTextMixin, serializers.ModelSerializer):\n        class Meta:\n            model = MyModel\n            fields = '__all__'\n\nTier 1 (name fields): strict character allowlist via validate_resource_name.\nTier 2 (all other CharField/TextField): dangerous-pattern blocklist via validate_free_text.\nOn update, unchanged fields are grandfathered (skipped).\n\nConfigurable attributes:\n    name_fields: field names routed to Tier 1 (default: name, username, hostname).\n    excluded_fields: field names skipped entirely — use for fields that legitimately\n        contain HTML or template syntax (e.g. Jinja2 templates, custom login HTML).\n        Also skips entire JSONFields when listed here.\n    excluded_json_keys: mapping of JSONField name to a frozenset of sub-keys\n        that should be skipped during validation (e.g. PEM keys, template content).\n        Example: {'inputs': frozenset({'ssh_key_data'})}\n\nSee docs/lib/validation.md for the full contract.",
                 "properties": {
                     "name": {
                         "type": "string",
@@ -35157,6 +35382,7 @@
             },
             "Copy": {
                 "type": "object",
+                "description": "CleanTextMixin for plain `serializers.Serializer` subclasses with no\nbacking Django model (AAP-78694). Overrides ONLY field discovery -- treats\nthe serializer's own declared fields as the text/JSON containers to validate.\nEverything else (Tier 1/2 dispatch, nested JSON walk, exclusions, audit\nlogging, the enforcement gate) is reused unchanged from CleanTextMixin.\n\nCharFields (including URLField) are Tier 1/2 top-level text. ListField,\nDictField, and JSONField values are walked with CleanTextMixin's nested\nstring validation (same path as model JSONFields) so settings like\nStringListField / KeyValueField are covered.\n\nKnown limitation: unlike the model-field path, this can't replicate the\nget_internal_type() exclusion of SlugField/IPAddressField-style fields\n(DRF fields have no equivalent signal) -- not an issue for any serializer\nusing this mixin today, since none declare such fields.",
                 "properties": {
                     "name": {
                         "type": "string"
@@ -35168,6 +35394,7 @@
             },
             "CopyRequest": {
                 "type": "object",
+                "description": "CleanTextMixin for plain `serializers.Serializer` subclasses with no\nbacking Django model (AAP-78694). Overrides ONLY field discovery -- treats\nthe serializer's own declared fields as the text/JSON containers to validate.\nEverything else (Tier 1/2 dispatch, nested JSON walk, exclusions, audit\nlogging, the enforcement gate) is reused unchanged from CleanTextMixin.\n\nCharFields (including URLField) are Tier 1/2 top-level text. ListField,\nDictField, and JSONField values are walked with CleanTextMixin's nested\nstring validation (same path as model JSONFields) so settings like\nStringListField / KeyValueField are covered.\n\nKnown limitation: unlike the model-field path, this can't replicate the\nget_internal_type() exclusion of SlugField/IPAddressField-style fields\n(DRF fields have no equivalent signal) -- not an issue for any serializer\nusing this mixin today, since none declare such fields.",
                 "properties": {
                     "name": {
                         "type": "string",
@@ -35180,6 +35407,7 @@
             },
             "Credential": {
                 "type": "object",
+                "description": "Drop-in mixin for DRF ModelSerializer that rejects unsafe text input.\nMust appear before ModelSerializer in MRO.\n\nUsage::\n\n    from ansible_base.lib.serializers.mixins import CleanTextMixin\n\n    class MySerializer(CleanTextMixin, serializers.ModelSerializer):\n        class Meta:\n            model = MyModel\n            fields = '__all__'\n\nTier 1 (name fields): strict character allowlist via validate_resource_name.\nTier 2 (all other CharField/TextField): dangerous-pattern blocklist via validate_free_text.\nOn update, unchanged fields are grandfathered (skipped).\n\nConfigurable attributes:\n    name_fields: field names routed to Tier 1 (default: name, username, hostname).\n    excluded_fields: field names skipped entirely — use for fields that legitimately\n        contain HTML or template syntax (e.g. Jinja2 templates, custom login HTML).\n        Also skips entire JSONFields when listed here.\n    excluded_json_keys: mapping of JSONField name to a frozenset of sub-keys\n        that should be skipped during validation (e.g. PEM keys, template content).\n        Example: {'inputs': frozenset({'ssh_key_data'})}\n\nSee docs/lib/validation.md for the full contract.",
                 "properties": {
                     "id": {
                         "type": "integer",
@@ -35255,6 +35483,7 @@
             },
             "CredentialInputSource": {
                 "type": "object",
+                "description": "Drop-in mixin for DRF ModelSerializer that rejects unsafe text input.\nMust appear before ModelSerializer in MRO.\n\nUsage::\n\n    from ansible_base.lib.serializers.mixins import CleanTextMixin\n\n    class MySerializer(CleanTextMixin, serializers.ModelSerializer):\n        class Meta:\n            model = MyModel\n            fields = '__all__'\n\nTier 1 (name fields): strict character allowlist via validate_resource_name.\nTier 2 (all other CharField/TextField): dangerous-pattern blocklist via validate_free_text.\nOn update, unchanged fields are grandfathered (skipped).\n\nConfigurable attributes:\n    name_fields: field names routed to Tier 1 (default: name, username, hostname).\n    excluded_fields: field names skipped entirely — use for fields that legitimately\n        contain HTML or template syntax (e.g. Jinja2 templates, custom login HTML).\n        Also skips entire JSONFields when listed here.\n    excluded_json_keys: mapping of JSONField name to a frozenset of sub-keys\n        that should be skipped during validation (e.g. PEM keys, template content).\n        Example: {'inputs': frozenset({'ssh_key_data'})}\n\nSee docs/lib/validation.md for the full contract.",
                 "properties": {
                     "id": {
                         "type": "integer",
@@ -35314,6 +35543,7 @@
             },
             "CredentialInputSourceRequest": {
                 "type": "object",
+                "description": "Drop-in mixin for DRF ModelSerializer that rejects unsafe text input.\nMust appear before ModelSerializer in MRO.\n\nUsage::\n\n    from ansible_base.lib.serializers.mixins import CleanTextMixin\n\n    class MySerializer(CleanTextMixin, serializers.ModelSerializer):\n        class Meta:\n            model = MyModel\n            fields = '__all__'\n\nTier 1 (name fields): strict character allowlist via validate_resource_name.\nTier 2 (all other CharField/TextField): dangerous-pattern blocklist via validate_free_text.\nOn update, unchanged fields are grandfathered (skipped).\n\nConfigurable attributes:\n    name_fields: field names routed to Tier 1 (default: name, username, hostname).\n    excluded_fields: field names skipped entirely — use for fields that legitimately\n        contain HTML or template syntax (e.g. Jinja2 templates, custom login HTML).\n        Also skips entire JSONFields when listed here.\n    excluded_json_keys: mapping of JSONField name to a frozenset of sub-keys\n        that should be skipped during validation (e.g. PEM keys, template content).\n        Example: {'inputs': frozenset({'ssh_key_data'})}\n\nSee docs/lib/validation.md for the full contract.",
                 "properties": {
                     "description": {
                         "type": "string",
@@ -35346,6 +35576,7 @@
             },
             "CredentialRequest": {
                 "type": "object",
+                "description": "Drop-in mixin for DRF ModelSerializer that rejects unsafe text input.\nMust appear before ModelSerializer in MRO.\n\nUsage::\n\n    from ansible_base.lib.serializers.mixins import CleanTextMixin\n\n    class MySerializer(CleanTextMixin, serializers.ModelSerializer):\n        class Meta:\n            model = MyModel\n            fields = '__all__'\n\nTier 1 (name fields): strict character allowlist via validate_resource_name.\nTier 2 (all other CharField/TextField): dangerous-pattern blocklist via validate_free_text.\nOn update, unchanged fields are grandfathered (skipped).\n\nConfigurable attributes:\n    name_fields: field names routed to Tier 1 (default: name, username, hostname).\n    excluded_fields: field names skipped entirely — use for fields that legitimately\n        contain HTML or template syntax (e.g. Jinja2 templates, custom login HTML).\n        Also skips entire JSONFields when listed here.\n    excluded_json_keys: mapping of JSONField name to a frozenset of sub-keys\n        that should be skipped during validation (e.g. PEM keys, template content).\n        Example: {'inputs': frozenset({'ssh_key_data'})}\n\nSee docs/lib/validation.md for the full contract.",
                 "properties": {
                     "name": {
                         "type": "string",
@@ -35378,6 +35609,7 @@
             },
             "CredentialSerializerCreate": {
                 "type": "object",
+                "description": "Drop-in mixin for DRF ModelSerializer that rejects unsafe text input.\nMust appear before ModelSerializer in MRO.\n\nUsage::\n\n    from ansible_base.lib.serializers.mixins import CleanTextMixin\n\n    class MySerializer(CleanTextMixin, serializers.ModelSerializer):\n        class Meta:\n            model = MyModel\n            fields = '__all__'\n\nTier 1 (name fields): strict character allowlist via validate_resource_name.\nTier 2 (all other CharField/TextField): dangerous-pattern blocklist via validate_free_text.\nOn update, unchanged fields are grandfathered (skipped).\n\nConfigurable attributes:\n    name_fields: field names routed to Tier 1 (default: name, username, hostname).\n    excluded_fields: field names skipped entirely — use for fields that legitimately\n        contain HTML or template syntax (e.g. Jinja2 templates, custom login HTML).\n        Also skips entire JSONFields when listed here.\n    excluded_json_keys: mapping of JSONField name to a frozenset of sub-keys\n        that should be skipped during validation (e.g. PEM keys, template content).\n        Example: {'inputs': frozenset({'ssh_key_data'})}\n\nSee docs/lib/validation.md for the full contract.",
                 "properties": {
                     "id": {
                         "type": "integer",
@@ -35454,6 +35686,7 @@
             },
             "CredentialSerializerCreateRequest": {
                 "type": "object",
+                "description": "Drop-in mixin for DRF ModelSerializer that rejects unsafe text input.\nMust appear before ModelSerializer in MRO.\n\nUsage::\n\n    from ansible_base.lib.serializers.mixins import CleanTextMixin\n\n    class MySerializer(CleanTextMixin, serializers.ModelSerializer):\n        class Meta:\n            model = MyModel\n            fields = '__all__'\n\nTier 1 (name fields): strict character allowlist via validate_resource_name.\nTier 2 (all other CharField/TextField): dangerous-pattern blocklist via validate_free_text.\nOn update, unchanged fields are grandfathered (skipped).\n\nConfigurable attributes:\n    name_fields: field names routed to Tier 1 (default: name, username, hostname).\n    excluded_fields: field names skipped entirely — use for fields that legitimately\n        contain HTML or template syntax (e.g. Jinja2 templates, custom login HTML).\n        Also skips entire JSONFields when listed here.\n    excluded_json_keys: mapping of JSONField name to a frozenset of sub-keys\n        that should be skipped during validation (e.g. PEM keys, template content).\n        Example: {'inputs': frozenset({'ssh_key_data'})}\n\nSee docs/lib/validation.md for the full contract.",
                 "properties": {
                     "name": {
                         "type": "string",
@@ -35499,6 +35732,7 @@
             },
             "CredentialType": {
                 "type": "object",
+                "description": "Drop-in mixin for DRF ModelSerializer that rejects unsafe text input.\nMust appear before ModelSerializer in MRO.\n\nUsage::\n\n    from ansible_base.lib.serializers.mixins import CleanTextMixin\n\n    class MySerializer(CleanTextMixin, serializers.ModelSerializer):\n        class Meta:\n            model = MyModel\n            fields = '__all__'\n\nTier 1 (name fields): strict character allowlist via validate_resource_name.\nTier 2 (all other CharField/TextField): dangerous-pattern blocklist via validate_free_text.\nOn update, unchanged fields are grandfathered (skipped).\n\nConfigurable attributes:\n    name_fields: field names routed to Tier 1 (default: name, username, hostname).\n    excluded_fields: field names skipped entirely — use for fields that legitimately\n        contain HTML or template syntax (e.g. Jinja2 templates, custom login HTML).\n        Also skips entire JSONFields when listed here.\n    excluded_json_keys: mapping of JSONField name to a frozenset of sub-keys\n        that should be skipped during validation (e.g. PEM keys, template content).\n        Example: {'inputs': frozenset({'ssh_key_data'})}\n\nSee docs/lib/validation.md for the full contract.",
                 "properties": {
                     "id": {
                         "type": "integer",
@@ -35584,6 +35818,7 @@
             },
             "CredentialTypeRequest": {
                 "type": "object",
+                "description": "Drop-in mixin for DRF ModelSerializer that rejects unsafe text input.\nMust appear before ModelSerializer in MRO.\n\nUsage::\n\n    from ansible_base.lib.serializers.mixins import CleanTextMixin\n\n    class MySerializer(CleanTextMixin, serializers.ModelSerializer):\n        class Meta:\n            model = MyModel\n            fields = '__all__'\n\nTier 1 (name fields): strict character allowlist via validate_resource_name.\nTier 2 (all other CharField/TextField): dangerous-pattern blocklist via validate_free_text.\nOn update, unchanged fields are grandfathered (skipped).\n\nConfigurable attributes:\n    name_fields: field names routed to Tier 1 (default: name, username, hostname).\n    excluded_fields: field names skipped entirely — use for fields that legitimately\n        contain HTML or template syntax (e.g. Jinja2 templates, custom login HTML).\n        Also skips entire JSONFields when listed here.\n    excluded_json_keys: mapping of JSONField name to a frozenset of sub-keys\n        that should be skipped during validation (e.g. PEM keys, template content).\n        Example: {'inputs': frozenset({'ssh_key_data'})}\n\nSee docs/lib/validation.md for the full contract.",
                 "properties": {
                     "name": {
                         "type": "string",
@@ -35690,6 +35925,7 @@
             },
             "ExecutionEnvironment": {
                 "type": "object",
+                "description": "Drop-in mixin for DRF ModelSerializer that rejects unsafe text input.\nMust appear before ModelSerializer in MRO.\n\nUsage::\n\n    from ansible_base.lib.serializers.mixins import CleanTextMixin\n\n    class MySerializer(CleanTextMixin, serializers.ModelSerializer):\n        class Meta:\n            model = MyModel\n            fields = '__all__'\n\nTier 1 (name fields): strict character allowlist via validate_resource_name.\nTier 2 (all other CharField/TextField): dangerous-pattern blocklist via validate_free_text.\nOn update, unchanged fields are grandfathered (skipped).\n\nConfigurable attributes:\n    name_fields: field names routed to Tier 1 (default: name, username, hostname).\n    excluded_fields: field names skipped entirely — use for fields that legitimately\n        contain HTML or template syntax (e.g. Jinja2 templates, custom login HTML).\n        Also skips entire JSONFields when listed here.\n    excluded_json_keys: mapping of JSONField name to a frozenset of sub-keys\n        that should be skipped during validation (e.g. PEM keys, template content).\n        Example: {'inputs': frozenset({'ssh_key_data'})}\n\nSee docs/lib/validation.md for the full contract.",
                 "properties": {
                     "id": {
                         "type": "integer",
@@ -35771,6 +36007,7 @@
             },
             "ExecutionEnvironmentRequest": {
                 "type": "object",
+                "description": "Drop-in mixin for DRF ModelSerializer that rejects unsafe text input.\nMust appear before ModelSerializer in MRO.\n\nUsage::\n\n    from ansible_base.lib.serializers.mixins import CleanTextMixin\n\n    class MySerializer(CleanTextMixin, serializers.ModelSerializer):\n        class Meta:\n            model = MyModel\n            fields = '__all__'\n\nTier 1 (name fields): strict character allowlist via validate_resource_name.\nTier 2 (all other CharField/TextField): dangerous-pattern blocklist via validate_free_text.\nOn update, unchanged fields are grandfathered (skipped).\n\nConfigurable attributes:\n    name_fields: field names routed to Tier 1 (default: name, username, hostname).\n    excluded_fields: field names skipped entirely — use for fields that legitimately\n        contain HTML or template syntax (e.g. Jinja2 templates, custom login HTML).\n        Also skips entire JSONFields when listed here.\n    excluded_json_keys: mapping of JSONField name to a frozenset of sub-keys\n        that should be skipped during validation (e.g. PEM keys, template content).\n        Example: {'inputs': frozenset({'ssh_key_data'})}\n\nSee docs/lib/validation.md for the full contract.",
                 "properties": {
                     "name": {
                         "type": "string",
@@ -35840,6 +36077,7 @@
             },
             "Group": {
                 "type": "object",
+                "description": "Drop-in mixin for DRF ModelSerializer that rejects unsafe text input.\nMust appear before ModelSerializer in MRO.\n\nUsage::\n\n    from ansible_base.lib.serializers.mixins import CleanTextMixin\n\n    class MySerializer(CleanTextMixin, serializers.ModelSerializer):\n        class Meta:\n            model = MyModel\n            fields = '__all__'\n\nTier 1 (name fields): strict character allowlist via validate_resource_name.\nTier 2 (all other CharField/TextField): dangerous-pattern blocklist via validate_free_text.\nOn update, unchanged fields are grandfathered (skipped).\n\nConfigurable attributes:\n    name_fields: field names routed to Tier 1 (default: name, username, hostname).\n    excluded_fields: field names skipped entirely — use for fields that legitimately\n        contain HTML or template syntax (e.g. Jinja2 templates, custom login HTML).\n        Also skips entire JSONFields when listed here.\n    excluded_json_keys: mapping of JSONField name to a frozenset of sub-keys\n        that should be skipped during validation (e.g. PEM keys, template content).\n        Example: {'inputs': frozenset({'ssh_key_data'})}\n\nSee docs/lib/validation.md for the full contract.",
                 "properties": {
                     "id": {
                         "type": "integer",
@@ -35896,6 +36134,7 @@
             },
             "GroupRequest": {
                 "type": "object",
+                "description": "Drop-in mixin for DRF ModelSerializer that rejects unsafe text input.\nMust appear before ModelSerializer in MRO.\n\nUsage::\n\n    from ansible_base.lib.serializers.mixins import CleanTextMixin\n\n    class MySerializer(CleanTextMixin, serializers.ModelSerializer):\n        class Meta:\n            model = MyModel\n            fields = '__all__'\n\nTier 1 (name fields): strict character allowlist via validate_resource_name.\nTier 2 (all other CharField/TextField): dangerous-pattern blocklist via validate_free_text.\nOn update, unchanged fields are grandfathered (skipped).\n\nConfigurable attributes:\n    name_fields: field names routed to Tier 1 (default: name, username, hostname).\n    excluded_fields: field names skipped entirely — use for fields that legitimately\n        contain HTML or template syntax (e.g. Jinja2 templates, custom login HTML).\n        Also skips entire JSONFields when listed here.\n    excluded_json_keys: mapping of JSONField name to a frozenset of sub-keys\n        that should be skipped during validation (e.g. PEM keys, template content).\n        Example: {'inputs': frozenset({'ssh_key_data'})}\n\nSee docs/lib/validation.md for the full contract.",
                 "properties": {
                     "name": {
                         "type": "string",
@@ -35925,6 +36164,7 @@
             },
             "GroupTree": {
                 "type": "object",
+                "description": "Drop-in mixin for DRF ModelSerializer that rejects unsafe text input.\nMust appear before ModelSerializer in MRO.\n\nUsage::\n\n    from ansible_base.lib.serializers.mixins import CleanTextMixin\n\n    class MySerializer(CleanTextMixin, serializers.ModelSerializer):\n        class Meta:\n            model = MyModel\n            fields = '__all__'\n\nTier 1 (name fields): strict character allowlist via validate_resource_name.\nTier 2 (all other CharField/TextField): dangerous-pattern blocklist via validate_free_text.\nOn update, unchanged fields are grandfathered (skipped).\n\nConfigurable attributes:\n    name_fields: field names routed to Tier 1 (default: name, username, hostname).\n    excluded_fields: field names skipped entirely — use for fields that legitimately\n        contain HTML or template syntax (e.g. Jinja2 templates, custom login HTML).\n        Also skips entire JSONFields when listed here.\n    excluded_json_keys: mapping of JSONField name to a frozenset of sub-keys\n        that should be skipped during validation (e.g. PEM keys, template content).\n        Example: {'inputs': frozenset({'ssh_key_data'})}\n\nSee docs/lib/validation.md for the full contract.",
                 "properties": {
                     "id": {
                         "type": "integer",
@@ -36007,6 +36247,7 @@
             },
             "Host": {
                 "type": "object",
+                "description": "Drop-in mixin for DRF ModelSerializer that rejects unsafe text input.\nMust appear before ModelSerializer in MRO.\n\nUsage::\n\n    from ansible_base.lib.serializers.mixins import CleanTextMixin\n\n    class MySerializer(CleanTextMixin, serializers.ModelSerializer):\n        class Meta:\n            model = MyModel\n            fields = '__all__'\n\nTier 1 (name fields): strict character allowlist via validate_resource_name.\nTier 2 (all other CharField/TextField): dangerous-pattern blocklist via validate_free_text.\nOn update, unchanged fields are grandfathered (skipped).\n\nConfigurable attributes:\n    name_fields: field names routed to Tier 1 (default: name, username, hostname).\n    excluded_fields: field names skipped entirely — use for fields that legitimately\n        contain HTML or template syntax (e.g. Jinja2 templates, custom login HTML).\n        Also skips entire JSONFields when listed here.\n    excluded_json_keys: mapping of JSONField name to a frozenset of sub-keys\n        that should be skipped during validation (e.g. PEM keys, template content).\n        Example: {'inputs': frozenset({'ssh_key_data'})}\n\nSee docs/lib/validation.md for the full contract.",
                 "properties": {
                     "id": {
                         "type": "integer",
@@ -36077,14 +36318,12 @@
                         "readOnly": true
                     },
                     "last_job": {
-                        "type": "integer",
-                        "readOnly": true,
-                        "nullable": true
+                        "type": "string",
+                        "readOnly": true
                     },
                     "last_job_host_summary": {
-                        "type": "integer",
-                        "readOnly": true,
-                        "nullable": true
+                        "type": "string",
+                        "readOnly": true
                     },
                     "ansible_facts_modified": {
                         "type": "string",
@@ -36209,6 +36448,7 @@
             },
             "HostRequest": {
                 "type": "object",
+                "description": "Drop-in mixin for DRF ModelSerializer that rejects unsafe text input.\nMust appear before ModelSerializer in MRO.\n\nUsage::\n\n    from ansible_base.lib.serializers.mixins import CleanTextMixin\n\n    class MySerializer(CleanTextMixin, serializers.ModelSerializer):\n        class Meta:\n            model = MyModel\n            fields = '__all__'\n\nTier 1 (name fields): strict character allowlist via validate_resource_name.\nTier 2 (all other CharField/TextField): dangerous-pattern blocklist via validate_free_text.\nOn update, unchanged fields are grandfathered (skipped).\n\nConfigurable attributes:\n    name_fields: field names routed to Tier 1 (default: name, username, hostname).\n    excluded_fields: field names skipped entirely — use for fields that legitimately\n        contain HTML or template syntax (e.g. Jinja2 templates, custom login HTML).\n        Also skips entire JSONFields when listed here.\n    excluded_json_keys: mapping of JSONField name to a frozenset of sub-keys\n        that should be skipped during validation (e.g. PEM keys, template content).\n        Example: {'inputs': frozenset({'ssh_key_data'})}\n\nSee docs/lib/validation.md for the full contract.",
                 "properties": {
                     "name": {
                         "type": "string",
@@ -36273,6 +36513,7 @@
             },
             "Instance": {
                 "type": "object",
+                "description": "Drop-in mixin for DRF ModelSerializer that rejects unsafe text input.\nMust appear before ModelSerializer in MRO.\n\nUsage::\n\n    from ansible_base.lib.serializers.mixins import CleanTextMixin\n\n    class MySerializer(CleanTextMixin, serializers.ModelSerializer):\n        class Meta:\n            model = MyModel\n            fields = '__all__'\n\nTier 1 (name fields): strict character allowlist via validate_resource_name.\nTier 2 (all other CharField/TextField): dangerous-pattern blocklist via validate_free_text.\nOn update, unchanged fields are grandfathered (skipped).\n\nConfigurable attributes:\n    name_fields: field names routed to Tier 1 (default: name, username, hostname).\n    excluded_fields: field names skipped entirely — use for fields that legitimately\n        contain HTML or template syntax (e.g. Jinja2 templates, custom login HTML).\n        Also skips entire JSONFields when listed here.\n    excluded_json_keys: mapping of JSONField name to a frozenset of sub-keys\n        that should be skipped during validation (e.g. PEM keys, template content).\n        Example: {'inputs': frozenset({'ssh_key_data'})}\n\nSee docs/lib/validation.md for the full contract.",
                 "properties": {
                     "id": {
                         "type": "integer",
@@ -36476,6 +36717,7 @@
             },
             "InstanceGroup": {
                 "type": "object",
+                "description": "Drop-in mixin for DRF ModelSerializer that rejects unsafe text input.\nMust appear before ModelSerializer in MRO.\n\nUsage::\n\n    from ansible_base.lib.serializers.mixins import CleanTextMixin\n\n    class MySerializer(CleanTextMixin, serializers.ModelSerializer):\n        class Meta:\n            model = MyModel\n            fields = '__all__'\n\nTier 1 (name fields): strict character allowlist via validate_resource_name.\nTier 2 (all other CharField/TextField): dangerous-pattern blocklist via validate_free_text.\nOn update, unchanged fields are grandfathered (skipped).\n\nConfigurable attributes:\n    name_fields: field names routed to Tier 1 (default: name, username, hostname).\n    excluded_fields: field names skipped entirely — use for fields that legitimately\n        contain HTML or template syntax (e.g. Jinja2 templates, custom login HTML).\n        Also skips entire JSONFields when listed here.\n    excluded_json_keys: mapping of JSONField name to a frozenset of sub-keys\n        that should be skipped during validation (e.g. PEM keys, template content).\n        Example: {'inputs': frozenset({'ssh_key_data'})}\n\nSee docs/lib/validation.md for the full contract.",
                 "properties": {
                     "id": {
                         "type": "integer",
@@ -36587,6 +36829,7 @@
             },
             "InstanceGroupRequest": {
                 "type": "object",
+                "description": "Drop-in mixin for DRF ModelSerializer that rejects unsafe text input.\nMust appear before ModelSerializer in MRO.\n\nUsage::\n\n    from ansible_base.lib.serializers.mixins import CleanTextMixin\n\n    class MySerializer(CleanTextMixin, serializers.ModelSerializer):\n        class Meta:\n            model = MyModel\n            fields = '__all__'\n\nTier 1 (name fields): strict character allowlist via validate_resource_name.\nTier 2 (all other CharField/TextField): dangerous-pattern blocklist via validate_free_text.\nOn update, unchanged fields are grandfathered (skipped).\n\nConfigurable attributes:\n    name_fields: field names routed to Tier 1 (default: name, username, hostname).\n    excluded_fields: field names skipped entirely — use for fields that legitimately\n        contain HTML or template syntax (e.g. Jinja2 templates, custom login HTML).\n        Also skips entire JSONFields when listed here.\n    excluded_json_keys: mapping of JSONField name to a frozenset of sub-keys\n        that should be skipped during validation (e.g. PEM keys, template content).\n        Example: {'inputs': frozenset({'ssh_key_data'})}\n\nSee docs/lib/validation.md for the full contract.",
                 "properties": {
                     "name": {
                         "type": "string",
@@ -36707,6 +36950,7 @@
             },
             "InstanceRequest": {
                 "type": "object",
+                "description": "Drop-in mixin for DRF ModelSerializer that rejects unsafe text input.\nMust appear before ModelSerializer in MRO.\n\nUsage::\n\n    from ansible_base.lib.serializers.mixins import CleanTextMixin\n\n    class MySerializer(CleanTextMixin, serializers.ModelSerializer):\n        class Meta:\n            model = MyModel\n            fields = '__all__'\n\nTier 1 (name fields): strict character allowlist via validate_resource_name.\nTier 2 (all other CharField/TextField): dangerous-pattern blocklist via validate_free_text.\nOn update, unchanged fields are grandfathered (skipped).\n\nConfigurable attributes:\n    name_fields: field names routed to Tier 1 (default: name, username, hostname).\n    excluded_fields: field names skipped entirely — use for fields that legitimately\n        contain HTML or template syntax (e.g. Jinja2 templates, custom login HTML).\n        Also skips entire JSONFields when listed here.\n    excluded_json_keys: mapping of JSONField name to a frozenset of sub-keys\n        that should be skipped during validation (e.g. PEM keys, template content).\n        Example: {'inputs': frozenset({'ssh_key_data'})}\n\nSee docs/lib/validation.md for the full contract.",
                 "properties": {
                     "hostname": {
                         "type": "string",
@@ -36783,6 +37027,7 @@
             },
             "Inventory": {
                 "type": "object",
+                "description": "Drop-in mixin for DRF ModelSerializer that rejects unsafe text input.\nMust appear before ModelSerializer in MRO.\n\nUsage::\n\n    from ansible_base.lib.serializers.mixins import CleanTextMixin\n\n    class MySerializer(CleanTextMixin, serializers.ModelSerializer):\n        class Meta:\n            model = MyModel\n            fields = '__all__'\n\nTier 1 (name fields): strict character allowlist via validate_resource_name.\nTier 2 (all other CharField/TextField): dangerous-pattern blocklist via validate_free_text.\nOn update, unchanged fields are grandfathered (skipped).\n\nConfigurable attributes:\n    name_fields: field names routed to Tier 1 (default: name, username, hostname).\n    excluded_fields: field names skipped entirely — use for fields that legitimately\n        contain HTML or template syntax (e.g. Jinja2 templates, custom login HTML).\n        Also skips entire JSONFields when listed here.\n    excluded_json_keys: mapping of JSONField name to a frozenset of sub-keys\n        that should be skipped during validation (e.g. PEM keys, template content).\n        Example: {'inputs': frozenset({'ssh_key_data'})}\n\nSee docs/lib/validation.md for the full contract.",
                 "properties": {
                     "id": {
                         "type": "integer",
@@ -36916,6 +37161,7 @@
             },
             "InventoryRequest": {
                 "type": "object",
+                "description": "Drop-in mixin for DRF ModelSerializer that rejects unsafe text input.\nMust appear before ModelSerializer in MRO.\n\nUsage::\n\n    from ansible_base.lib.serializers.mixins import CleanTextMixin\n\n    class MySerializer(CleanTextMixin, serializers.ModelSerializer):\n        class Meta:\n            model = MyModel\n            fields = '__all__'\n\nTier 1 (name fields): strict character allowlist via validate_resource_name.\nTier 2 (all other CharField/TextField): dangerous-pattern blocklist via validate_free_text.\nOn update, unchanged fields are grandfathered (skipped).\n\nConfigurable attributes:\n    name_fields: field names routed to Tier 1 (default: name, username, hostname).\n    excluded_fields: field names skipped entirely — use for fields that legitimately\n        contain HTML or template syntax (e.g. Jinja2 templates, custom login HTML).\n        Also skips entire JSONFields when listed here.\n    excluded_json_keys: mapping of JSONField name to a frozenset of sub-keys\n        that should be skipped during validation (e.g. PEM keys, template content).\n        Example: {'inputs': frozenset({'ssh_key_data'})}\n\nSee docs/lib/validation.md for the full contract.",
                 "properties": {
                     "name": {
                         "type": "string",
@@ -36977,6 +37223,7 @@
             },
             "InventorySource": {
                 "type": "object",
+                "description": "Drop-in mixin for DRF ModelSerializer that rejects unsafe text input.\nMust appear before ModelSerializer in MRO.\n\nUsage::\n\n    from ansible_base.lib.serializers.mixins import CleanTextMixin\n\n    class MySerializer(CleanTextMixin, serializers.ModelSerializer):\n        class Meta:\n            model = MyModel\n            fields = '__all__'\n\nTier 1 (name fields): strict character allowlist via validate_resource_name.\nTier 2 (all other CharField/TextField): dangerous-pattern blocklist via validate_free_text.\nOn update, unchanged fields are grandfathered (skipped).\n\nConfigurable attributes:\n    name_fields: field names routed to Tier 1 (default: name, username, hostname).\n    excluded_fields: field names skipped entirely — use for fields that legitimately\n        contain HTML or template syntax (e.g. Jinja2 templates, custom login HTML).\n        Also skips entire JSONFields when listed here.\n    excluded_json_keys: mapping of JSONField name to a frozenset of sub-keys\n        that should be skipped during validation (e.g. PEM keys, template content).\n        Example: {'inputs': frozenset({'ssh_key_data'})}\n\nSee docs/lib/validation.md for the full contract.",
                 "properties": {
                     "id": {
                         "type": "integer",
@@ -37202,6 +37449,7 @@
             },
             "InventorySourceRequest": {
                 "type": "object",
+                "description": "Drop-in mixin for DRF ModelSerializer that rejects unsafe text input.\nMust appear before ModelSerializer in MRO.\n\nUsage::\n\n    from ansible_base.lib.serializers.mixins import CleanTextMixin\n\n    class MySerializer(CleanTextMixin, serializers.ModelSerializer):\n        class Meta:\n            model = MyModel\n            fields = '__all__'\n\nTier 1 (name fields): strict character allowlist via validate_resource_name.\nTier 2 (all other CharField/TextField): dangerous-pattern blocklist via validate_free_text.\nOn update, unchanged fields are grandfathered (skipped).\n\nConfigurable attributes:\n    name_fields: field names routed to Tier 1 (default: name, username, hostname).\n    excluded_fields: field names skipped entirely — use for fields that legitimately\n        contain HTML or template syntax (e.g. Jinja2 templates, custom login HTML).\n        Also skips entire JSONFields when listed here.\n    excluded_json_keys: mapping of JSONField name to a frozenset of sub-keys\n        that should be skipped during validation (e.g. PEM keys, template content).\n        Example: {'inputs': frozenset({'ssh_key_data'})}\n\nSee docs/lib/validation.md for the full contract.",
                 "properties": {
                     "name": {
                         "type": "string",
@@ -37351,6 +37599,7 @@
             },
             "InventorySourceUpdate": {
                 "type": "object",
+                "description": "Drop-in mixin for DRF ModelSerializer that rejects unsafe text input.\nMust appear before ModelSerializer in MRO.\n\nUsage::\n\n    from ansible_base.lib.serializers.mixins import CleanTextMixin\n\n    class MySerializer(CleanTextMixin, serializers.ModelSerializer):\n        class Meta:\n            model = MyModel\n            fields = '__all__'\n\nTier 1 (name fields): strict character allowlist via validate_resource_name.\nTier 2 (all other CharField/TextField): dangerous-pattern blocklist via validate_free_text.\nOn update, unchanged fields are grandfathered (skipped).\n\nConfigurable attributes:\n    name_fields: field names routed to Tier 1 (default: name, username, hostname).\n    excluded_fields: field names skipped entirely — use for fields that legitimately\n        contain HTML or template syntax (e.g. Jinja2 templates, custom login HTML).\n        Also skips entire JSONFields when listed here.\n    excluded_json_keys: mapping of JSONField name to a frozenset of sub-keys\n        that should be skipped during validation (e.g. PEM keys, template content).\n        Example: {'inputs': frozenset({'ssh_key_data'})}\n\nSee docs/lib/validation.md for the full contract.",
                 "properties": {
                     "can_update": {
                         "type": "boolean",
@@ -38094,6 +38343,7 @@
             },
             "JobDetail": {
                 "type": "object",
+                "description": "Drop-in mixin for DRF ModelSerializer that rejects unsafe text input.\nMust appear before ModelSerializer in MRO.\n\nUsage::\n\n    from ansible_base.lib.serializers.mixins import CleanTextMixin\n\n    class MySerializer(CleanTextMixin, serializers.ModelSerializer):\n        class Meta:\n            model = MyModel\n            fields = '__all__'\n\nTier 1 (name fields): strict character allowlist via validate_resource_name.\nTier 2 (all other CharField/TextField): dangerous-pattern blocklist via validate_free_text.\nOn update, unchanged fields are grandfathered (skipped).\n\nConfigurable attributes:\n    name_fields: field names routed to Tier 1 (default: name, username, hostname).\n    excluded_fields: field names skipped entirely — use for fields that legitimately\n        contain HTML or template syntax (e.g. Jinja2 templates, custom login HTML).\n        Also skips entire JSONFields when listed here.\n    excluded_json_keys: mapping of JSONField name to a frozenset of sub-keys\n        that should be skipped during validation (e.g. PEM keys, template content).\n        Example: {'inputs': frozenset({'ssh_key_data'})}\n\nSee docs/lib/validation.md for the full contract.",
                 "properties": {
                     "id": {
                         "type": "integer",
@@ -38713,6 +38963,7 @@
             },
             "JobLaunch": {
                 "type": "object",
+                "description": "Drop-in mixin for DRF ModelSerializer that rejects unsafe text input.\nMust appear before ModelSerializer in MRO.\n\nUsage::\n\n    from ansible_base.lib.serializers.mixins import CleanTextMixin\n\n    class MySerializer(CleanTextMixin, serializers.ModelSerializer):\n        class Meta:\n            model = MyModel\n            fields = '__all__'\n\nTier 1 (name fields): strict character allowlist via validate_resource_name.\nTier 2 (all other CharField/TextField): dangerous-pattern blocklist via validate_free_text.\nOn update, unchanged fields are grandfathered (skipped).\n\nConfigurable attributes:\n    name_fields: field names routed to Tier 1 (default: name, username, hostname).\n    excluded_fields: field names skipped entirely — use for fields that legitimately\n        contain HTML or template syntax (e.g. Jinja2 templates, custom login HTML).\n        Also skips entire JSONFields when listed here.\n    excluded_json_keys: mapping of JSONField name to a frozenset of sub-keys\n        that should be skipped during validation (e.g. PEM keys, template content).\n        Example: {'inputs': frozenset({'ssh_key_data'})}\n\nSee docs/lib/validation.md for the full contract.",
                 "properties": {
                     "can_start_without_user_input": {
                         "type": "boolean",
@@ -38830,6 +39081,7 @@
             },
             "JobLaunchRequest": {
                 "type": "object",
+                "description": "Drop-in mixin for DRF ModelSerializer that rejects unsafe text input.\nMust appear before ModelSerializer in MRO.\n\nUsage::\n\n    from ansible_base.lib.serializers.mixins import CleanTextMixin\n\n    class MySerializer(CleanTextMixin, serializers.ModelSerializer):\n        class Meta:\n            model = MyModel\n            fields = '__all__'\n\nTier 1 (name fields): strict character allowlist via validate_resource_name.\nTier 2 (all other CharField/TextField): dangerous-pattern blocklist via validate_free_text.\nOn update, unchanged fields are grandfathered (skipped).\n\nConfigurable attributes:\n    name_fields: field names routed to Tier 1 (default: name, username, hostname).\n    excluded_fields: field names skipped entirely — use for fields that legitimately\n        contain HTML or template syntax (e.g. Jinja2 templates, custom login HTML).\n        Also skips entire JSONFields when listed here.\n    excluded_json_keys: mapping of JSONField name to a frozenset of sub-keys\n        that should be skipped during validation (e.g. PEM keys, template content).\n        Example: {'inputs': frozenset({'ssh_key_data'})}\n\nSee docs/lib/validation.md for the full contract.",
                 "properties": {
                     "extra_vars": {
                         "writeOnly": true
@@ -38932,6 +39184,7 @@
             },
             "JobList": {
                 "type": "object",
+                "description": "Drop-in mixin for DRF ModelSerializer that rejects unsafe text input.\nMust appear before ModelSerializer in MRO.\n\nUsage::\n\n    from ansible_base.lib.serializers.mixins import CleanTextMixin\n\n    class MySerializer(CleanTextMixin, serializers.ModelSerializer):\n        class Meta:\n            model = MyModel\n            fields = '__all__'\n\nTier 1 (name fields): strict character allowlist via validate_resource_name.\nTier 2 (all other CharField/TextField): dangerous-pattern blocklist via validate_free_text.\nOn update, unchanged fields are grandfathered (skipped).\n\nConfigurable attributes:\n    name_fields: field names routed to Tier 1 (default: name, username, hostname).\n    excluded_fields: field names skipped entirely — use for fields that legitimately\n        contain HTML or template syntax (e.g. Jinja2 templates, custom login HTML).\n        Also skips entire JSONFields when listed here.\n    excluded_json_keys: mapping of JSONField name to a frozenset of sub-keys\n        that should be skipped during validation (e.g. PEM keys, template content).\n        Example: {'inputs': frozenset({'ssh_key_data'})}\n\nSee docs/lib/validation.md for the full contract.",
                 "properties": {
                     "id": {
                         "type": "integer",
@@ -39306,7 +39559,7 @@
             },
             "JobTemplate": {
                 "type": "object",
-                "description": "Provide recent jobs and survey details in summary_fields",
+                "description": "Drop-in mixin for DRF ModelSerializer that rejects unsafe text input.\nMust appear before ModelSerializer in MRO.\n\nUsage::\n\n    from ansible_base.lib.serializers.mixins import CleanTextMixin\n\n    class MySerializer(CleanTextMixin, serializers.ModelSerializer):\n        class Meta:\n            model = MyModel\n            fields = '__all__'\n\nTier 1 (name fields): strict character allowlist via validate_resource_name.\nTier 2 (all other CharField/TextField): dangerous-pattern blocklist via validate_free_text.\nOn update, unchanged fields are grandfathered (skipped).\n\nConfigurable attributes:\n    name_fields: field names routed to Tier 1 (default: name, username, hostname).\n    excluded_fields: field names skipped entirely — use for fields that legitimately\n        contain HTML or template syntax (e.g. Jinja2 templates, custom login HTML).\n        Also skips entire JSONFields when listed here.\n    excluded_json_keys: mapping of JSONField name to a frozenset of sub-keys\n        that should be skipped during validation (e.g. PEM keys, template content).\n        Example: {'inputs': frozenset({'ssh_key_data'})}\n\nSee docs/lib/validation.md for the full contract.",
                 "properties": {
                     "id": {
                         "type": "integer",
@@ -39649,7 +39902,7 @@
             },
             "JobTemplateRequest": {
                 "type": "object",
-                "description": "Provide recent jobs and survey details in summary_fields",
+                "description": "Drop-in mixin for DRF ModelSerializer that rejects unsafe text input.\nMust appear before ModelSerializer in MRO.\n\nUsage::\n\n    from ansible_base.lib.serializers.mixins import CleanTextMixin\n\n    class MySerializer(CleanTextMixin, serializers.ModelSerializer):\n        class Meta:\n            model = MyModel\n            fields = '__all__'\n\nTier 1 (name fields): strict character allowlist via validate_resource_name.\nTier 2 (all other CharField/TextField): dangerous-pattern blocklist via validate_free_text.\nOn update, unchanged fields are grandfathered (skipped).\n\nConfigurable attributes:\n    name_fields: field names routed to Tier 1 (default: name, username, hostname).\n    excluded_fields: field names skipped entirely — use for fields that legitimately\n        contain HTML or template syntax (e.g. Jinja2 templates, custom login HTML).\n        Also skips entire JSONFields when listed here.\n    excluded_json_keys: mapping of JSONField name to a frozenset of sub-keys\n        that should be skipped during validation (e.g. PEM keys, template content).\n        Example: {'inputs': frozenset({'ssh_key_data'})}\n\nSee docs/lib/validation.md for the full contract.",
                 "properties": {
                     "name": {
                         "type": "string",
@@ -39920,6 +40173,7 @@
             },
             "Label": {
                 "type": "object",
+                "description": "Drop-in mixin for DRF ModelSerializer that rejects unsafe text input.\nMust appear before ModelSerializer in MRO.\n\nUsage::\n\n    from ansible_base.lib.serializers.mixins import CleanTextMixin\n\n    class MySerializer(CleanTextMixin, serializers.ModelSerializer):\n        class Meta:\n            model = MyModel\n            fields = '__all__'\n\nTier 1 (name fields): strict character allowlist via validate_resource_name.\nTier 2 (all other CharField/TextField): dangerous-pattern blocklist via validate_free_text.\nOn update, unchanged fields are grandfathered (skipped).\n\nConfigurable attributes:\n    name_fields: field names routed to Tier 1 (default: name, username, hostname).\n    excluded_fields: field names skipped entirely — use for fields that legitimately\n        contain HTML or template syntax (e.g. Jinja2 templates, custom login HTML).\n        Also skips entire JSONFields when listed here.\n    excluded_json_keys: mapping of JSONField name to a frozenset of sub-keys\n        that should be skipped during validation (e.g. PEM keys, template content).\n        Example: {'inputs': frozenset({'ssh_key_data'})}\n\nSee docs/lib/validation.md for the full contract.",
                 "properties": {
                     "id": {
                         "type": "integer",
@@ -39966,6 +40220,7 @@
             },
             "LabelRequest": {
                 "type": "object",
+                "description": "Drop-in mixin for DRF ModelSerializer that rejects unsafe text input.\nMust appear before ModelSerializer in MRO.\n\nUsage::\n\n    from ansible_base.lib.serializers.mixins import CleanTextMixin\n\n    class MySerializer(CleanTextMixin, serializers.ModelSerializer):\n        class Meta:\n            model = MyModel\n            fields = '__all__'\n\nTier 1 (name fields): strict character allowlist via validate_resource_name.\nTier 2 (all other CharField/TextField): dangerous-pattern blocklist via validate_free_text.\nOn update, unchanged fields are grandfathered (skipped).\n\nConfigurable attributes:\n    name_fields: field names routed to Tier 1 (default: name, username, hostname).\n    excluded_fields: field names skipped entirely — use for fields that legitimately\n        contain HTML or template syntax (e.g. Jinja2 templates, custom login HTML).\n        Also skips entire JSONFields when listed here.\n    excluded_json_keys: mapping of JSONField name to a frozenset of sub-keys\n        that should be skipped during validation (e.g. PEM keys, template content).\n        Example: {'inputs': frozenset({'ssh_key_data'})}\n\nSee docs/lib/validation.md for the full contract.",
                 "properties": {
                     "name": {
                         "type": "string",
@@ -40076,6 +40331,7 @@
             },
             "NotificationTemplate": {
                 "type": "object",
+                "description": "Drop-in mixin for DRF ModelSerializer that rejects unsafe text input.\nMust appear before ModelSerializer in MRO.\n\nUsage::\n\n    from ansible_base.lib.serializers.mixins import CleanTextMixin\n\n    class MySerializer(CleanTextMixin, serializers.ModelSerializer):\n        class Meta:\n            model = MyModel\n            fields = '__all__'\n\nTier 1 (name fields): strict character allowlist via validate_resource_name.\nTier 2 (all other CharField/TextField): dangerous-pattern blocklist via validate_free_text.\nOn update, unchanged fields are grandfathered (skipped).\n\nConfigurable attributes:\n    name_fields: field names routed to Tier 1 (default: name, username, hostname).\n    excluded_fields: field names skipped entirely — use for fields that legitimately\n        contain HTML or template syntax (e.g. Jinja2 templates, custom login HTML).\n        Also skips entire JSONFields when listed here.\n    excluded_json_keys: mapping of JSONField name to a frozenset of sub-keys\n        that should be skipped during validation (e.g. PEM keys, template content).\n        Example: {'inputs': frozenset({'ssh_key_data'})}\n\nSee docs/lib/validation.md for the full contract.",
                 "properties": {
                     "id": {
                         "type": "integer",
@@ -40160,6 +40416,7 @@
             },
             "NotificationTemplateRequest": {
                 "type": "object",
+                "description": "Drop-in mixin for DRF ModelSerializer that rejects unsafe text input.\nMust appear before ModelSerializer in MRO.\n\nUsage::\n\n    from ansible_base.lib.serializers.mixins import CleanTextMixin\n\n    class MySerializer(CleanTextMixin, serializers.ModelSerializer):\n        class Meta:\n            model = MyModel\n            fields = '__all__'\n\nTier 1 (name fields): strict character allowlist via validate_resource_name.\nTier 2 (all other CharField/TextField): dangerous-pattern blocklist via validate_free_text.\nOn update, unchanged fields are grandfathered (skipped).\n\nConfigurable attributes:\n    name_fields: field names routed to Tier 1 (default: name, username, hostname).\n    excluded_fields: field names skipped entirely — use for fields that legitimately\n        contain HTML or template syntax (e.g. Jinja2 templates, custom login HTML).\n        Also skips entire JSONFields when listed here.\n    excluded_json_keys: mapping of JSONField name to a frozenset of sub-keys\n        that should be skipped during validation (e.g. PEM keys, template content).\n        Example: {'inputs': frozenset({'ssh_key_data'})}\n\nSee docs/lib/validation.md for the full contract.",
                 "properties": {
                     "name": {
                         "type": "string",
@@ -40217,6 +40474,7 @@
             },
             "Organization": {
                 "type": "object",
+                "description": "Drop-in mixin for DRF ModelSerializer that rejects unsafe text input.\nMust appear before ModelSerializer in MRO.\n\nUsage::\n\n    from ansible_base.lib.serializers.mixins import CleanTextMixin\n\n    class MySerializer(CleanTextMixin, serializers.ModelSerializer):\n        class Meta:\n            model = MyModel\n            fields = '__all__'\n\nTier 1 (name fields): strict character allowlist via validate_resource_name.\nTier 2 (all other CharField/TextField): dangerous-pattern blocklist via validate_free_text.\nOn update, unchanged fields are grandfathered (skipped).\n\nConfigurable attributes:\n    name_fields: field names routed to Tier 1 (default: name, username, hostname).\n    excluded_fields: field names skipped entirely — use for fields that legitimately\n        contain HTML or template syntax (e.g. Jinja2 templates, custom login HTML).\n        Also skips entire JSONFields when listed here.\n    excluded_json_keys: mapping of JSONField name to a frozenset of sub-keys\n        that should be skipped during validation (e.g. PEM keys, template content).\n        Example: {'inputs': frozenset({'ssh_key_data'})}\n\nSee docs/lib/validation.md for the full contract.",
                 "properties": {
                     "id": {
                         "type": "integer",
@@ -40288,6 +40546,7 @@
             },
             "OrganizationCredentialSerializerCreate": {
                 "type": "object",
+                "description": "Drop-in mixin for DRF ModelSerializer that rejects unsafe text input.\nMust appear before ModelSerializer in MRO.\n\nUsage::\n\n    from ansible_base.lib.serializers.mixins import CleanTextMixin\n\n    class MySerializer(CleanTextMixin, serializers.ModelSerializer):\n        class Meta:\n            model = MyModel\n            fields = '__all__'\n\nTier 1 (name fields): strict character allowlist via validate_resource_name.\nTier 2 (all other CharField/TextField): dangerous-pattern blocklist via validate_free_text.\nOn update, unchanged fields are grandfathered (skipped).\n\nConfigurable attributes:\n    name_fields: field names routed to Tier 1 (default: name, username, hostname).\n    excluded_fields: field names skipped entirely — use for fields that legitimately\n        contain HTML or template syntax (e.g. Jinja2 templates, custom login HTML).\n        Also skips entire JSONFields when listed here.\n    excluded_json_keys: mapping of JSONField name to a frozenset of sub-keys\n        that should be skipped during validation (e.g. PEM keys, template content).\n        Example: {'inputs': frozenset({'ssh_key_data'})}\n\nSee docs/lib/validation.md for the full contract.",
                 "properties": {
                     "id": {
                         "type": "integer",
@@ -40364,6 +40623,7 @@
             },
             "OrganizationCredentialSerializerCreateRequest": {
                 "type": "object",
+                "description": "Drop-in mixin for DRF ModelSerializer that rejects unsafe text input.\nMust appear before ModelSerializer in MRO.\n\nUsage::\n\n    from ansible_base.lib.serializers.mixins import CleanTextMixin\n\n    class MySerializer(CleanTextMixin, serializers.ModelSerializer):\n        class Meta:\n            model = MyModel\n            fields = '__all__'\n\nTier 1 (name fields): strict character allowlist via validate_resource_name.\nTier 2 (all other CharField/TextField): dangerous-pattern blocklist via validate_free_text.\nOn update, unchanged fields are grandfathered (skipped).\n\nConfigurable attributes:\n    name_fields: field names routed to Tier 1 (default: name, username, hostname).\n    excluded_fields: field names skipped entirely — use for fields that legitimately\n        contain HTML or template syntax (e.g. Jinja2 templates, custom login HTML).\n        Also skips entire JSONFields when listed here.\n    excluded_json_keys: mapping of JSONField name to a frozenset of sub-keys\n        that should be skipped during validation (e.g. PEM keys, template content).\n        Example: {'inputs': frozenset({'ssh_key_data'})}\n\nSee docs/lib/validation.md for the full contract.",
                 "properties": {
                     "name": {
                         "type": "string",
@@ -40397,6 +40657,7 @@
             },
             "OrganizationRequest": {
                 "type": "object",
+                "description": "Drop-in mixin for DRF ModelSerializer that rejects unsafe text input.\nMust appear before ModelSerializer in MRO.\n\nUsage::\n\n    from ansible_base.lib.serializers.mixins import CleanTextMixin\n\n    class MySerializer(CleanTextMixin, serializers.ModelSerializer):\n        class Meta:\n            model = MyModel\n            fields = '__all__'\n\nTier 1 (name fields): strict character allowlist via validate_resource_name.\nTier 2 (all other CharField/TextField): dangerous-pattern blocklist via validate_free_text.\nOn update, unchanged fields are grandfathered (skipped).\n\nConfigurable attributes:\n    name_fields: field names routed to Tier 1 (default: name, username, hostname).\n    excluded_fields: field names skipped entirely — use for fields that legitimately\n        contain HTML or template syntax (e.g. Jinja2 templates, custom login HTML).\n        Also skips entire JSONFields when listed here.\n    excluded_json_keys: mapping of JSONField name to a frozenset of sub-keys\n        that should be skipped during validation (e.g. PEM keys, template content).\n        Example: {'inputs': frozenset({'ssh_key_data'})}\n\nSee docs/lib/validation.md for the full contract.",
                 "properties": {
                     "name": {
                         "type": "string",
@@ -41359,6 +41620,37 @@
                         "type": "array",
                         "items": {
                             "$ref": "#/components/schemas/OrganizationCredentialSerializerCreate"
+                        }
+                    }
+                }
+            },
+            "PaginatedOrganizationList": {
+                "type": "object",
+                "required": [
+                    "count",
+                    "results"
+                ],
+                "properties": {
+                    "count": {
+                        "type": "integer",
+                        "example": 123
+                    },
+                    "next": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uri",
+                        "example": "http://api.example.org/accounts/?page=4"
+                    },
+                    "previous": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uri",
+                        "example": "http://api.example.org/accounts/?page=2"
+                    },
+                    "results": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/Organization"
                         }
                     }
                 }
@@ -42419,6 +42711,7 @@
             },
             "PatchedConstructedInventoryRequest": {
                 "type": "object",
+                "description": "Drop-in mixin for DRF ModelSerializer that rejects unsafe text input.\nMust appear before ModelSerializer in MRO.\n\nUsage::\n\n    from ansible_base.lib.serializers.mixins import CleanTextMixin\n\n    class MySerializer(CleanTextMixin, serializers.ModelSerializer):\n        class Meta:\n            model = MyModel\n            fields = '__all__'\n\nTier 1 (name fields): strict character allowlist via validate_resource_name.\nTier 2 (all other CharField/TextField): dangerous-pattern blocklist via validate_free_text.\nOn update, unchanged fields are grandfathered (skipped).\n\nConfigurable attributes:\n    name_fields: field names routed to Tier 1 (default: name, username, hostname).\n    excluded_fields: field names skipped entirely — use for fields that legitimately\n        contain HTML or template syntax (e.g. Jinja2 templates, custom login HTML).\n        Also skips entire JSONFields when listed here.\n    excluded_json_keys: mapping of JSONField name to a frozenset of sub-keys\n        that should be skipped during validation (e.g. PEM keys, template content).\n        Example: {'inputs': frozenset({'ssh_key_data'})}\n\nSee docs/lib/validation.md for the full contract.",
                 "properties": {
                     "name": {
                         "type": "string",
@@ -42479,6 +42772,7 @@
             },
             "PatchedCredentialInputSourceRequest": {
                 "type": "object",
+                "description": "Drop-in mixin for DRF ModelSerializer that rejects unsafe text input.\nMust appear before ModelSerializer in MRO.\n\nUsage::\n\n    from ansible_base.lib.serializers.mixins import CleanTextMixin\n\n    class MySerializer(CleanTextMixin, serializers.ModelSerializer):\n        class Meta:\n            model = MyModel\n            fields = '__all__'\n\nTier 1 (name fields): strict character allowlist via validate_resource_name.\nTier 2 (all other CharField/TextField): dangerous-pattern blocklist via validate_free_text.\nOn update, unchanged fields are grandfathered (skipped).\n\nConfigurable attributes:\n    name_fields: field names routed to Tier 1 (default: name, username, hostname).\n    excluded_fields: field names skipped entirely — use for fields that legitimately\n        contain HTML or template syntax (e.g. Jinja2 templates, custom login HTML).\n        Also skips entire JSONFields when listed here.\n    excluded_json_keys: mapping of JSONField name to a frozenset of sub-keys\n        that should be skipped during validation (e.g. PEM keys, template content).\n        Example: {'inputs': frozenset({'ssh_key_data'})}\n\nSee docs/lib/validation.md for the full contract.",
                 "properties": {
                     "description": {
                         "type": "string",
@@ -42506,6 +42800,7 @@
             },
             "PatchedCredentialRequest": {
                 "type": "object",
+                "description": "Drop-in mixin for DRF ModelSerializer that rejects unsafe text input.\nMust appear before ModelSerializer in MRO.\n\nUsage::\n\n    from ansible_base.lib.serializers.mixins import CleanTextMixin\n\n    class MySerializer(CleanTextMixin, serializers.ModelSerializer):\n        class Meta:\n            model = MyModel\n            fields = '__all__'\n\nTier 1 (name fields): strict character allowlist via validate_resource_name.\nTier 2 (all other CharField/TextField): dangerous-pattern blocklist via validate_free_text.\nOn update, unchanged fields are grandfathered (skipped).\n\nConfigurable attributes:\n    name_fields: field names routed to Tier 1 (default: name, username, hostname).\n    excluded_fields: field names skipped entirely — use for fields that legitimately\n        contain HTML or template syntax (e.g. Jinja2 templates, custom login HTML).\n        Also skips entire JSONFields when listed here.\n    excluded_json_keys: mapping of JSONField name to a frozenset of sub-keys\n        that should be skipped during validation (e.g. PEM keys, template content).\n        Example: {'inputs': frozenset({'ssh_key_data'})}\n\nSee docs/lib/validation.md for the full contract.",
                 "properties": {
                     "name": {
                         "type": "string",
@@ -42534,6 +42829,7 @@
             },
             "PatchedCredentialTypeRequest": {
                 "type": "object",
+                "description": "Drop-in mixin for DRF ModelSerializer that rejects unsafe text input.\nMust appear before ModelSerializer in MRO.\n\nUsage::\n\n    from ansible_base.lib.serializers.mixins import CleanTextMixin\n\n    class MySerializer(CleanTextMixin, serializers.ModelSerializer):\n        class Meta:\n            model = MyModel\n            fields = '__all__'\n\nTier 1 (name fields): strict character allowlist via validate_resource_name.\nTier 2 (all other CharField/TextField): dangerous-pattern blocklist via validate_free_text.\nOn update, unchanged fields are grandfathered (skipped).\n\nConfigurable attributes:\n    name_fields: field names routed to Tier 1 (default: name, username, hostname).\n    excluded_fields: field names skipped entirely — use for fields that legitimately\n        contain HTML or template syntax (e.g. Jinja2 templates, custom login HTML).\n        Also skips entire JSONFields when listed here.\n    excluded_json_keys: mapping of JSONField name to a frozenset of sub-keys\n        that should be skipped during validation (e.g. PEM keys, template content).\n        Example: {'inputs': frozenset({'ssh_key_data'})}\n\nSee docs/lib/validation.md for the full contract.",
                 "properties": {
                     "name": {
                         "type": "string",
@@ -42569,6 +42865,7 @@
             },
             "PatchedExecutionEnvironmentRequest": {
                 "type": "object",
+                "description": "Drop-in mixin for DRF ModelSerializer that rejects unsafe text input.\nMust appear before ModelSerializer in MRO.\n\nUsage::\n\n    from ansible_base.lib.serializers.mixins import CleanTextMixin\n\n    class MySerializer(CleanTextMixin, serializers.ModelSerializer):\n        class Meta:\n            model = MyModel\n            fields = '__all__'\n\nTier 1 (name fields): strict character allowlist via validate_resource_name.\nTier 2 (all other CharField/TextField): dangerous-pattern blocklist via validate_free_text.\nOn update, unchanged fields are grandfathered (skipped).\n\nConfigurable attributes:\n    name_fields: field names routed to Tier 1 (default: name, username, hostname).\n    excluded_fields: field names skipped entirely — use for fields that legitimately\n        contain HTML or template syntax (e.g. Jinja2 templates, custom login HTML).\n        Also skips entire JSONFields when listed here.\n    excluded_json_keys: mapping of JSONField name to a frozenset of sub-keys\n        that should be skipped during validation (e.g. PEM keys, template content).\n        Example: {'inputs': frozenset({'ssh_key_data'})}\n\nSee docs/lib/validation.md for the full contract.",
                 "properties": {
                     "name": {
                         "type": "string",
@@ -42616,6 +42913,7 @@
             },
             "PatchedGroupRequest": {
                 "type": "object",
+                "description": "Drop-in mixin for DRF ModelSerializer that rejects unsafe text input.\nMust appear before ModelSerializer in MRO.\n\nUsage::\n\n    from ansible_base.lib.serializers.mixins import CleanTextMixin\n\n    class MySerializer(CleanTextMixin, serializers.ModelSerializer):\n        class Meta:\n            model = MyModel\n            fields = '__all__'\n\nTier 1 (name fields): strict character allowlist via validate_resource_name.\nTier 2 (all other CharField/TextField): dangerous-pattern blocklist via validate_free_text.\nOn update, unchanged fields are grandfathered (skipped).\n\nConfigurable attributes:\n    name_fields: field names routed to Tier 1 (default: name, username, hostname).\n    excluded_fields: field names skipped entirely — use for fields that legitimately\n        contain HTML or template syntax (e.g. Jinja2 templates, custom login HTML).\n        Also skips entire JSONFields when listed here.\n    excluded_json_keys: mapping of JSONField name to a frozenset of sub-keys\n        that should be skipped during validation (e.g. PEM keys, template content).\n        Example: {'inputs': frozenset({'ssh_key_data'})}\n\nSee docs/lib/validation.md for the full contract.",
                 "properties": {
                     "name": {
                         "type": "string",
@@ -42652,6 +42950,7 @@
             },
             "PatchedHostRequest": {
                 "type": "object",
+                "description": "Drop-in mixin for DRF ModelSerializer that rejects unsafe text input.\nMust appear before ModelSerializer in MRO.\n\nUsage::\n\n    from ansible_base.lib.serializers.mixins import CleanTextMixin\n\n    class MySerializer(CleanTextMixin, serializers.ModelSerializer):\n        class Meta:\n            model = MyModel\n            fields = '__all__'\n\nTier 1 (name fields): strict character allowlist via validate_resource_name.\nTier 2 (all other CharField/TextField): dangerous-pattern blocklist via validate_free_text.\nOn update, unchanged fields are grandfathered (skipped).\n\nConfigurable attributes:\n    name_fields: field names routed to Tier 1 (default: name, username, hostname).\n    excluded_fields: field names skipped entirely — use for fields that legitimately\n        contain HTML or template syntax (e.g. Jinja2 templates, custom login HTML).\n        Also skips entire JSONFields when listed here.\n    excluded_json_keys: mapping of JSONField name to a frozenset of sub-keys\n        that should be skipped during validation (e.g. PEM keys, template content).\n        Example: {'inputs': frozenset({'ssh_key_data'})}\n\nSee docs/lib/validation.md for the full contract.",
                 "properties": {
                     "name": {
                         "type": "string",
@@ -42701,6 +43000,7 @@
             },
             "PatchedInstanceGroupRequest": {
                 "type": "object",
+                "description": "Drop-in mixin for DRF ModelSerializer that rejects unsafe text input.\nMust appear before ModelSerializer in MRO.\n\nUsage::\n\n    from ansible_base.lib.serializers.mixins import CleanTextMixin\n\n    class MySerializer(CleanTextMixin, serializers.ModelSerializer):\n        class Meta:\n            model = MyModel\n            fields = '__all__'\n\nTier 1 (name fields): strict character allowlist via validate_resource_name.\nTier 2 (all other CharField/TextField): dangerous-pattern blocklist via validate_free_text.\nOn update, unchanged fields are grandfathered (skipped).\n\nConfigurable attributes:\n    name_fields: field names routed to Tier 1 (default: name, username, hostname).\n    excluded_fields: field names skipped entirely — use for fields that legitimately\n        contain HTML or template syntax (e.g. Jinja2 templates, custom login HTML).\n        Also skips entire JSONFields when listed here.\n    excluded_json_keys: mapping of JSONField name to a frozenset of sub-keys\n        that should be skipped during validation (e.g. PEM keys, template content).\n        Example: {'inputs': frozenset({'ssh_key_data'})}\n\nSee docs/lib/validation.md for the full contract.",
                 "properties": {
                     "name": {
                         "type": "string",
@@ -42758,6 +43058,7 @@
             },
             "PatchedInstanceRequest": {
                 "type": "object",
+                "description": "Drop-in mixin for DRF ModelSerializer that rejects unsafe text input.\nMust appear before ModelSerializer in MRO.\n\nUsage::\n\n    from ansible_base.lib.serializers.mixins import CleanTextMixin\n\n    class MySerializer(CleanTextMixin, serializers.ModelSerializer):\n        class Meta:\n            model = MyModel\n            fields = '__all__'\n\nTier 1 (name fields): strict character allowlist via validate_resource_name.\nTier 2 (all other CharField/TextField): dangerous-pattern blocklist via validate_free_text.\nOn update, unchanged fields are grandfathered (skipped).\n\nConfigurable attributes:\n    name_fields: field names routed to Tier 1 (default: name, username, hostname).\n    excluded_fields: field names skipped entirely — use for fields that legitimately\n        contain HTML or template syntax (e.g. Jinja2 templates, custom login HTML).\n        Also skips entire JSONFields when listed here.\n    excluded_json_keys: mapping of JSONField name to a frozenset of sub-keys\n        that should be skipped during validation (e.g. PEM keys, template content).\n        Example: {'inputs': frozenset({'ssh_key_data'})}\n\nSee docs/lib/validation.md for the full contract.",
                 "properties": {
                     "hostname": {
                         "type": "string",
@@ -42831,6 +43132,7 @@
             },
             "PatchedInventoryRequest": {
                 "type": "object",
+                "description": "Drop-in mixin for DRF ModelSerializer that rejects unsafe text input.\nMust appear before ModelSerializer in MRO.\n\nUsage::\n\n    from ansible_base.lib.serializers.mixins import CleanTextMixin\n\n    class MySerializer(CleanTextMixin, serializers.ModelSerializer):\n        class Meta:\n            model = MyModel\n            fields = '__all__'\n\nTier 1 (name fields): strict character allowlist via validate_resource_name.\nTier 2 (all other CharField/TextField): dangerous-pattern blocklist via validate_free_text.\nOn update, unchanged fields are grandfathered (skipped).\n\nConfigurable attributes:\n    name_fields: field names routed to Tier 1 (default: name, username, hostname).\n    excluded_fields: field names skipped entirely — use for fields that legitimately\n        contain HTML or template syntax (e.g. Jinja2 templates, custom login HTML).\n        Also skips entire JSONFields when listed here.\n    excluded_json_keys: mapping of JSONField name to a frozenset of sub-keys\n        that should be skipped during validation (e.g. PEM keys, template content).\n        Example: {'inputs': frozenset({'ssh_key_data'})}\n\nSee docs/lib/validation.md for the full contract.",
                 "properties": {
                     "name": {
                         "type": "string",
@@ -42888,6 +43190,7 @@
             },
             "PatchedInventorySourceRequest": {
                 "type": "object",
+                "description": "Drop-in mixin for DRF ModelSerializer that rejects unsafe text input.\nMust appear before ModelSerializer in MRO.\n\nUsage::\n\n    from ansible_base.lib.serializers.mixins import CleanTextMixin\n\n    class MySerializer(CleanTextMixin, serializers.ModelSerializer):\n        class Meta:\n            model = MyModel\n            fields = '__all__'\n\nTier 1 (name fields): strict character allowlist via validate_resource_name.\nTier 2 (all other CharField/TextField): dangerous-pattern blocklist via validate_free_text.\nOn update, unchanged fields are grandfathered (skipped).\n\nConfigurable attributes:\n    name_fields: field names routed to Tier 1 (default: name, username, hostname).\n    excluded_fields: field names skipped entirely — use for fields that legitimately\n        contain HTML or template syntax (e.g. Jinja2 templates, custom login HTML).\n        Also skips entire JSONFields when listed here.\n    excluded_json_keys: mapping of JSONField name to a frozenset of sub-keys\n        that should be skipped during validation (e.g. PEM keys, template content).\n        Example: {'inputs': frozenset({'ssh_key_data'})}\n\nSee docs/lib/validation.md for the full contract.",
                 "properties": {
                     "name": {
                         "type": "string",
@@ -43043,7 +43346,7 @@
             },
             "PatchedJobTemplateRequest": {
                 "type": "object",
-                "description": "Provide recent jobs and survey details in summary_fields",
+                "description": "Drop-in mixin for DRF ModelSerializer that rejects unsafe text input.\nMust appear before ModelSerializer in MRO.\n\nUsage::\n\n    from ansible_base.lib.serializers.mixins import CleanTextMixin\n\n    class MySerializer(CleanTextMixin, serializers.ModelSerializer):\n        class Meta:\n            model = MyModel\n            fields = '__all__'\n\nTier 1 (name fields): strict character allowlist via validate_resource_name.\nTier 2 (all other CharField/TextField): dangerous-pattern blocklist via validate_free_text.\nOn update, unchanged fields are grandfathered (skipped).\n\nConfigurable attributes:\n    name_fields: field names routed to Tier 1 (default: name, username, hostname).\n    excluded_fields: field names skipped entirely — use for fields that legitimately\n        contain HTML or template syntax (e.g. Jinja2 templates, custom login HTML).\n        Also skips entire JSONFields when listed here.\n    excluded_json_keys: mapping of JSONField name to a frozenset of sub-keys\n        that should be skipped during validation (e.g. PEM keys, template content).\n        Example: {'inputs': frozenset({'ssh_key_data'})}\n\nSee docs/lib/validation.md for the full contract.",
                 "properties": {
                     "name": {
                         "type": "string",
@@ -43311,6 +43614,7 @@
             },
             "PatchedLabelRequest": {
                 "type": "object",
+                "description": "Drop-in mixin for DRF ModelSerializer that rejects unsafe text input.\nMust appear before ModelSerializer in MRO.\n\nUsage::\n\n    from ansible_base.lib.serializers.mixins import CleanTextMixin\n\n    class MySerializer(CleanTextMixin, serializers.ModelSerializer):\n        class Meta:\n            model = MyModel\n            fields = '__all__'\n\nTier 1 (name fields): strict character allowlist via validate_resource_name.\nTier 2 (all other CharField/TextField): dangerous-pattern blocklist via validate_free_text.\nOn update, unchanged fields are grandfathered (skipped).\n\nConfigurable attributes:\n    name_fields: field names routed to Tier 1 (default: name, username, hostname).\n    excluded_fields: field names skipped entirely — use for fields that legitimately\n        contain HTML or template syntax (e.g. Jinja2 templates, custom login HTML).\n        Also skips entire JSONFields when listed here.\n    excluded_json_keys: mapping of JSONField name to a frozenset of sub-keys\n        that should be skipped during validation (e.g. PEM keys, template content).\n        Example: {'inputs': frozenset({'ssh_key_data'})}\n\nSee docs/lib/validation.md for the full contract.",
                 "properties": {
                     "name": {
                         "type": "string",
@@ -43326,6 +43630,7 @@
             },
             "PatchedNotificationTemplateRequest": {
                 "type": "object",
+                "description": "Drop-in mixin for DRF ModelSerializer that rejects unsafe text input.\nMust appear before ModelSerializer in MRO.\n\nUsage::\n\n    from ansible_base.lib.serializers.mixins import CleanTextMixin\n\n    class MySerializer(CleanTextMixin, serializers.ModelSerializer):\n        class Meta:\n            model = MyModel\n            fields = '__all__'\n\nTier 1 (name fields): strict character allowlist via validate_resource_name.\nTier 2 (all other CharField/TextField): dangerous-pattern blocklist via validate_free_text.\nOn update, unchanged fields are grandfathered (skipped).\n\nConfigurable attributes:\n    name_fields: field names routed to Tier 1 (default: name, username, hostname).\n    excluded_fields: field names skipped entirely — use for fields that legitimately\n        contain HTML or template syntax (e.g. Jinja2 templates, custom login HTML).\n        Also skips entire JSONFields when listed here.\n    excluded_json_keys: mapping of JSONField name to a frozenset of sub-keys\n        that should be skipped during validation (e.g. PEM keys, template content).\n        Example: {'inputs': frozenset({'ssh_key_data'})}\n\nSee docs/lib/validation.md for the full contract.",
                 "properties": {
                     "name": {
                         "type": "string",
@@ -43378,6 +43683,7 @@
             },
             "PatchedOrganizationRequest": {
                 "type": "object",
+                "description": "Drop-in mixin for DRF ModelSerializer that rejects unsafe text input.\nMust appear before ModelSerializer in MRO.\n\nUsage::\n\n    from ansible_base.lib.serializers.mixins import CleanTextMixin\n\n    class MySerializer(CleanTextMixin, serializers.ModelSerializer):\n        class Meta:\n            model = MyModel\n            fields = '__all__'\n\nTier 1 (name fields): strict character allowlist via validate_resource_name.\nTier 2 (all other CharField/TextField): dangerous-pattern blocklist via validate_free_text.\nOn update, unchanged fields are grandfathered (skipped).\n\nConfigurable attributes:\n    name_fields: field names routed to Tier 1 (default: name, username, hostname).\n    excluded_fields: field names skipped entirely — use for fields that legitimately\n        contain HTML or template syntax (e.g. Jinja2 templates, custom login HTML).\n        Also skips entire JSONFields when listed here.\n    excluded_json_keys: mapping of JSONField name to a frozenset of sub-keys\n        that should be skipped during validation (e.g. PEM keys, template content).\n        Example: {'inputs': frozenset({'ssh_key_data'})}\n\nSee docs/lib/validation.md for the full contract.",
                 "properties": {
                     "name": {
                         "type": "string",
@@ -43413,6 +43719,7 @@
             },
             "PatchedProjectRequest": {
                 "type": "object",
+                "description": "Drop-in mixin for DRF ModelSerializer that rejects unsafe text input.\nMust appear before ModelSerializer in MRO.\n\nUsage::\n\n    from ansible_base.lib.serializers.mixins import CleanTextMixin\n\n    class MySerializer(CleanTextMixin, serializers.ModelSerializer):\n        class Meta:\n            model = MyModel\n            fields = '__all__'\n\nTier 1 (name fields): strict character allowlist via validate_resource_name.\nTier 2 (all other CharField/TextField): dangerous-pattern blocklist via validate_free_text.\nOn update, unchanged fields are grandfathered (skipped).\n\nConfigurable attributes:\n    name_fields: field names routed to Tier 1 (default: name, username, hostname).\n    excluded_fields: field names skipped entirely — use for fields that legitimately\n        contain HTML or template syntax (e.g. Jinja2 templates, custom login HTML).\n        Also skips entire JSONFields when listed here.\n    excluded_json_keys: mapping of JSONField name to a frozenset of sub-keys\n        that should be skipped during validation (e.g. PEM keys, template content).\n        Example: {'inputs': frozenset({'ssh_key_data'})}\n\nSee docs/lib/validation.md for the full contract.",
                 "properties": {
                     "name": {
                         "type": "string",
@@ -43560,6 +43867,7 @@
             },
             "PatchedRoleDefinitionRequest": {
                 "type": "object",
+                "description": "Drop-in mixin for DRF ModelSerializer that rejects unsafe text input.\nMust appear before ModelSerializer in MRO.\n\nUsage::\n\n    from ansible_base.lib.serializers.mixins import CleanTextMixin\n\n    class MySerializer(CleanTextMixin, serializers.ModelSerializer):\n        class Meta:\n            model = MyModel\n            fields = '__all__'\n\nTier 1 (name fields): strict character allowlist via validate_resource_name.\nTier 2 (all other CharField/TextField): dangerous-pattern blocklist via validate_free_text.\nOn update, unchanged fields are grandfathered (skipped).\n\nConfigurable attributes:\n    name_fields: field names routed to Tier 1 (default: name, username, hostname).\n    excluded_fields: field names skipped entirely — use for fields that legitimately\n        contain HTML or template syntax (e.g. Jinja2 templates, custom login HTML).\n        Also skips entire JSONFields when listed here.\n    excluded_json_keys: mapping of JSONField name to a frozenset of sub-keys\n        that should be skipped during validation (e.g. PEM keys, template content).\n        Example: {'inputs': frozenset({'ssh_key_data'})}\n\nSee docs/lib/validation.md for the full contract.",
                 "properties": {
                     "permissions": {
                         "type": "array",
@@ -43588,6 +43896,7 @@
             },
             "PatchedScheduleRequest": {
                 "type": "object",
+                "description": "CleanTextMixin for serializers whose Meta.model derives from\nLaunchTimeConfigBase (WorkflowJobTemplate, WorkflowJobTemplateNode,\nWorkflowJobNode, Schedule). Those models store scm_branch/limit/job_tags/\nskip_tags as NullablePromptPseudoField descriptors backed by the\nchar_prompts JSONField, not real django.db.models.Field instances, so\nCleanTextMixin's model._meta.get_fields() auto-discovery can never see\nthem (AAP-78694). This adds them back in explicitly as Tier 2 free-text\nfields. They are always declared as plain serializer CharFields (see\nLaunchConfigurationBaseSerializer below), so self.fields has them\nwhenever applicable, and grandfathering still works because the\npseudo-field descriptor's __get__ correctly returns the stored\nchar_prompts value via getattr(self.instance, name).",
                 "properties": {
                     "rrule": {
                         "type": "string",
@@ -43693,7 +44002,7 @@
             },
             "PatchedSettingSingletonRequest": {
                 "type": "object",
-                "description": "Present a group of settings (by category) as a single object.",
+                "description": "Present a group of settings (by category) as a single object.\n\nUses PlainSerializerCleanTextMixin because there is no Django model whose\nfields match the dynamic settings registry. Top-level CharFields get Tier\n1/2 text validation; ListField/DictField/JSONField string children are\nwalked via CleanTextMixin's nested JSON validation path.",
                 "properties": {
                     "ACTIVITY_STREAM_ENABLED": {
                         "type": "boolean",
@@ -43706,6 +44015,12 @@
                         "default": false,
                         "title": "Enable Activity Stream for Inventory Sync",
                         "description": "Enable capturing activity for the activity stream when running inventory sync."
+                    },
+                    "INDIRECT_NODE_COUNTING_ENABLED": {
+                        "type": "boolean",
+                        "default": true,
+                        "title": "Enable Indirect Node Counting",
+                        "description": "Controls whether Controller processes indirect managed nodes reported by jobs."
                     },
                     "ORG_ADMINS_CAN_SEE_ALL_USERS": {
                         "type": "boolean",
@@ -44453,6 +44768,7 @@
             },
             "PatchedTeamRequest": {
                 "type": "object",
+                "description": "Drop-in mixin for DRF ModelSerializer that rejects unsafe text input.\nMust appear before ModelSerializer in MRO.\n\nUsage::\n\n    from ansible_base.lib.serializers.mixins import CleanTextMixin\n\n    class MySerializer(CleanTextMixin, serializers.ModelSerializer):\n        class Meta:\n            model = MyModel\n            fields = '__all__'\n\nTier 1 (name fields): strict character allowlist via validate_resource_name.\nTier 2 (all other CharField/TextField): dangerous-pattern blocklist via validate_free_text.\nOn update, unchanged fields are grandfathered (skipped).\n\nConfigurable attributes:\n    name_fields: field names routed to Tier 1 (default: name, username, hostname).\n    excluded_fields: field names skipped entirely — use for fields that legitimately\n        contain HTML or template syntax (e.g. Jinja2 templates, custom login HTML).\n        Also skips entire JSONFields when listed here.\n    excluded_json_keys: mapping of JSONField name to a frozenset of sub-keys\n        that should be skipped during validation (e.g. PEM keys, template content).\n        Example: {'inputs': frozenset({'ssh_key_data'})}\n\nSee docs/lib/validation.md for the full contract.",
                 "properties": {
                     "name": {
                         "type": "string",
@@ -44472,6 +44788,7 @@
             },
             "PatchedUserRequest": {
                 "type": "object",
+                "description": "Drop-in mixin for DRF ModelSerializer that rejects unsafe text input.\nMust appear before ModelSerializer in MRO.\n\nUsage::\n\n    from ansible_base.lib.serializers.mixins import CleanTextMixin\n\n    class MySerializer(CleanTextMixin, serializers.ModelSerializer):\n        class Meta:\n            model = MyModel\n            fields = '__all__'\n\nTier 1 (name fields): strict character allowlist via validate_resource_name.\nTier 2 (all other CharField/TextField): dangerous-pattern blocklist via validate_free_text.\nOn update, unchanged fields are grandfathered (skipped).\n\nConfigurable attributes:\n    name_fields: field names routed to Tier 1 (default: name, username, hostname).\n    excluded_fields: field names skipped entirely — use for fields that legitimately\n        contain HTML or template syntax (e.g. Jinja2 templates, custom login HTML).\n        Also skips entire JSONFields when listed here.\n    excluded_json_keys: mapping of JSONField name to a frozenset of sub-keys\n        that should be skipped during validation (e.g. PEM keys, template content).\n        Example: {'inputs': frozenset({'ssh_key_data'})}\n\nSee docs/lib/validation.md for the full contract.",
                 "properties": {
                     "username": {
                         "type": "string",
@@ -44517,6 +44834,7 @@
             },
             "PatchedWorkflowApprovalTemplateRequest": {
                 "type": "object",
+                "description": "Drop-in mixin for DRF ModelSerializer that rejects unsafe text input.\nMust appear before ModelSerializer in MRO.\n\nUsage::\n\n    from ansible_base.lib.serializers.mixins import CleanTextMixin\n\n    class MySerializer(CleanTextMixin, serializers.ModelSerializer):\n        class Meta:\n            model = MyModel\n            fields = '__all__'\n\nTier 1 (name fields): strict character allowlist via validate_resource_name.\nTier 2 (all other CharField/TextField): dangerous-pattern blocklist via validate_free_text.\nOn update, unchanged fields are grandfathered (skipped).\n\nConfigurable attributes:\n    name_fields: field names routed to Tier 1 (default: name, username, hostname).\n    excluded_fields: field names skipped entirely — use for fields that legitimately\n        contain HTML or template syntax (e.g. Jinja2 templates, custom login HTML).\n        Also skips entire JSONFields when listed here.\n    excluded_json_keys: mapping of JSONField name to a frozenset of sub-keys\n        that should be skipped during validation (e.g. PEM keys, template content).\n        Example: {'inputs': frozenset({'ssh_key_data'})}\n\nSee docs/lib/validation.md for the full contract.",
                 "properties": {
                     "name": {
                         "type": "string",
@@ -44646,7 +44964,7 @@
             },
             "PatchedWorkflowJobTemplateRequest": {
                 "type": "object",
-                "description": "Provide recent jobs and survey details in summary_fields",
+                "description": "CleanTextMixin for serializers whose Meta.model derives from\nLaunchTimeConfigBase (WorkflowJobTemplate, WorkflowJobTemplateNode,\nWorkflowJobNode, Schedule). Those models store scm_branch/limit/job_tags/\nskip_tags as NullablePromptPseudoField descriptors backed by the\nchar_prompts JSONField, not real django.db.models.Field instances, so\nCleanTextMixin's model._meta.get_fields() auto-discovery can never see\nthem (AAP-78694). This adds them back in explicitly as Tier 2 free-text\nfields. They are always declared as plain serializer CharFields (see\nLaunchConfigurationBaseSerializer below), so self.fields has them\nwhenever applicable, and grandfathering still works because the\npseudo-field descriptor's __get__ correctly returns the stored\nchar_prompts value via getattr(self.instance, name).",
                 "properties": {
                     "name": {
                         "type": "string",
@@ -44757,6 +45075,7 @@
             },
             "Project": {
                 "type": "object",
+                "description": "Drop-in mixin for DRF ModelSerializer that rejects unsafe text input.\nMust appear before ModelSerializer in MRO.\n\nUsage::\n\n    from ansible_base.lib.serializers.mixins import CleanTextMixin\n\n    class MySerializer(CleanTextMixin, serializers.ModelSerializer):\n        class Meta:\n            model = MyModel\n            fields = '__all__'\n\nTier 1 (name fields): strict character allowlist via validate_resource_name.\nTier 2 (all other CharField/TextField): dangerous-pattern blocklist via validate_free_text.\nOn update, unchanged fields are grandfathered (skipped).\n\nConfigurable attributes:\n    name_fields: field names routed to Tier 1 (default: name, username, hostname).\n    excluded_fields: field names skipped entirely — use for fields that legitimately\n        contain HTML or template syntax (e.g. Jinja2 templates, custom login HTML).\n        Also skips entire JSONFields when listed here.\n    excluded_json_keys: mapping of JSONField name to a frozenset of sub-keys\n        that should be skipped during validation (e.g. PEM keys, template content).\n        Example: {'inputs': frozenset({'ssh_key_data'})}\n\nSee docs/lib/validation.md for the full contract.",
                 "properties": {
                     "id": {
                         "type": "integer",
@@ -44965,6 +45284,7 @@
             },
             "ProjectInventories": {
                 "type": "object",
+                "description": "Drop-in mixin for DRF ModelSerializer that rejects unsafe text input.\nMust appear before ModelSerializer in MRO.\n\nUsage::\n\n    from ansible_base.lib.serializers.mixins import CleanTextMixin\n\n    class MySerializer(CleanTextMixin, serializers.ModelSerializer):\n        class Meta:\n            model = MyModel\n            fields = '__all__'\n\nTier 1 (name fields): strict character allowlist via validate_resource_name.\nTier 2 (all other CharField/TextField): dangerous-pattern blocklist via validate_free_text.\nOn update, unchanged fields are grandfathered (skipped).\n\nConfigurable attributes:\n    name_fields: field names routed to Tier 1 (default: name, username, hostname).\n    excluded_fields: field names skipped entirely — use for fields that legitimately\n        contain HTML or template syntax (e.g. Jinja2 templates, custom login HTML).\n        Also skips entire JSONFields when listed here.\n    excluded_json_keys: mapping of JSONField name to a frozenset of sub-keys\n        that should be skipped during validation (e.g. PEM keys, template content).\n        Example: {'inputs': frozenset({'ssh_key_data'})}\n\nSee docs/lib/validation.md for the full contract.",
                 "properties": {
                     "inventory_files": {
                         "readOnly": true,
@@ -44974,6 +45294,7 @@
             },
             "ProjectPlaybooks": {
                 "type": "object",
+                "description": "Drop-in mixin for DRF ModelSerializer that rejects unsafe text input.\nMust appear before ModelSerializer in MRO.\n\nUsage::\n\n    from ansible_base.lib.serializers.mixins import CleanTextMixin\n\n    class MySerializer(CleanTextMixin, serializers.ModelSerializer):\n        class Meta:\n            model = MyModel\n            fields = '__all__'\n\nTier 1 (name fields): strict character allowlist via validate_resource_name.\nTier 2 (all other CharField/TextField): dangerous-pattern blocklist via validate_free_text.\nOn update, unchanged fields are grandfathered (skipped).\n\nConfigurable attributes:\n    name_fields: field names routed to Tier 1 (default: name, username, hostname).\n    excluded_fields: field names skipped entirely — use for fields that legitimately\n        contain HTML or template syntax (e.g. Jinja2 templates, custom login HTML).\n        Also skips entire JSONFields when listed here.\n    excluded_json_keys: mapping of JSONField name to a frozenset of sub-keys\n        that should be skipped during validation (e.g. PEM keys, template content).\n        Example: {'inputs': frozenset({'ssh_key_data'})}\n\nSee docs/lib/validation.md for the full contract.",
                 "properties": {
                     "playbooks": {
                         "type": "string",
@@ -44984,6 +45305,7 @@
             },
             "ProjectRequest": {
                 "type": "object",
+                "description": "Drop-in mixin for DRF ModelSerializer that rejects unsafe text input.\nMust appear before ModelSerializer in MRO.\n\nUsage::\n\n    from ansible_base.lib.serializers.mixins import CleanTextMixin\n\n    class MySerializer(CleanTextMixin, serializers.ModelSerializer):\n        class Meta:\n            model = MyModel\n            fields = '__all__'\n\nTier 1 (name fields): strict character allowlist via validate_resource_name.\nTier 2 (all other CharField/TextField): dangerous-pattern blocklist via validate_free_text.\nOn update, unchanged fields are grandfathered (skipped).\n\nConfigurable attributes:\n    name_fields: field names routed to Tier 1 (default: name, username, hostname).\n    excluded_fields: field names skipped entirely — use for fields that legitimately\n        contain HTML or template syntax (e.g. Jinja2 templates, custom login HTML).\n        Also skips entire JSONFields when listed here.\n    excluded_json_keys: mapping of JSONField name to a frozenset of sub-keys\n        that should be skipped during validation (e.g. PEM keys, template content).\n        Example: {'inputs': frozenset({'ssh_key_data'})}\n\nSee docs/lib/validation.md for the full contract.",
                 "properties": {
                     "name": {
                         "type": "string",
@@ -45781,6 +46103,7 @@
             },
             "ProjectUpdateView": {
                 "type": "object",
+                "description": "Drop-in mixin for DRF ModelSerializer that rejects unsafe text input.\nMust appear before ModelSerializer in MRO.\n\nUsage::\n\n    from ansible_base.lib.serializers.mixins import CleanTextMixin\n\n    class MySerializer(CleanTextMixin, serializers.ModelSerializer):\n        class Meta:\n            model = MyModel\n            fields = '__all__'\n\nTier 1 (name fields): strict character allowlist via validate_resource_name.\nTier 2 (all other CharField/TextField): dangerous-pattern blocklist via validate_free_text.\nOn update, unchanged fields are grandfathered (skipped).\n\nConfigurable attributes:\n    name_fields: field names routed to Tier 1 (default: name, username, hostname).\n    excluded_fields: field names skipped entirely — use for fields that legitimately\n        contain HTML or template syntax (e.g. Jinja2 templates, custom login HTML).\n        Also skips entire JSONFields when listed here.\n    excluded_json_keys: mapping of JSONField name to a frozenset of sub-keys\n        that should be skipped during validation (e.g. PEM keys, template content).\n        Example: {'inputs': frozenset({'ssh_key_data'})}\n\nSee docs/lib/validation.md for the full contract.",
                 "properties": {
                     "can_update": {
                         "type": "boolean",
@@ -45914,6 +46237,7 @@
             },
             "ResourceAccessListElement": {
                 "type": "object",
+                "description": "Drop-in mixin for DRF ModelSerializer that rejects unsafe text input.\nMust appear before ModelSerializer in MRO.\n\nUsage::\n\n    from ansible_base.lib.serializers.mixins import CleanTextMixin\n\n    class MySerializer(CleanTextMixin, serializers.ModelSerializer):\n        class Meta:\n            model = MyModel\n            fields = '__all__'\n\nTier 1 (name fields): strict character allowlist via validate_resource_name.\nTier 2 (all other CharField/TextField): dangerous-pattern blocklist via validate_free_text.\nOn update, unchanged fields are grandfathered (skipped).\n\nConfigurable attributes:\n    name_fields: field names routed to Tier 1 (default: name, username, hostname).\n    excluded_fields: field names skipped entirely — use for fields that legitimately\n        contain HTML or template syntax (e.g. Jinja2 templates, custom login HTML).\n        Also skips entire JSONFields when listed here.\n    excluded_json_keys: mapping of JSONField name to a frozenset of sub-keys\n        that should be skipped during validation (e.g. PEM keys, template content).\n        Example: {'inputs': frozenset({'ssh_key_data'})}\n\nSee docs/lib/validation.md for the full contract.",
                 "properties": {
                     "id": {
                         "type": "integer",
@@ -46126,6 +46450,7 @@
             },
             "RoleDefinition": {
                 "type": "object",
+                "description": "Drop-in mixin for DRF ModelSerializer that rejects unsafe text input.\nMust appear before ModelSerializer in MRO.\n\nUsage::\n\n    from ansible_base.lib.serializers.mixins import CleanTextMixin\n\n    class MySerializer(CleanTextMixin, serializers.ModelSerializer):\n        class Meta:\n            model = MyModel\n            fields = '__all__'\n\nTier 1 (name fields): strict character allowlist via validate_resource_name.\nTier 2 (all other CharField/TextField): dangerous-pattern blocklist via validate_free_text.\nOn update, unchanged fields are grandfathered (skipped).\n\nConfigurable attributes:\n    name_fields: field names routed to Tier 1 (default: name, username, hostname).\n    excluded_fields: field names skipped entirely — use for fields that legitimately\n        contain HTML or template syntax (e.g. Jinja2 templates, custom login HTML).\n        Also skips entire JSONFields when listed here.\n    excluded_json_keys: mapping of JSONField name to a frozenset of sub-keys\n        that should be skipped during validation (e.g. PEM keys, template content).\n        Example: {'inputs': frozenset({'ssh_key_data'})}\n\nSee docs/lib/validation.md for the full contract.",
                 "properties": {
                     "id": {
                         "type": "integer",
@@ -46207,6 +46532,7 @@
             },
             "RoleDefinitionDetail": {
                 "type": "object",
+                "description": "Drop-in mixin for DRF ModelSerializer that rejects unsafe text input.\nMust appear before ModelSerializer in MRO.\n\nUsage::\n\n    from ansible_base.lib.serializers.mixins import CleanTextMixin\n\n    class MySerializer(CleanTextMixin, serializers.ModelSerializer):\n        class Meta:\n            model = MyModel\n            fields = '__all__'\n\nTier 1 (name fields): strict character allowlist via validate_resource_name.\nTier 2 (all other CharField/TextField): dangerous-pattern blocklist via validate_free_text.\nOn update, unchanged fields are grandfathered (skipped).\n\nConfigurable attributes:\n    name_fields: field names routed to Tier 1 (default: name, username, hostname).\n    excluded_fields: field names skipped entirely — use for fields that legitimately\n        contain HTML or template syntax (e.g. Jinja2 templates, custom login HTML).\n        Also skips entire JSONFields when listed here.\n    excluded_json_keys: mapping of JSONField name to a frozenset of sub-keys\n        that should be skipped during validation (e.g. PEM keys, template content).\n        Example: {'inputs': frozenset({'ssh_key_data'})}\n\nSee docs/lib/validation.md for the full contract.",
                 "properties": {
                     "id": {
                         "type": "integer",
@@ -46288,6 +46614,7 @@
             },
             "RoleDefinitionDetailRequest": {
                 "type": "object",
+                "description": "Drop-in mixin for DRF ModelSerializer that rejects unsafe text input.\nMust appear before ModelSerializer in MRO.\n\nUsage::\n\n    from ansible_base.lib.serializers.mixins import CleanTextMixin\n\n    class MySerializer(CleanTextMixin, serializers.ModelSerializer):\n        class Meta:\n            model = MyModel\n            fields = '__all__'\n\nTier 1 (name fields): strict character allowlist via validate_resource_name.\nTier 2 (all other CharField/TextField): dangerous-pattern blocklist via validate_free_text.\nOn update, unchanged fields are grandfathered (skipped).\n\nConfigurable attributes:\n    name_fields: field names routed to Tier 1 (default: name, username, hostname).\n    excluded_fields: field names skipped entirely — use for fields that legitimately\n        contain HTML or template syntax (e.g. Jinja2 templates, custom login HTML).\n        Also skips entire JSONFields when listed here.\n    excluded_json_keys: mapping of JSONField name to a frozenset of sub-keys\n        that should be skipped during validation (e.g. PEM keys, template content).\n        Example: {'inputs': frozenset({'ssh_key_data'})}\n\nSee docs/lib/validation.md for the full contract.",
                 "properties": {
                     "permissions": {
                         "type": "array",
@@ -46314,6 +46641,7 @@
             },
             "RoleDefinitionRequest": {
                 "type": "object",
+                "description": "Drop-in mixin for DRF ModelSerializer that rejects unsafe text input.\nMust appear before ModelSerializer in MRO.\n\nUsage::\n\n    from ansible_base.lib.serializers.mixins import CleanTextMixin\n\n    class MySerializer(CleanTextMixin, serializers.ModelSerializer):\n        class Meta:\n            model = MyModel\n            fields = '__all__'\n\nTier 1 (name fields): strict character allowlist via validate_resource_name.\nTier 2 (all other CharField/TextField): dangerous-pattern blocklist via validate_free_text.\nOn update, unchanged fields are grandfathered (skipped).\n\nConfigurable attributes:\n    name_fields: field names routed to Tier 1 (default: name, username, hostname).\n    excluded_fields: field names skipped entirely — use for fields that legitimately\n        contain HTML or template syntax (e.g. Jinja2 templates, custom login HTML).\n        Also skips entire JSONFields when listed here.\n    excluded_json_keys: mapping of JSONField name to a frozenset of sub-keys\n        that should be skipped during validation (e.g. PEM keys, template content).\n        Example: {'inputs': frozenset({'ssh_key_data'})}\n\nSee docs/lib/validation.md for the full contract.",
                 "properties": {
                     "permissions": {
                         "type": "array",
@@ -46571,6 +46899,7 @@
             },
             "Schedule": {
                 "type": "object",
+                "description": "CleanTextMixin for serializers whose Meta.model derives from\nLaunchTimeConfigBase (WorkflowJobTemplate, WorkflowJobTemplateNode,\nWorkflowJobNode, Schedule). Those models store scm_branch/limit/job_tags/\nskip_tags as NullablePromptPseudoField descriptors backed by the\nchar_prompts JSONField, not real django.db.models.Field instances, so\nCleanTextMixin's model._meta.get_fields() auto-discovery can never see\nthem (AAP-78694). This adds them back in explicitly as Tier 2 free-text\nfields. They are always declared as plain serializer CharFields (see\nLaunchConfigurationBaseSerializer below), so self.fields has them\nwhenever applicable, and grandfathering still works because the\npseudo-field descriptor's __get__ correctly returns the stored\nchar_prompts value via getattr(self.instance, name).",
                 "properties": {
                     "rrule": {
                         "type": "string",
@@ -46765,6 +47094,7 @@
             },
             "ScheduleRequest": {
                 "type": "object",
+                "description": "CleanTextMixin for serializers whose Meta.model derives from\nLaunchTimeConfigBase (WorkflowJobTemplate, WorkflowJobTemplateNode,\nWorkflowJobNode, Schedule). Those models store scm_branch/limit/job_tags/\nskip_tags as NullablePromptPseudoField descriptors backed by the\nchar_prompts JSONField, not real django.db.models.Field instances, so\nCleanTextMixin's model._meta.get_fields() auto-discovery can never see\nthem (AAP-78694). This adds them back in explicitly as Tier 2 free-text\nfields. They are always declared as plain serializer CharFields (see\nLaunchConfigurationBaseSerializer below), so self.fields has them\nwhenever applicable, and grandfathering still works because the\npseudo-field descriptor's __get__ correctly returns the stored\nchar_prompts value via getattr(self.instance, name).",
                 "properties": {
                     "rrule": {
                         "type": "string",
@@ -46908,6 +47238,11 @@
                         "type": "string",
                         "description": "The name of this role."
                     },
+                    "parent_reference": {
+                        "type": "string",
+                        "description": "Read parent_reference from the prefetched object_role relation.",
+                        "readOnly": true
+                    },
                     "team_ansible_id": {
                         "type": "string",
                         "format": "uuid"
@@ -46984,6 +47319,11 @@
                         "type": "string",
                         "description": "The name of this role."
                     },
+                    "parent_reference": {
+                        "type": "string",
+                        "description": "Read parent_reference from the prefetched object_role relation.",
+                        "readOnly": true
+                    },
                     "user_ansible_id": {
                         "type": "string",
                         "format": "uuid"
@@ -47045,7 +47385,7 @@
             },
             "SettingSingleton": {
                 "type": "object",
-                "description": "Present a group of settings (by category) as a single object.",
+                "description": "Present a group of settings (by category) as a single object.\n\nUses PlainSerializerCleanTextMixin because there is no Django model whose\nfields match the dynamic settings registry. Top-level CharFields get Tier\n1/2 text validation; ListField/DictField/JSONField string children are\nwalked via CleanTextMixin's nested JSON validation path.",
                 "properties": {
                     "ACTIVITY_STREAM_ENABLED": {
                         "type": "boolean",
@@ -47058,6 +47398,12 @@
                         "default": false,
                         "title": "Enable Activity Stream for Inventory Sync",
                         "description": "Enable capturing activity for the activity stream when running inventory sync."
+                    },
+                    "INDIRECT_NODE_COUNTING_ENABLED": {
+                        "type": "boolean",
+                        "default": true,
+                        "title": "Enable Indirect Node Counting",
+                        "description": "Controls whether Controller processes indirect managed nodes reported by jobs."
                     },
                     "ORG_ADMINS_CAN_SEE_ALL_USERS": {
                         "type": "boolean",
@@ -48040,7 +48386,7 @@
             },
             "SettingSingletonRequest": {
                 "type": "object",
-                "description": "Present a group of settings (by category) as a single object.",
+                "description": "Present a group of settings (by category) as a single object.\n\nUses PlainSerializerCleanTextMixin because there is no Django model whose\nfields match the dynamic settings registry. Top-level CharFields get Tier\n1/2 text validation; ListField/DictField/JSONField string children are\nwalked via CleanTextMixin's nested JSON validation path.",
                 "properties": {
                     "ACTIVITY_STREAM_ENABLED": {
                         "type": "boolean",
@@ -48053,6 +48399,12 @@
                         "default": false,
                         "title": "Enable Activity Stream for Inventory Sync",
                         "description": "Enable capturing activity for the activity stream when running inventory sync."
+                    },
+                    "INDIRECT_NODE_COUNTING_ENABLED": {
+                        "type": "boolean",
+                        "default": true,
+                        "title": "Enable Indirect Node Counting",
+                        "description": "Controls whether Controller processes indirect managed nodes reported by jobs."
                     },
                     "ORG_ADMINS_CAN_SEE_ALL_USERS": {
                         "type": "boolean",
@@ -49351,6 +49703,7 @@
             },
             "Team": {
                 "type": "object",
+                "description": "Drop-in mixin for DRF ModelSerializer that rejects unsafe text input.\nMust appear before ModelSerializer in MRO.\n\nUsage::\n\n    from ansible_base.lib.serializers.mixins import CleanTextMixin\n\n    class MySerializer(CleanTextMixin, serializers.ModelSerializer):\n        class Meta:\n            model = MyModel\n            fields = '__all__'\n\nTier 1 (name fields): strict character allowlist via validate_resource_name.\nTier 2 (all other CharField/TextField): dangerous-pattern blocklist via validate_free_text.\nOn update, unchanged fields are grandfathered (skipped).\n\nConfigurable attributes:\n    name_fields: field names routed to Tier 1 (default: name, username, hostname).\n    excluded_fields: field names skipped entirely — use for fields that legitimately\n        contain HTML or template syntax (e.g. Jinja2 templates, custom login HTML).\n        Also skips entire JSONFields when listed here.\n    excluded_json_keys: mapping of JSONField name to a frozenset of sub-keys\n        that should be skipped during validation (e.g. PEM keys, template content).\n        Example: {'inputs': frozenset({'ssh_key_data'})}\n\nSee docs/lib/validation.md for the full contract.",
                 "properties": {
                     "id": {
                         "type": "integer",
@@ -49509,6 +49862,7 @@
             },
             "TeamCredentialSerializerCreate": {
                 "type": "object",
+                "description": "Drop-in mixin for DRF ModelSerializer that rejects unsafe text input.\nMust appear before ModelSerializer in MRO.\n\nUsage::\n\n    from ansible_base.lib.serializers.mixins import CleanTextMixin\n\n    class MySerializer(CleanTextMixin, serializers.ModelSerializer):\n        class Meta:\n            model = MyModel\n            fields = '__all__'\n\nTier 1 (name fields): strict character allowlist via validate_resource_name.\nTier 2 (all other CharField/TextField): dangerous-pattern blocklist via validate_free_text.\nOn update, unchanged fields are grandfathered (skipped).\n\nConfigurable attributes:\n    name_fields: field names routed to Tier 1 (default: name, username, hostname).\n    excluded_fields: field names skipped entirely — use for fields that legitimately\n        contain HTML or template syntax (e.g. Jinja2 templates, custom login HTML).\n        Also skips entire JSONFields when listed here.\n    excluded_json_keys: mapping of JSONField name to a frozenset of sub-keys\n        that should be skipped during validation (e.g. PEM keys, template content).\n        Example: {'inputs': frozenset({'ssh_key_data'})}\n\nSee docs/lib/validation.md for the full contract.",
                 "properties": {
                     "id": {
                         "type": "integer",
@@ -49580,6 +49934,7 @@
             },
             "TeamCredentialSerializerCreateRequest": {
                 "type": "object",
+                "description": "Drop-in mixin for DRF ModelSerializer that rejects unsafe text input.\nMust appear before ModelSerializer in MRO.\n\nUsage::\n\n    from ansible_base.lib.serializers.mixins import CleanTextMixin\n\n    class MySerializer(CleanTextMixin, serializers.ModelSerializer):\n        class Meta:\n            model = MyModel\n            fields = '__all__'\n\nTier 1 (name fields): strict character allowlist via validate_resource_name.\nTier 2 (all other CharField/TextField): dangerous-pattern blocklist via validate_free_text.\nOn update, unchanged fields are grandfathered (skipped).\n\nConfigurable attributes:\n    name_fields: field names routed to Tier 1 (default: name, username, hostname).\n    excluded_fields: field names skipped entirely — use for fields that legitimately\n        contain HTML or template syntax (e.g. Jinja2 templates, custom login HTML).\n        Also skips entire JSONFields when listed here.\n    excluded_json_keys: mapping of JSONField name to a frozenset of sub-keys\n        that should be skipped during validation (e.g. PEM keys, template content).\n        Example: {'inputs': frozenset({'ssh_key_data'})}\n\nSee docs/lib/validation.md for the full contract.",
                 "properties": {
                     "name": {
                         "type": "string",
@@ -49614,6 +49969,7 @@
             },
             "TeamRequest": {
                 "type": "object",
+                "description": "Drop-in mixin for DRF ModelSerializer that rejects unsafe text input.\nMust appear before ModelSerializer in MRO.\n\nUsage::\n\n    from ansible_base.lib.serializers.mixins import CleanTextMixin\n\n    class MySerializer(CleanTextMixin, serializers.ModelSerializer):\n        class Meta:\n            model = MyModel\n            fields = '__all__'\n\nTier 1 (name fields): strict character allowlist via validate_resource_name.\nTier 2 (all other CharField/TextField): dangerous-pattern blocklist via validate_free_text.\nOn update, unchanged fields are grandfathered (skipped).\n\nConfigurable attributes:\n    name_fields: field names routed to Tier 1 (default: name, username, hostname).\n    excluded_fields: field names skipped entirely — use for fields that legitimately\n        contain HTML or template syntax (e.g. Jinja2 templates, custom login HTML).\n        Also skips entire JSONFields when listed here.\n    excluded_json_keys: mapping of JSONField name to a frozenset of sub-keys\n        that should be skipped during validation (e.g. PEM keys, template content).\n        Example: {'inputs': frozenset({'ssh_key_data'})}\n\nSee docs/lib/validation.md for the full contract.",
                 "properties": {
                     "name": {
                         "type": "string",
@@ -49880,6 +50236,7 @@
             },
             "User": {
                 "type": "object",
+                "description": "Drop-in mixin for DRF ModelSerializer that rejects unsafe text input.\nMust appear before ModelSerializer in MRO.\n\nUsage::\n\n    from ansible_base.lib.serializers.mixins import CleanTextMixin\n\n    class MySerializer(CleanTextMixin, serializers.ModelSerializer):\n        class Meta:\n            model = MyModel\n            fields = '__all__'\n\nTier 1 (name fields): strict character allowlist via validate_resource_name.\nTier 2 (all other CharField/TextField): dangerous-pattern blocklist via validate_free_text.\nOn update, unchanged fields are grandfathered (skipped).\n\nConfigurable attributes:\n    name_fields: field names routed to Tier 1 (default: name, username, hostname).\n    excluded_fields: field names skipped entirely — use for fields that legitimately\n        contain HTML or template syntax (e.g. Jinja2 templates, custom login HTML).\n        Also skips entire JSONFields when listed here.\n    excluded_json_keys: mapping of JSONField name to a frozenset of sub-keys\n        that should be skipped during validation (e.g. PEM keys, template content).\n        Example: {'inputs': frozenset({'ssh_key_data'})}\n\nSee docs/lib/validation.md for the full contract.",
                 "properties": {
                     "id": {
                         "type": "integer",
@@ -50085,6 +50442,7 @@
             },
             "UserCredentialSerializerCreate": {
                 "type": "object",
+                "description": "Drop-in mixin for DRF ModelSerializer that rejects unsafe text input.\nMust appear before ModelSerializer in MRO.\n\nUsage::\n\n    from ansible_base.lib.serializers.mixins import CleanTextMixin\n\n    class MySerializer(CleanTextMixin, serializers.ModelSerializer):\n        class Meta:\n            model = MyModel\n            fields = '__all__'\n\nTier 1 (name fields): strict character allowlist via validate_resource_name.\nTier 2 (all other CharField/TextField): dangerous-pattern blocklist via validate_free_text.\nOn update, unchanged fields are grandfathered (skipped).\n\nConfigurable attributes:\n    name_fields: field names routed to Tier 1 (default: name, username, hostname).\n    excluded_fields: field names skipped entirely — use for fields that legitimately\n        contain HTML or template syntax (e.g. Jinja2 templates, custom login HTML).\n        Also skips entire JSONFields when listed here.\n    excluded_json_keys: mapping of JSONField name to a frozenset of sub-keys\n        that should be skipped during validation (e.g. PEM keys, template content).\n        Example: {'inputs': frozenset({'ssh_key_data'})}\n\nSee docs/lib/validation.md for the full contract.",
                 "properties": {
                     "id": {
                         "type": "integer",
@@ -50156,6 +50514,7 @@
             },
             "UserCredentialSerializerCreateRequest": {
                 "type": "object",
+                "description": "Drop-in mixin for DRF ModelSerializer that rejects unsafe text input.\nMust appear before ModelSerializer in MRO.\n\nUsage::\n\n    from ansible_base.lib.serializers.mixins import CleanTextMixin\n\n    class MySerializer(CleanTextMixin, serializers.ModelSerializer):\n        class Meta:\n            model = MyModel\n            fields = '__all__'\n\nTier 1 (name fields): strict character allowlist via validate_resource_name.\nTier 2 (all other CharField/TextField): dangerous-pattern blocklist via validate_free_text.\nOn update, unchanged fields are grandfathered (skipped).\n\nConfigurable attributes:\n    name_fields: field names routed to Tier 1 (default: name, username, hostname).\n    excluded_fields: field names skipped entirely — use for fields that legitimately\n        contain HTML or template syntax (e.g. Jinja2 templates, custom login HTML).\n        Also skips entire JSONFields when listed here.\n    excluded_json_keys: mapping of JSONField name to a frozenset of sub-keys\n        that should be skipped during validation (e.g. PEM keys, template content).\n        Example: {'inputs': frozenset({'ssh_key_data'})}\n\nSee docs/lib/validation.md for the full contract.",
                 "properties": {
                     "name": {
                         "type": "string",
@@ -50190,6 +50549,7 @@
             },
             "UserRequest": {
                 "type": "object",
+                "description": "Drop-in mixin for DRF ModelSerializer that rejects unsafe text input.\nMust appear before ModelSerializer in MRO.\n\nUsage::\n\n    from ansible_base.lib.serializers.mixins import CleanTextMixin\n\n    class MySerializer(CleanTextMixin, serializers.ModelSerializer):\n        class Meta:\n            model = MyModel\n            fields = '__all__'\n\nTier 1 (name fields): strict character allowlist via validate_resource_name.\nTier 2 (all other CharField/TextField): dangerous-pattern blocklist via validate_free_text.\nOn update, unchanged fields are grandfathered (skipped).\n\nConfigurable attributes:\n    name_fields: field names routed to Tier 1 (default: name, username, hostname).\n    excluded_fields: field names skipped entirely — use for fields that legitimately\n        contain HTML or template syntax (e.g. Jinja2 templates, custom login HTML).\n        Also skips entire JSONFields when listed here.\n    excluded_json_keys: mapping of JSONField name to a frozenset of sub-keys\n        that should be skipped during validation (e.g. PEM keys, template content).\n        Example: {'inputs': frozenset({'ssh_key_data'})}\n\nSee docs/lib/validation.md for the full contract.",
                 "properties": {
                     "username": {
                         "type": "string",
@@ -50556,6 +50916,7 @@
             },
             "WorkflowApprovalTemplate": {
                 "type": "object",
+                "description": "Drop-in mixin for DRF ModelSerializer that rejects unsafe text input.\nMust appear before ModelSerializer in MRO.\n\nUsage::\n\n    from ansible_base.lib.serializers.mixins import CleanTextMixin\n\n    class MySerializer(CleanTextMixin, serializers.ModelSerializer):\n        class Meta:\n            model = MyModel\n            fields = '__all__'\n\nTier 1 (name fields): strict character allowlist via validate_resource_name.\nTier 2 (all other CharField/TextField): dangerous-pattern blocklist via validate_free_text.\nOn update, unchanged fields are grandfathered (skipped).\n\nConfigurable attributes:\n    name_fields: field names routed to Tier 1 (default: name, username, hostname).\n    excluded_fields: field names skipped entirely — use for fields that legitimately\n        contain HTML or template syntax (e.g. Jinja2 templates, custom login HTML).\n        Also skips entire JSONFields when listed here.\n    excluded_json_keys: mapping of JSONField name to a frozenset of sub-keys\n        that should be skipped during validation (e.g. PEM keys, template content).\n        Example: {'inputs': frozenset({'ssh_key_data'})}\n\nSee docs/lib/validation.md for the full contract.",
                 "properties": {
                     "id": {
                         "type": "integer",
@@ -50652,6 +51013,7 @@
             },
             "WorkflowApprovalTemplateRequest": {
                 "type": "object",
+                "description": "Drop-in mixin for DRF ModelSerializer that rejects unsafe text input.\nMust appear before ModelSerializer in MRO.\n\nUsage::\n\n    from ansible_base.lib.serializers.mixins import CleanTextMixin\n\n    class MySerializer(CleanTextMixin, serializers.ModelSerializer):\n        class Meta:\n            model = MyModel\n            fields = '__all__'\n\nTier 1 (name fields): strict character allowlist via validate_resource_name.\nTier 2 (all other CharField/TextField): dangerous-pattern blocklist via validate_free_text.\nOn update, unchanged fields are grandfathered (skipped).\n\nConfigurable attributes:\n    name_fields: field names routed to Tier 1 (default: name, username, hostname).\n    excluded_fields: field names skipped entirely — use for fields that legitimately\n        contain HTML or template syntax (e.g. Jinja2 templates, custom login HTML).\n        Also skips entire JSONFields when listed here.\n    excluded_json_keys: mapping of JSONField name to a frozenset of sub-keys\n        that should be skipped during validation (e.g. PEM keys, template content).\n        Example: {'inputs': frozenset({'ssh_key_data'})}\n\nSee docs/lib/validation.md for the full contract.",
                 "properties": {
                     "name": {
                         "type": "string",
@@ -50908,6 +51270,7 @@
             },
             "WorkflowJobLaunch": {
                 "type": "object",
+                "description": "CleanTextMixin for serializers whose Meta.model derives from\nLaunchTimeConfigBase (WorkflowJobTemplate, WorkflowJobTemplateNode,\nWorkflowJobNode, Schedule). Those models store scm_branch/limit/job_tags/\nskip_tags as NullablePromptPseudoField descriptors backed by the\nchar_prompts JSONField, not real django.db.models.Field instances, so\nCleanTextMixin's model._meta.get_fields() auto-discovery can never see\nthem (AAP-78694). This adds them back in explicitly as Tier 2 free-text\nfields. They are always declared as plain serializer CharFields (see\nLaunchConfigurationBaseSerializer below), so self.fields has them\nwhenever applicable, and grandfathering still works because the\npseudo-field descriptor's __get__ correctly returns the stored\nchar_prompts value via getattr(self.instance, name).",
                 "properties": {
                     "ask_inventory_on_launch": {
                         "type": "boolean",
@@ -50976,6 +51339,7 @@
             },
             "WorkflowJobLaunchRequest": {
                 "type": "object",
+                "description": "CleanTextMixin for serializers whose Meta.model derives from\nLaunchTimeConfigBase (WorkflowJobTemplate, WorkflowJobTemplateNode,\nWorkflowJobNode, Schedule). Those models store scm_branch/limit/job_tags/\nskip_tags as NullablePromptPseudoField descriptors backed by the\nchar_prompts JSONField, not real django.db.models.Field instances, so\nCleanTextMixin's model._meta.get_fields() auto-discovery can never see\nthem (AAP-78694). This adds them back in explicitly as Tier 2 free-text\nfields. They are always declared as plain serializer CharFields (see\nLaunchConfigurationBaseSerializer below), so self.fields has them\nwhenever applicable, and grandfathering still works because the\npseudo-field descriptor's __get__ correctly returns the stored\nchar_prompts value via getattr(self.instance, name).",
                 "properties": {
                     "extra_vars": {
                         "type": "string",
@@ -51301,6 +51665,7 @@
             },
             "WorkflowJobNodeDetail": {
                 "type": "object",
+                "description": "CleanTextMixin for serializers whose Meta.model derives from\nLaunchTimeConfigBase (WorkflowJobTemplate, WorkflowJobTemplateNode,\nWorkflowJobNode, Schedule). Those models store scm_branch/limit/job_tags/\nskip_tags as NullablePromptPseudoField descriptors backed by the\nchar_prompts JSONField, not real django.db.models.Field instances, so\nCleanTextMixin's model._meta.get_fields() auto-discovery can never see\nthem (AAP-78694). This adds them back in explicitly as Tier 2 free-text\nfields. They are always declared as plain serializer CharFields (see\nLaunchConfigurationBaseSerializer below), so self.fields has them\nwhenever applicable, and grandfathering still works because the\npseudo-field descriptor's __get__ correctly returns the stored\nchar_prompts value via getattr(self.instance, name).",
                 "properties": {
                     "id": {
                         "type": "integer",
@@ -51459,6 +51824,7 @@
             },
             "WorkflowJobNodeList": {
                 "type": "object",
+                "description": "CleanTextMixin for serializers whose Meta.model derives from\nLaunchTimeConfigBase (WorkflowJobTemplate, WorkflowJobTemplateNode,\nWorkflowJobNode, Schedule). Those models store scm_branch/limit/job_tags/\nskip_tags as NullablePromptPseudoField descriptors backed by the\nchar_prompts JSONField, not real django.db.models.Field instances, so\nCleanTextMixin's model._meta.get_fields() auto-discovery can never see\nthem (AAP-78694). This adds them back in explicitly as Tier 2 free-text\nfields. They are always declared as plain serializer CharFields (see\nLaunchConfigurationBaseSerializer below), so self.fields has them\nwhenever applicable, and grandfathering still works because the\npseudo-field descriptor's __get__ correctly returns the stored\nchar_prompts value via getattr(self.instance, name).",
                 "properties": {
                     "id": {
                         "type": "integer",
@@ -51617,7 +51983,7 @@
             },
             "WorkflowJobTemplate": {
                 "type": "object",
-                "description": "Provide recent jobs and survey details in summary_fields",
+                "description": "CleanTextMixin for serializers whose Meta.model derives from\nLaunchTimeConfigBase (WorkflowJobTemplate, WorkflowJobTemplateNode,\nWorkflowJobNode, Schedule). Those models store scm_branch/limit/job_tags/\nskip_tags as NullablePromptPseudoField descriptors backed by the\nchar_prompts JSONField, not real django.db.models.Field instances, so\nCleanTextMixin's model._meta.get_fields() auto-discovery can never see\nthem (AAP-78694). This adds them back in explicitly as Tier 2 free-text\nfields. They are always declared as plain serializer CharFields (see\nLaunchConfigurationBaseSerializer below), so self.fields has them\nwhenever applicable, and grandfathering still works because the\npseudo-field descriptor's __get__ correctly returns the stored\nchar_prompts value via getattr(self.instance, name).",
                 "properties": {
                     "id": {
                         "type": "integer",
@@ -51795,6 +52161,7 @@
             },
             "WorkflowJobTemplateNode": {
                 "type": "object",
+                "description": "CleanTextMixin for serializers whose Meta.model derives from\nLaunchTimeConfigBase (WorkflowJobTemplate, WorkflowJobTemplateNode,\nWorkflowJobNode, Schedule). Those models store scm_branch/limit/job_tags/\nskip_tags as NullablePromptPseudoField descriptors backed by the\nchar_prompts JSONField, not real django.db.models.Field instances, so\nCleanTextMixin's model._meta.get_fields() auto-discovery can never see\nthem (AAP-78694). This adds them back in explicitly as Tier 2 free-text\nfields. They are always declared as plain serializer CharFields (see\nLaunchConfigurationBaseSerializer below), so self.fields has them\nwhenever applicable, and grandfathering still works because the\npseudo-field descriptor's __get__ correctly returns the stored\nchar_prompts value via getattr(self.instance, name).",
                 "properties": {
                     "id": {
                         "type": "integer",
@@ -51945,6 +52312,7 @@
             },
             "WorkflowJobTemplateNodeCreateApproval": {
                 "type": "object",
+                "description": "Drop-in mixin for DRF ModelSerializer that rejects unsafe text input.\nMust appear before ModelSerializer in MRO.\n\nUsage::\n\n    from ansible_base.lib.serializers.mixins import CleanTextMixin\n\n    class MySerializer(CleanTextMixin, serializers.ModelSerializer):\n        class Meta:\n            model = MyModel\n            fields = '__all__'\n\nTier 1 (name fields): strict character allowlist via validate_resource_name.\nTier 2 (all other CharField/TextField): dangerous-pattern blocklist via validate_free_text.\nOn update, unchanged fields are grandfathered (skipped).\n\nConfigurable attributes:\n    name_fields: field names routed to Tier 1 (default: name, username, hostname).\n    excluded_fields: field names skipped entirely — use for fields that legitimately\n        contain HTML or template syntax (e.g. Jinja2 templates, custom login HTML).\n        Also skips entire JSONFields when listed here.\n    excluded_json_keys: mapping of JSONField name to a frozenset of sub-keys\n        that should be skipped during validation (e.g. PEM keys, template content).\n        Example: {'inputs': frozenset({'ssh_key_data'})}\n\nSee docs/lib/validation.md for the full contract.",
                 "properties": {
                     "timeout": {
                         "type": "integer",
@@ -51971,6 +52339,7 @@
             },
             "WorkflowJobTemplateNodeCreateApprovalRequest": {
                 "type": "object",
+                "description": "Drop-in mixin for DRF ModelSerializer that rejects unsafe text input.\nMust appear before ModelSerializer in MRO.\n\nUsage::\n\n    from ansible_base.lib.serializers.mixins import CleanTextMixin\n\n    class MySerializer(CleanTextMixin, serializers.ModelSerializer):\n        class Meta:\n            model = MyModel\n            fields = '__all__'\n\nTier 1 (name fields): strict character allowlist via validate_resource_name.\nTier 2 (all other CharField/TextField): dangerous-pattern blocklist via validate_free_text.\nOn update, unchanged fields are grandfathered (skipped).\n\nConfigurable attributes:\n    name_fields: field names routed to Tier 1 (default: name, username, hostname).\n    excluded_fields: field names skipped entirely — use for fields that legitimately\n        contain HTML or template syntax (e.g. Jinja2 templates, custom login HTML).\n        Also skips entire JSONFields when listed here.\n    excluded_json_keys: mapping of JSONField name to a frozenset of sub-keys\n        that should be skipped during validation (e.g. PEM keys, template content).\n        Example: {'inputs': frozenset({'ssh_key_data'})}\n\nSee docs/lib/validation.md for the full contract.",
                 "properties": {
                     "timeout": {
                         "type": "integer",
@@ -52252,6 +52621,7 @@
             },
             "WorkflowJobTemplateNodeRequest": {
                 "type": "object",
+                "description": "CleanTextMixin for serializers whose Meta.model derives from\nLaunchTimeConfigBase (WorkflowJobTemplate, WorkflowJobTemplateNode,\nWorkflowJobNode, Schedule). Those models store scm_branch/limit/job_tags/\nskip_tags as NullablePromptPseudoField descriptors backed by the\nchar_prompts JSONField, not real django.db.models.Field instances, so\nCleanTextMixin's model._meta.get_fields() auto-discovery can never see\nthem (AAP-78694). This adds them back in explicitly as Tier 2 free-text\nfields. They are always declared as plain serializer CharFields (see\nLaunchConfigurationBaseSerializer below), so self.fields has them\nwhenever applicable, and grandfathering still works because the\npseudo-field descriptor's __get__ correctly returns the stored\nchar_prompts value via getattr(self.instance, name).",
                 "properties": {
                     "extra_data": {
                         "default": {}
@@ -52354,7 +52724,7 @@
             },
             "WorkflowJobTemplateRequest": {
                 "type": "object",
-                "description": "Provide recent jobs and survey details in summary_fields",
+                "description": "CleanTextMixin for serializers whose Meta.model derives from\nLaunchTimeConfigBase (WorkflowJobTemplate, WorkflowJobTemplateNode,\nWorkflowJobNode, Schedule). Those models store scm_branch/limit/job_tags/\nskip_tags as NullablePromptPseudoField descriptors backed by the\nchar_prompts JSONField, not real django.db.models.Field instances, so\nCleanTextMixin's model._meta.get_fields() auto-discovery can never see\nthem (AAP-78694). This adds them back in explicitly as Tier 2 free-text\nfields. They are always declared as plain serializer CharFields (see\nLaunchConfigurationBaseSerializer below), so self.fields has them\nwhenever applicable, and grandfathering still works because the\npseudo-field descriptor's __get__ correctly returns the stored\nchar_prompts value via getattr(self.instance, name).",
                 "properties": {
                     "name": {
                         "type": "string",
