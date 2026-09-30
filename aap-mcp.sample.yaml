@@ -34,6 +34,21 @@
 # OpenAPI schema defaults take precedence over this value
 # default-page-size: 10
 
+# Directory of skills to serve over the MCP skills extension (SEP-2640).
+# Unset or empty disables skills entirely: the extension is not advertised and
+# skills/list and skills/get are not registered.
+# Each immediate subdirectory is one skill and must contain a SKILL.md whose
+# frontmatter `name` equals the directory name. A skill that fails to load is
+# skipped with a warning; it never prevents the server from starting.
+# Lower priority than the SKILLS_PATH environment variable.
+# skills_path: "/opt/aap-mcp/skills"
+
+# Organizational prefix for skill URIs: skill://<prefix>/<name>/<file>
+# Defaults to "aap". SEP-2640 constrains only the final segment of the skill
+# path, which must equal the frontmatter name; the prefix is ours to choose.
+# Lower priority than the SKILLS_URI_PREFIX environment variable.
+# skills_uri_prefix: "aap"
+
 services:
   - name: controller
     # url: "https://custom-controller.example.com/api/v2/schema/"
