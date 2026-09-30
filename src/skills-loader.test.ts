@@ -64,7 +64,11 @@ let root: string;
 const warnings: string[] = [];
 const warn = (m: string) => warnings.push(m);
 
-const writeSkill = (name: string, skillMd: string, extra: Record<string, string> = {}) => {
+const writeSkill = (
+  name: string,
+  skillMd: string,
+  extra: Record<string, string> = {},
+) => {
   const dir = join(root, name);
   mkdirSync(dir, { recursive: true });
   writeFileSync(join(dir, "SKILL.md"), skillMd);
@@ -195,9 +199,9 @@ describe("loadSkills", () => {
     expect(
       loadSkills({ directory: root, prefix: "redhat/aap", warn }).skills[0].uri,
     ).toBe("skill://redhat/aap/aap-platform-health-check/SKILL.md");
-    expect(loadSkills({ directory: root, prefix: "", warn }).skills[0].uri).toBe(
-      "skill://aap-platform-health-check/SKILL.md",
-    );
+    expect(
+      loadSkills({ directory: root, prefix: "", warn }).skills[0].uri,
+    ).toBe("skill://aap-platform-health-check/SKILL.md");
   });
 });
 
@@ -270,7 +274,9 @@ describe("loadSkills — SEP-2640 limits", () => {
     writeSkill("over-limit", minimal("over-limit"), extra);
 
     expect(loadSkills({ directory: root, warn }).skills).toEqual([]);
-    expect(warnings[0]).toContain(`exceeds the SEP-2640 limit of ${MAX_RESOURCES_PER_SKILL}`);
+    expect(warnings[0]).toContain(
+      `exceeds the SEP-2640 limit of ${MAX_RESOURCES_PER_SKILL}`,
+    );
   });
 
   it("skips a skill over the total size limit", () => {
@@ -319,10 +325,7 @@ describe("readCatalogFile — path safety", () => {
 
   it("serves binary files as base64 blobs rather than mangled text", () => {
     const png = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
-    writeFileSync(
-      join(root, "aap-platform-health-check", "diagram.png"),
-      png,
-    );
+    writeFileSync(join(root, "aap-platform-health-check", "diagram.png"), png);
     const catalog = loadSkills({ directory: root, warn });
     const contents = readCatalogFile(
       catalog,
@@ -330,7 +333,9 @@ describe("readCatalogFile — path safety", () => {
     );
     expect(contents).not.toBeNull();
     expect("blob" in contents!).toBe(true);
-    expect(Buffer.from((contents as { blob: string }).blob, "base64")).toEqual(png);
+    expect(Buffer.from((contents as { blob: string }).blob, "base64")).toEqual(
+      png,
+    );
   });
 });
 

@@ -288,11 +288,7 @@ describe("End-to-End: SEP-2640 skills", () => {
         [SKILL_URI, REFERENCE_URI].sort(),
       );
       for (const resource of entry.resources) {
-        expect(Object.keys(resource).sort()).toEqual([
-          "digest",
-          "size",
-          "uri",
-        ]);
+        expect(Object.keys(resource).sort()).toEqual(["digest", "size", "uri"]);
         expect(resource.digest).toMatch(/^sha256:[0-9a-f]{64}$/);
         expect(resource.size).toBeGreaterThan(0);
       }
@@ -376,7 +372,9 @@ describe("End-to-End: SEP-2640 skills", () => {
       const served = (await readBytes(SKILL_URI)).toString("utf8");
 
       const lines = served.split("\n");
-      const end = lines.findIndex((line, i) => i > 0 && line.trimEnd() === "---");
+      const end = lines.findIndex(
+        (line, i) => i > 0 && line.trimEnd() === "---",
+      );
       const reparsed = yamlLoad(lines.slice(1, end).join("\n"));
 
       expect(reparsed).toEqual(entry.frontmatter);

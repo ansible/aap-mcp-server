@@ -29,10 +29,7 @@ import { PseudoIdentityService, type UserInfo } from "./pseudo-identity.js";
 import { AapMcpConfig, loadToolsetsFromCfg } from "./config-utils.js";
 import { DISCOVER_TOOLS, handleDiscoverTool } from "./discover.js";
 import { loadSkills, type SkillCatalog } from "./skills-loader.js";
-import {
-  registerSkillHandlers,
-  SKILLS_CAPABILITIES,
-} from "./skills-server.js";
+import { registerSkillHandlers, SKILLS_CAPABILITIES } from "./skills-server.js";
 import { JsonRpcErrorCode } from "./error-codes.js";
 import { createOriginValidationMiddleware } from "./middleware/origin-validation.js";
 import { resolveMcpPort } from "./port.js";

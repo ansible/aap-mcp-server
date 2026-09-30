@@ -202,7 +202,11 @@ const loadOneSkill = (
       return null;
     }
     const parsed = yamlLoad(split.yaml);
-    if (parsed === null || typeof parsed !== "object" || Array.isArray(parsed)) {
+    if (
+      parsed === null ||
+      typeof parsed !== "object" ||
+      Array.isArray(parsed)
+    ) {
       warn(`Skipping skill '${dirName}': frontmatter is not a YAML mapping`);
       return null;
     }
@@ -345,12 +349,19 @@ export const loadSkills = (options: LoadSkillsOptions): SkillCatalog => {
 export const readCatalogFile = (
   catalog: SkillCatalog,
   uri: string,
-): { uri: string; mimeType: string; text: string } | { uri: string; mimeType: string; blob: string } | null => {
+):
+  | { uri: string; mimeType: string; text: string }
+  | { uri: string; mimeType: string; blob: string }
+  | null => {
   const file = catalog.files.get(uri);
   if (!file) return null;
 
   const bytes = readFileSync(file.path);
   return file.isText
     ? { uri, mimeType: "text/plain", text: bytes.toString("utf8") }
-    : { uri, mimeType: "application/octet-stream", blob: bytes.toString("base64") };
+    : {
+        uri,
+        mimeType: "application/octet-stream",
+        blob: bytes.toString("base64"),
+      };
 };

@@ -88,7 +88,9 @@ interface StandardSchemaLike<T> {
 /** skills/list takes no required params; an optional cursor is tolerated. */
 const ListParams = standardSchema((value) => {
   const params = (value ?? {}) as Record<string, unknown>;
-  return { cursor: typeof params.cursor === "string" ? params.cursor : undefined };
+  return {
+    cursor: typeof params.cursor === "string" ? params.cursor : undefined,
+  };
 });
 
 /** skills/get requires a skill URI. */

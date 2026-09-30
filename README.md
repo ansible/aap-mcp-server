@@ -182,7 +182,7 @@ The service provides several MCP endpoints:
 - **Standard MCP**: `/mcp` (POST, GET, DELETE)
 - **Toolset-specific**: `/mcp/{toolset}` where toolset matches your configured toolsets
 
-Toolset endpoints narrow the *tools* on offer. When skills are enabled, the full skill catalog
+Toolset endpoints narrow the _tools_ on offer. When skills are enabled, the full skill catalog
 is served from every endpoint, toolset-specific ones included — see
 [Serving Skills](#serving-skills).
 
@@ -275,7 +275,7 @@ or in `aap-mcp.yaml`:
 
 ```yaml
 skills_path: "/opt/aap-mcp/skills"
-skills_uri_prefix: "aap"   # optional, defaults to "aap"
+skills_uri_prefix: "aap" # optional, defaults to "aap"
 ```
 
 With `SKILLS_PATH` unset or empty the extension is not advertised and `skills/list` and
@@ -308,10 +308,10 @@ artifact later all look the same to it.
 
 ### What clients see
 
-| Method | Returns |
-| --- | --- |
-| `skills/list` | Every skill, each as `{uri, frontmatter, resources}` |
-| `skills/get` | One skill by URI, wrapped as `{"skill": {…}}` |
+| Method           | Returns                                                           |
+| ---------------- | ----------------------------------------------------------------- |
+| `skills/list`    | Every skill, each as `{uri, frontmatter, resources}`              |
+| `skills/get`     | One skill by URI, wrapped as `{"skill": {…}}`                     |
 | `resources/read` | The bytes of one file, addressed `skill://<prefix>/<name>/<file>` |
 
 Every file is listed with a SHA-256 `digest` and byte `size`. Clients are expected to verify
