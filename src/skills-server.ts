@@ -153,7 +153,17 @@ export const registerSkillHandlers = (
           `Not a skill served by this server: ${params.uri}`,
         );
       }
-      return toWireEntry(entry);
+      // The entry goes inside a `skill` envelope. Returning it inline looks
+      // reasonable and round-trips against our own client, but clients reject
+      // it: the reference implementation's schema requires the envelope and
+      // deliberately does not normalize an inline entry past its conformance
+      // checks. SEP-2640 leaves the caching attributes optional here; we send
+      // them because this result is as immutable as skills/list.
+      return {
+        skill: toWireEntry(entry),
+        ttlMs: SKILLS_LIST_TTL_MS,
+        cacheScope: SKILLS_LIST_CACHE_SCOPE,
+      };
     },
   );
 
