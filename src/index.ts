@@ -926,6 +926,31 @@ async function main(): Promise<void> {
     console.log(`  ${toolsetName}: ${toolsetTools.length}`);
   }
 
+  // Skills are off by default and the loader is deliberately quiet — it warns
+  // about skills it skips and says nothing about the ones it loads. That left
+  // no way to tell a working catalog from an empty one without making an
+  // authenticated request, so state the outcome either way.
+  console.log("");
+  if (!CONFIG.SKILLS_PATH) {
+    console.log("Skills: disabled (no SKILLS_PATH or skills_path configured)");
+  } else if (skillCatalog.skills.length === 0) {
+    console.log(`Skills: none loaded from ${CONFIG.SKILLS_PATH}`);
+    console.log(
+      "  The skills extension is NOT advertised. See warnings above for skipped skills.",
+    );
+  } else {
+    const fileCount = skillCatalog.files.size;
+    console.log(
+      `Skills: ${skillCatalog.skills.length} loaded from ${CONFIG.SKILLS_PATH} (${fileCount} files)`,
+    );
+    for (const skill of skillCatalog.skills) {
+      console.log(`  ✓ ${skill.name} → ${skill.uri}`);
+    }
+    console.log(
+      "  Served from every MCP endpoint, including toolset-specific ones.",
+    );
+  }
+
   console.log("");
   console.log("═══════════════════════════════════════════════════════════");
 
