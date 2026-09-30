@@ -12,6 +12,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { load as yamlLoad } from "js-yaml";
 import {
+  byCodePoint,
   loadSkills,
   readCatalogFile,
   splitFrontmatter,
@@ -87,6 +88,36 @@ beforeEach(() => {
 
 afterEach(() => {
   rmSync(root, { recursive: true, force: true });
+});
+
+describe("byCodePoint", () => {
+  it("orders by code point, not by locale", () => {
+    // The point of not using localeCompare: these two orderings disagree.
+    // A locale-aware collator ignores case and punctuation at the primary
+    // strength, so it would interleave these; code-point order is total and
+    // identical on every machine, which is what a catalog needs.
+    expect(["b.md", "A.md", "_a.md"].sort(byCodePoint)).toEqual([
+      "A.md",
+      "_a.md",
+      "b.md",
+    ]);
+  });
+
+  it("returns 0 for equal strings so sorting stays stable", () => {
+    expect(byCodePoint("same", "same")).toBe(0);
+  });
+
+  it("gives a skill's resources a machine-independent order", () => {
+    writeSkill("aap-platform-health-check", REFERENCE_SKILL_MD, {
+      "references/b.md": "b",
+      "references/A.md": "a",
+      "Z.md": "z",
+    });
+    const uris = loadSkills({ directory: root, warn }).skills[0].resources.map(
+      (r) => r.uri,
+    );
+    expect(uris).toEqual([...uris].sort(byCodePoint));
+  });
 });
 
 describe("splitFrontmatter", () => {

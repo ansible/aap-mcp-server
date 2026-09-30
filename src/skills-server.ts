@@ -34,7 +34,11 @@
 
 import { ProtocolError, ProtocolErrorCode } from "@modelcontextprotocol/server";
 import type { McpServer } from "@modelcontextprotocol/server";
-import { readCatalogFile, type SkillCatalog } from "./skills-loader.js";
+import {
+  byCodePoint,
+  readCatalogFile,
+  type SkillCatalog,
+} from "./skills-loader.js";
 
 /**
  * Freshness hint for skills/list. The catalog is built once at startup and is
@@ -170,7 +174,7 @@ export const registerSkillHandlers = (
   );
 
   server.server.setRequestHandler("resources/list", async () => ({
-    resources: [...catalog.files.keys()].sort().map((uri) => ({
+    resources: [...catalog.files.keys()].sort(byCodePoint).map((uri) => ({
       uri,
       name: uri.slice(uri.lastIndexOf("/") + 1),
       mimeType: uri.endsWith(".md") ? "text/markdown" : undefined,

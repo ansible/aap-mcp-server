@@ -29,6 +29,18 @@ import { load as yamlLoad } from "js-yaml";
 export const MAX_RESOURCES_PER_SKILL = 512;
 export const MAX_SKILL_BYTES = 16 * 1024 * 1024; // 16 MiB
 
+/**
+ * Order two file paths or URIs by Unicode code point.
+ *
+ * Deliberately not `localeCompare`: that orders by the host's locale, so the
+ * same catalog would enumerate differently on two machines. These are file
+ * paths and URIs rather than text shown to a person, and the order they are
+ * listed in should be a property of the content, not of the server's
+ * environment.
+ */
+export const byCodePoint = (a: string, b: string): number =>
+  a < b ? -1 : a > b ? 1 : 0;
+
 /** One file within a skill, as it appears in a skill entry's `resources`. */
 export interface SkillResource {
   uri: string;
@@ -240,7 +252,7 @@ const loadOneSkill = (
   }
 
   const skillPath = prefix ? `${prefix}/${name}` : name;
-  const relPaths = listFilesRecursive(skillDir).sort();
+  const relPaths = listFilesRecursive(skillDir).sort(byCodePoint);
 
   if (relPaths.length > MAX_RESOURCES_PER_SKILL) {
     warn(
@@ -341,7 +353,7 @@ export const loadSkills = (options: LoadSkillsOptions): SkillCatalog => {
     for (const [uri, file] of loaded.files) files.set(uri, file);
   }
 
-  skills.sort((a, b) => a.name.localeCompare(b.name));
+  skills.sort((a, b) => byCodePoint(a.name, b.name));
   return { skills, byUri, files };
 };
 
