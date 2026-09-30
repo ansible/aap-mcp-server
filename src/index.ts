@@ -28,6 +28,11 @@ import { AnalyticsService } from "./analytics.js";
 import { PseudoIdentityService, type UserInfo } from "./pseudo-identity.js";
 import { AapMcpConfig, loadToolsetsFromCfg } from "./config-utils.js";
 import { DISCOVER_TOOLS, handleDiscoverTool } from "./discover.js";
+import { loadSkills, type SkillCatalog } from "./skills-loader.js";
+import {
+  registerSkillHandlers,
+  SKILLS_CAPABILITIES,
+} from "./skills-server.js";
 import { JsonRpcErrorCode } from "./error-codes.js";
 import { createOriginValidationMiddleware } from "./middleware/origin-validation.js";
 import { resolveMcpPort } from "./port.js";
@@ -82,6 +87,23 @@ const CONFIG = {
   )
     .map((origin) => origin.trim())
     .filter((origin) => origin.length > 0),
+  // SEP-2640 skills serving. A plain directory path, so the loader stays
+  // ignorant of how the content arrived (git submodule in the container, a
+  // working copy in local dev, an OCI-unpacked directory later).
+  // Empty disables skills entirely.
+  SKILLS_PATH: (
+    process.env.SKILLS_PATH ||
+    localConfig.skills_path ||
+    ""
+  ).trim(),
+  // Server-chosen organizational prefix for skill URIs. SEP-2640 constrains
+  // only the final segment of the skill path (it MUST equal the frontmatter
+  // name); preceding segments are ours to choose.
+  SKILLS_URI_PREFIX: (
+    process.env.SKILLS_URI_PREFIX ||
+    localConfig.skills_uri_prefix ||
+    "aap"
+  ).trim(),
 } as const;
 
 // Multi-round-trip (MRTR) requestState integrity codec (2026-07-28). requestState
@@ -474,6 +496,12 @@ const createMcpServer = (requestCtx: RequestContext): McpServer => {
         // the SDK default listChanged to true, which would advertise a capability
         // we don't honor on server/discover; pin it false.
         tools: { listChanged: false },
+        // SEP-2640: advertise the skills extension only when we actually have
+        // skills to serve. Declaring it with an empty catalog would promise a
+        // surface with nothing behind it. Note the extension surfaces on both
+        // protocol eras — the modern server/discover result and the legacy
+        // initialize result — so this is not gated on protocol revision.
+        ...(skillCatalog.skills.length > 0 ? SKILLS_CAPABILITIES : {}),
       },
       // Cache hint for the SDK-built tools/list result (2026-07-28). The tool set
       // is static per process, so a short shared TTL is safe. cacheScope is
@@ -481,6 +509,13 @@ const createMcpServer = (requestCtx: RequestContext): McpServer => {
       // cacheable method and already defaults to ttlMs:0/private.
       cacheHints: {
         "tools/list": { ttlMs: 300_000, cacheScope: "public" },
+        // The skill catalog is built once at startup and immutable thereafter,
+        // so its resources cache exactly like the tool list. Note this option
+        // only reaches the SDK's six cacheable methods — resources/list and
+        // resources/read are on that list, skills/list is not, which is why
+        // skills/list emits ttlMs and cacheScope by hand. See skills-server.ts.
+        "resources/list": { ttlMs: 300_000, cacheScope: "public" },
+        "resources/read": { ttlMs: 300_000, cacheScope: "public" },
       },
       // MRTR requestState integrity hook, wired only when a secret is configured.
       ...(requestStateCodec
@@ -530,6 +565,10 @@ const createMcpServer = (requestCtx: RequestContext): McpServer => {
 
     return executeToolRequest(tool, args, requestCtx);
   });
+
+  if (skillCatalog.skills.length > 0) {
+    registerSkillHandlers(server, skillCatalog);
+  }
 
   return server;
 };
@@ -728,6 +767,15 @@ const mcpPostHandler = async (
 const allTools: AAPMcpToolDefinition[] = await generateTools();
 const allToolsets = loadToolsetsFromCfg(allTools, localConfig);
 allToolsets["discover"] = [];
+
+// Skill catalog, built once at startup. The server is stateless per request, so
+// re-walking and re-hashing the tree per request would be pure waste. A missing
+// directory or an unservable skill yields a warning and a smaller catalog —
+// never a failed startup.
+const skillCatalog: SkillCatalog = loadSkills({
+  directory: CONFIG.SKILLS_PATH,
+  prefix: CONFIG.SKILLS_URI_PREFIX,
+});
 
 // Set up routes - POST only, no GET/DELETE (no sessions to stream or terminate)
 app.post("/mcp", (req, res) => mcpPostHandler(req, res));

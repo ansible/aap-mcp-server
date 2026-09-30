@@ -12,6 +12,10 @@ export interface AapMcpConfig {
   toolsets: Record<string, string[]>;
   analytics_key?: string;
   allowed_origins?: string[];
+  /** Directory of SEP-2640 skills to serve. Unset or empty disables skills. */
+  skills_path?: string;
+  /** Organizational prefix for skill URIs (skill://<prefix>/<name>/…). */
+  skills_uri_prefix?: string;
 }
 
 /**
