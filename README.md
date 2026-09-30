@@ -312,11 +312,20 @@ artifact later all look the same to it.
 | ---------------- | ----------------------------------------------------------------- |
 | `skills/list`    | Every skill, each as `{uri, frontmatter, resources}`              |
 | `skills/get`     | One skill by URI, wrapped as `{"skill": {…}}`                     |
+| `resources/list` | Every served file as a plain resource, by `skill://` URI          |
 | `resources/read` | The bytes of one file, addressed `skill://<prefix>/<name>/<file>` |
 
 Every file is listed with a SHA-256 `digest` and byte `size`. Clients are expected to verify
 both, and to re-parse the fetched `SKILL.md` and confirm its frontmatter matches what the
 listing advertised, before loading a skill.
+
+`resources/list` is worth knowing about even though the extension does not require it. No
+mainstream client implements `skills/list` yet, so in practice a client that knows nothing
+about SEP-2640 still finds these skills: it lists resources, sees the `skill://` URIs, and
+reads the `SKILL.md` through `resources/read`. That path has been confirmed working against a
+real client. What it does not get you is discovery without being asked — nothing draws a model
+to a resource the way a tool name does — so a user generally has to point the client at the
+skill first.
 
 ### A skill that fails to load
 
