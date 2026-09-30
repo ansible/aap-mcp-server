@@ -38,8 +38,11 @@ export const MAX_SKILL_BYTES = 16 * 1024 * 1024; // 16 MiB
  * listed in should be a property of the content, not of the server's
  * environment.
  */
-export const byCodePoint = (a: string, b: string): number =>
-  a < b ? -1 : a > b ? 1 : 0;
+export const byCodePoint = (a: string, b: string): number => {
+  if (a < b) return -1;
+  if (a > b) return 1;
+  return 0;
+};
 
 /** One file within a skill, as it appears in a skill entry's `resources`. */
 export interface SkillResource {
@@ -187,28 +190,23 @@ const sha256 = (bytes: Buffer): string =>
   `sha256:${createHash("sha256").update(bytes).digest("hex")}`;
 
 /**
- * Load one skill directory into an entry plus its files.
- * Returns null and warns if the skill is unservable for any reason.
+ * Parse a SKILL.md's frontmatter and check the fields a servable skill needs.
+ *
+ * Returns null and warns on anything unservable, so the caller can treat a bad
+ * skill as simply absent.
  */
-const loadOneSkill = (
-  skillDir: string,
+const readSkillFrontmatter = (
+  skillMdPath: string,
   dirName: string,
-  prefix: string,
   warn: (m: string) => void,
-): { entry: SkillEntry; files: Map<string, CatalogFile> } | null => {
-  const skillMdPath = join(skillDir, "SKILL.md");
-  if (!existsSync(skillMdPath)) {
-    warn(`Skipping skill '${dirName}': no SKILL.md`);
-    return null;
-  }
-
-  // Resolve the skill root once so symlink escapes can be detected below.
-  const skillRoot = realpathSync(skillDir);
-
-  let split: { yaml: string; body: string } | null;
+): {
+  frontmatter: Record<string, unknown>;
+  name: string;
+  description: string;
+} | null => {
   let frontmatter: Record<string, unknown>;
   try {
-    split = splitFrontmatter(readFileSync(skillMdPath, "utf8"));
+    const split = splitFrontmatter(readFileSync(skillMdPath, "utf8"));
     if (!split) {
       warn(`Skipping skill '${dirName}': SKILL.md has no YAML frontmatter`);
       return null;
@@ -251,28 +249,35 @@ const loadOneSkill = (
     return null;
   }
 
-  const skillPath = prefix ? `${prefix}/${name}` : name;
-  const relPaths = listFilesRecursive(skillDir).sort(byCodePoint);
+  return { frontmatter, name, description };
+};
 
-  if (relPaths.length > MAX_RESOURCES_PER_SKILL) {
-    warn(
-      `Skipping skill '${dirName}': ${relPaths.length} files exceeds the SEP-2640 limit of ${MAX_RESOURCES_PER_SKILL}`,
-    );
-    return null;
-  }
-
+/**
+ * Digest every file in a skill directory, enforcing the escape and size rules.
+ *
+ * All-or-nothing: if any file is unreadable, escapes the skill directory, or
+ * pushes the skill past the byte limit, the whole skill is refused. Serving a
+ * partial skill would mean advertising a `resources` list that does not
+ * describe the skill an author wrote.
+ */
+const collectSkillFiles = (
+  skillDir: string,
+  skillRoot: string,
+  skillPath: string,
+  dirName: string,
+  relPaths: string[],
+  warn: (m: string) => void,
+): { resources: SkillResource[]; files: Map<string, CatalogFile> } | null => {
   const resources: SkillResource[] = [];
   const files = new Map<string, CatalogFile>();
   let totalBytes = 0;
 
   for (const rel of relPaths) {
-    const full = join(skillDir, rel);
-
     // A symlink whose target escapes the skill directory is not served. Checked
     // at load time so the read path never has to reason about it.
     let real: string;
     try {
-      real = realpathSync(full);
+      real = realpathSync(join(skillDir, rel));
     } catch {
       warn(`Skipping skill '${dirName}': cannot resolve '${rel}'`);
       return null;
@@ -305,15 +310,59 @@ const loadOneSkill = (
     });
   }
 
+  return { resources, files };
+};
+
+/**
+ * Load one skill directory into an entry plus its files.
+ * Returns null and warns if the skill is unservable for any reason.
+ */
+const loadOneSkill = (
+  skillDir: string,
+  dirName: string,
+  prefix: string,
+  warn: (m: string) => void,
+): { entry: SkillEntry; files: Map<string, CatalogFile> } | null => {
+  const skillMdPath = join(skillDir, "SKILL.md");
+  if (!existsSync(skillMdPath)) {
+    warn(`Skipping skill '${dirName}': no SKILL.md`);
+    return null;
+  }
+
+  const parsed = readSkillFrontmatter(skillMdPath, dirName, warn);
+  if (!parsed) return null;
+  const { frontmatter, name, description } = parsed;
+
+  const skillPath = prefix ? `${prefix}/${name}` : name;
+  const relPaths = listFilesRecursive(skillDir).sort(byCodePoint);
+
+  if (relPaths.length > MAX_RESOURCES_PER_SKILL) {
+    warn(
+      `Skipping skill '${dirName}': ${relPaths.length} files exceeds the SEP-2640 limit of ${MAX_RESOURCES_PER_SKILL}`,
+    );
+    return null;
+  }
+
+  // Resolve the skill root once so symlink escapes can be detected against it.
+  const collected = collectSkillFiles(
+    skillDir,
+    realpathSync(skillDir),
+    skillPath,
+    dirName,
+    relPaths,
+    warn,
+  );
+  if (!collected) return null;
+
   return {
     entry: {
       uri: `skill://${skillPath}/SKILL.md`,
       name,
       description,
       frontmatter,
-      resources,
+      resources: collected.resources,
     },
-    files,
+    files: collected.files,
   };
 };
 

@@ -137,7 +137,7 @@ export const registerSkillHandlers = (
   server.server.setRequestHandler(
     "skills/list",
     { params: ListParams },
-    async () => ({
+    () => ({
       skills: catalog.skills.map(toWireEntry),
       // Emitted by hand: the SDK's cacheHints option does not reach skills/*.
       ttlMs: SKILLS_LIST_TTL_MS,
@@ -148,7 +148,7 @@ export const registerSkillHandlers = (
   server.server.setRequestHandler(
     "skills/get",
     { params: GetParams },
-    async (params) => {
+    (params) => {
       const entry = catalog.byUri.get(params.uri);
       if (!entry) {
         // A URI this server does not serve as a skill must error rather than
@@ -173,7 +173,7 @@ export const registerSkillHandlers = (
     },
   );
 
-  server.server.setRequestHandler("resources/list", async () => ({
+  server.server.setRequestHandler("resources/list", () => ({
     resources: [...catalog.files.keys()].sort(byCodePoint).map((uri) => ({
       uri,
       name: uri.slice(uri.lastIndexOf("/") + 1),
@@ -181,7 +181,7 @@ export const registerSkillHandlers = (
     })),
   }));
 
-  server.server.setRequestHandler("resources/read", async (request) => {
+  server.server.setRequestHandler("resources/read", (request) => {
     const { uri } = request.params;
 
     const contents = readCatalogFile(catalog, uri);
