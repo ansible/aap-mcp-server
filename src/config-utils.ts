@@ -16,6 +16,8 @@ export interface AapMcpConfig {
   skills_path?: string;
   /** Organizational prefix for skill URIs (skill://<prefix>/<name>/…). */
   skills_uri_prefix?: string;
+  /** Tool-based skills compatibility shim: off | catalog | skill-tools | both. */
+  skills_shim_mode?: string;
 }
 
 /**

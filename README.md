@@ -327,6 +327,40 @@ real client. What it does not get you is discovery without being asked — nothi
 to a resource the way a tool name does — so a user generally has to point the client at the
 skill first.
 
+### Compatibility shim: skills as tools
+
+Clients that have not implemented the skills extension can reach these skills over
+`resources/list` and `resources/read`, as described above — but they rarely _find_ them, because
+the tool list is a far more prominent surface than the resource list. The shim closes that gap by
+republishing the same catalog as ordinary tools. It grants no new capability: every tool below
+mirrors a method the server already answers.
+
+Configured independently of `skills_path`, so skills can be served natively with the shim off —
+which is the default. Set `skills_shim_mode`, or the `SKILLS_SHIM_MODE` environment variable:
+
+| Mode          | Tools published                                                |
+| ------------- | -------------------------------------------------------------- |
+| `off`         | None. Native methods are unaffected. **Default.**              |
+| `catalog`     | `list_skills`, `get_skill`, `read_skill_file`                  |
+| `skill-tools` | One tool per skill, named as the skill, plus `read_skill_file` |
+| `both`        | Both of the above                                              |
+
+`catalog` mirrors the three native methods one for one. `skill-tools` names each tool after the
+skill it serves and carries the skill's own description — including its trigger conditions — so a
+model matching a prompt against the tool list encounters the skill directly rather than having to
+decide to go looking for skills at all. Calling such a tool returns the skill's instructions; it
+does not perform the task.
+
+`read_skill_file` is published in every mode but `off`, including `skill-tools`: a skill's
+instructions cite its reference files, and a client that cannot read resources needs some way to
+fetch them. Both readers resolve a URI against the startup catalog and never against the
+filesystem, so the shim inherits the native path-confinement property rather than reimplementing
+it.
+
+Shim tools are prepended to `tools/list` on every endpoint, toolset-scoped ones included, matching
+how the native methods already serve the whole catalog everywhere. Every description states that
+the shim is a temporary compatibility path that will be removed as clients adopt native discovery.
+
 ### A skill that fails to load
 
 Loading is deliberately forgiving: a skill is skipped with a warning on stderr rather than

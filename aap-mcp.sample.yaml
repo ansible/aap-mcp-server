@@ -49,6 +49,19 @@
 # Lower priority than the SKILLS_URI_PREFIX environment variable.
 # skills_uri_prefix: "aap"
 
+# Tool-based compatibility shim for clients that have not implemented the MCP
+# skills extension. Configured independently of skills_path: skills can be
+# served natively with the shim off, which is the default.
+#   off          no shim tools are published (default)
+#   catalog      three generic tools: list_skills, get_skill, read_skill_file
+#   skill-tools  one tool per skill, named as the skill, plus read_skill_file
+#   both         both of the above
+# The shim adds no capability — every tool mirrors a native method. It exists
+# because the tool list is a more prominent surface than the resource list, and
+# it is a temporary path that will be removed as clients adopt native discovery.
+# Lower priority than the SKILLS_SHIM_MODE environment variable.
+# skills_shim_mode: "off"
+
 services:
   - name: controller
     # url: "https://custom-controller.example.com/api/v2/schema/"

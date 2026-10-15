@@ -30,6 +30,12 @@ import { AapMcpConfig, loadToolsetsFromCfg } from "./config-utils.js";
 import { DISCOVER_TOOLS, handleDiscoverTool } from "./discover.js";
 import { loadSkills, type SkillCatalog } from "./skills-loader.js";
 import { registerSkillHandlers, SKILLS_CAPABILITIES } from "./skills-server.js";
+import {
+  buildShimTools,
+  handleShimTool,
+  isShimTool,
+  parseShimMode,
+} from "./skills-shim.js";
 import { JsonRpcErrorCode } from "./error-codes.js";
 import { createOriginValidationMiddleware } from "./middleware/origin-validation.js";
 import { resolveMcpPort } from "./port.js";
@@ -101,6 +107,23 @@ const CONFIG = {
     localConfig.skills_uri_prefix ||
     "aap"
   ).trim(),
+  // Tool-based compatibility shim for clients that have not implemented the
+  // skills extension. Independent of SKILLS_PATH so an administrator can serve
+  // skills natively without it: off | catalog | skill-tools | both.
+  SKILLS_SHIM_MODE: parseShimMode(
+    (
+      process.env.SKILLS_SHIM_MODE ||
+      localConfig.skills_shim_mode ||
+      "off"
+    ).trim(),
+  ),
+  // Where shim tools sit in tools/list. Exists to separate two explanations of
+  // the shim working: that a skill is on the tool surface at all, or merely
+  // that it was placed at the top of it. Not a knob an administrator needs.
+  SKILLS_SHIM_POSITION:
+    (process.env.SKILLS_SHIM_POSITION || "first").trim() === "last"
+      ? "last"
+      : "first",
 } as const;
 
 // Multi-round-trip (MRTR) requestState integrity codec (2026-07-28). requestState
@@ -522,23 +545,40 @@ const createMcpServer = (requestCtx: RequestContext): McpServer => {
   );
 
   server.server.setRequestHandler("tools/list", async () => {
+    // Shim tools lead the list by default, since prominence is the point of the
+    // shim and `discover` is otherwise the first thing a model sees. Measured
+    // not to matter — the skill was found on the second call either way — so
+    // the position is a diagnostic rather than a tuning knob.
+    const withShim = (tools: unknown[]) =>
+      CONFIG.SKILLS_SHIM_POSITION === "last"
+        ? [...tools, ...shimTools]
+        : [...shimTools, ...tools];
+
     if (requestCtx.toolset === "discover") {
-      return { tools: DISCOVER_TOOLS } as any;
+      return { tools: withShim(DISCOVER_TOOLS) } as any;
     }
 
     const availableTools = getToolsByToolset(requestCtx.toolset);
 
     return {
-      tools: availableTools.map((tool) => ({
-        name: tool.name,
-        description: tool.description,
-        inputSchema: tool.inputSchema,
-      })),
+      tools: withShim(
+        availableTools.map((tool) => ({
+          name: tool.name,
+          description: tool.description,
+          inputSchema: tool.inputSchema,
+        })),
+      ),
     } as any;
   });
 
   server.server.setRequestHandler("tools/call", async (request) => {
     const { name, arguments: args = {} } = request.params;
+
+    // Checked before the toolset dispatch: the shim serves the whole catalog
+    // from every endpoint, matching how the native methods already behave.
+    if (isShimTool(name, skillCatalog, CONFIG.SKILLS_SHIM_MODE)) {
+      return handleShimTool(name, args, skillCatalog);
+    }
 
     if (requestCtx.toolset === "discover") {
       return handleDiscoverTool(name, args, allToolsets, (tool, toolArgs) =>
@@ -774,6 +814,10 @@ const skillCatalog: SkillCatalog = loadSkills({
   prefix: CONFIG.SKILLS_URI_PREFIX,
 });
 
+// Built once alongside the catalog, for the same reason: both are immutable for
+// the life of the process, and the tool list is rebuilt on every tools/list.
+const shimTools = buildShimTools(skillCatalog, CONFIG.SKILLS_SHIM_MODE);
+
 // Set up routes - POST only, no GET/DELETE (no sessions to stream or terminate)
 app.post("/mcp", (req, res) => mcpPostHandler(req, res));
 
@@ -949,6 +993,21 @@ async function main(): Promise<void> {
     console.log(
       "  Served from every MCP endpoint, including toolset-specific ones.",
     );
+  }
+
+  if (shimTools.length > 0) {
+    console.log(
+      `Skills shim: ${CONFIG.SKILLS_SHIM_MODE} — ${shimTools.length} tools added ${CONFIG.SKILLS_SHIM_POSITION} in every tools/list`,
+    );
+    for (const tool of shimTools) {
+      console.log(`  ✓ ${tool.name}`);
+    }
+  } else if (CONFIG.SKILLS_SHIM_MODE !== "off") {
+    console.log(
+      `Skills shim: ${CONFIG.SKILLS_SHIM_MODE} requested, but no skills are loaded — no shim tools published`,
+    );
+  } else {
+    console.log("Skills shim: off");
   }
 
   console.log("");
