@@ -213,6 +213,33 @@ describe("End-to-End: MCP Server", () => {
       expect(response.status).toBe(405);
       expect(response.headers.get("allow")).toBe("POST, OPTIONS");
     });
+
+    // AAP-96996: the cases above send a bare GET. The SDK's SSE probe
+    // (StreamableHTTPClientTransport._startOrAuthSse) sends Accept:
+    // text/event-stream, so assert that request shape explicitly — it is the
+    // one real clients actually issue.
+    //
+    // The status code matters, not just the fact that the request is refused:
+    // the SDK returns gracefully only on 405 and treats 404 as fatal, surfacing
+    // "Failed to open SSE stream: Not Found" and making the server unusable.
+    // See modelcontextprotocol/typescript-sdk#1635. Do not relax these to a
+    // generic "not ok" assertion.
+    const sseProbePaths = [
+      "/mcp",
+      "/mcp/job_management",
+      "/job_management/mcp",
+      "/mcp/discover",
+    ];
+
+    for (const path of sseProbePaths) {
+      it(`should return 405, not 404, for an SSE probe on ${path}`, async () => {
+        const response = await fetch(`${MCP_BASE_URL}${path}`, {
+          headers: { Accept: "text/event-stream" },
+        });
+        expect(response.status).toBe(405);
+        expect(response.headers.get("allow")).toBe("POST, OPTIONS");
+      });
+    }
   });
 
   // --- POST handler - invalid requests ---
