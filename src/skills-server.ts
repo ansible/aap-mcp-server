@@ -41,6 +41,66 @@ import {
 } from "./skills-loader.js";
 
 /**
+ * Per-skill cap on the description text carried into the server instructions.
+ *
+ * SEP-2640 calls the `instructions` field "practically bounded in size" and
+ * cites that bound as a reason skills exist at all, so the pointer must stay a
+ * pointer. The trigger conditions are the part worth the bytes: they are what a
+ * model matches a prompt against.
+ */
+const INSTRUCTION_DESCRIPTION_BUDGET = 400;
+
+/**
+ * Advertise the skill catalog in the server's `instructions` field.
+ *
+ * This is the third discovery mechanism SEP-2640 defines, alongside
+ * `skills/list` and direct URI reads:
+ *
+ *   "A server MAY direct the agent to specific skill URIs from its
+ *    `instructions` field. This requires no discovery machinery on the host;
+ *    the URI is simply present in the model's context and readable via
+ *    resources/read."
+ *
+ * Unlike the tool-based shim it is not a compatibility hack to be deprecated:
+ * `instructions` is base-protocol, so it reaches clients that have implemented
+ * nothing beyond core MCP, and it costs no entry in tools/list.
+ *
+ * Returns undefined for an empty catalog so the server advertises nothing it
+ * cannot serve.
+ */
+export const buildSkillsInstructions = (
+  catalog: SkillCatalog,
+): string | undefined => {
+  if (catalog.skills.length === 0) return undefined;
+
+  const entries = catalog.skills.map((skill) => {
+    // Collapse to a single line: this lands in a prose block, and a skill's
+    // description is frequently a multi-line YAML scalar.
+    const summary = skill.description.replace(/\s+/g, " ").trim();
+    const trimmed =
+      summary.length > INSTRUCTION_DESCRIPTION_BUDGET
+        ? `${summary.slice(0, INSTRUCTION_DESCRIPTION_BUDGET).trimEnd()}…`
+        : summary;
+    return `- ${skill.uri}\n  ${trimmed}`;
+  });
+
+  return [
+    `This server provides ${catalog.skills.length} AAP skill${
+      catalog.skills.length === 1 ? "" : "s"
+    }: documented procedures for platform tasks that are easy to answer`,
+    "incompletely. A skill fixes the dimensions that must be checked and the",
+    "thresholds that decide what counts as a problem.",
+    "",
+    "When a request matches one of the skills below, read it with",
+    "resources/read and follow its procedure instead of improvising your own",
+    "investigation. Each skill lists supporting files; read those the same way",
+    "when its steps tell you to.",
+    "",
+    ...entries,
+  ].join("\n");
+};
+
+/**
  * Freshness hint for skills/list. The catalog is built once at startup and is
  * immutable for the life of the process, so a shared five-minute TTL is safe
  * and matches what the server already advertises for tools/list.

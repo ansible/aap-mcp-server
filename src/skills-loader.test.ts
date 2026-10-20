@@ -19,6 +19,7 @@ import {
   MAX_RESOURCES_PER_SKILL,
   MAX_SKILL_BYTES,
 } from "./skills-loader.js";
+import { buildSkillsInstructions } from "./skills-server.js";
 
 /**
  * The reference skill from ansible/aap-skills, reproduced verbatim enough to
@@ -396,4 +397,92 @@ describe("loadSkills — against the real reference skill", () => {
       }
     },
   );
+});
+
+describe("buildSkillsInstructions", () => {
+  it("returns undefined for an empty catalog", () => {
+    // Nothing to point at: advertising skills we do not serve would send a
+    // model after URIs that answer ResourceNotFound.
+    const catalog = loadSkills({ directory: root, warn });
+    expect(buildSkillsInstructions(catalog)).toBeUndefined();
+  });
+
+  it("names every served skill by URI", () => {
+    writeSkill("aap-platform-health-check", REFERENCE_SKILL_MD);
+    writeSkill(
+      "aap-skill-creator",
+      "---\nname: aap-skill-creator\ndescription: Create AAP skills.\n---\nBody\n",
+    );
+
+    const catalog = loadSkills({ directory: root, warn });
+    const instructions = buildSkillsInstructions(catalog);
+
+    expect(instructions).toBeDefined();
+    for (const skill of catalog.skills) {
+      expect(instructions).toContain(skill.uri);
+    }
+  });
+
+  it("carries the trigger conditions a model matches a prompt against", () => {
+    // The whole mechanism rests on this: the description is what lets a model
+    // connect "is my platform healthy?" to this skill without any discovery
+    // round trip. Dropping to name-only would quietly defeat the feature.
+    writeSkill("aap-platform-health-check", REFERENCE_SKILL_MD);
+
+    const instructions = buildSkillsInstructions(
+      loadSkills({ directory: root, warn }),
+    )!;
+
+    expect(instructions).toContain('"Is my platform healthy?"');
+    expect(instructions).toContain("NOT for: remediation actions");
+  });
+
+  it("collapses a multi-line description onto one line", () => {
+    // Descriptions are routinely literal block scalars. Emitted raw, their
+    // newlines break the one-entry-per-line shape of the list.
+    writeSkill("aap-platform-health-check", REFERENCE_SKILL_MD);
+
+    const instructions = buildSkillsInstructions(
+      loadSkills({ directory: root, warn }),
+    )!;
+
+    const entry = instructions
+      .split("\n")
+      .find((line) => line.trim().startsWith("Run comprehensive"));
+    expect(entry).toBeDefined();
+    expect(entry).toContain("Use when:");
+  });
+
+  it("truncates a description that would blow the instructions budget", () => {
+    // SEP-2640 calls `instructions` practically bounded in size, and cites that
+    // bound as a reason skills exist at all. The pointer has to stay a pointer.
+    writeSkill(
+      "verbose-skill",
+      `---\nname: verbose-skill\ndescription: ${"x".repeat(5000)}\n---\nBody\n`,
+    );
+
+    const instructions = buildSkillsInstructions(
+      loadSkills({ directory: root, warn }),
+    )!;
+
+    expect(instructions).toContain("…");
+    expect(instructions.length).toBeLessThan(1000);
+  });
+
+  it("omits a skill the loader refused to serve", () => {
+    // A pointer to an unservable skill is worse than no pointer: the model
+    // spends a call to be told the resource does not exist.
+    writeSkill("aap-platform-health-check", REFERENCE_SKILL_MD);
+    writeSkill(
+      "mismatched",
+      "---\nname: something-else\ndescription: Mismatched name.\n---\nBody\n",
+    );
+
+    const catalog = loadSkills({ directory: root, warn });
+    const instructions = buildSkillsInstructions(catalog)!;
+
+    expect(catalog.skills).toHaveLength(1);
+    expect(instructions).not.toContain("mismatched");
+    expect(instructions).not.toContain("something-else");
+  });
 });

@@ -29,7 +29,11 @@ import { PseudoIdentityService, type UserInfo } from "./pseudo-identity.js";
 import { AapMcpConfig, loadToolsetsFromCfg } from "./config-utils.js";
 import { DISCOVER_TOOLS, handleDiscoverTool } from "./discover.js";
 import { loadSkills, type SkillCatalog } from "./skills-loader.js";
-import { registerSkillHandlers, SKILLS_CAPABILITIES } from "./skills-server.js";
+import {
+  buildSkillsInstructions,
+  registerSkillHandlers,
+  SKILLS_CAPABILITIES,
+} from "./skills-server.js";
 import { JsonRpcErrorCode } from "./error-codes.js";
 import { createOriginValidationMiddleware } from "./middleware/origin-validation.js";
 import { resolveMcpPort } from "./port.js";
@@ -101,6 +105,16 @@ const CONFIG = {
     localConfig.skills_uri_prefix ||
     "aap"
   ).trim(),
+  // Name the served skills in the server's `instructions` field — the discovery
+  // pointer SEP-2640 defines alongside skills/list. On by default: it is base
+  // protocol rather than an extension, so it reaches a client that has
+  // implemented nothing beyond core MCP, and it costs no tools/list entry. The
+  // toggle exists so the mechanism can be isolated when measuring which
+  // discovery path a client actually uses.
+  SKILLS_INSTRUCTIONS:
+    (process.env.SKILLS_INSTRUCTIONS || localConfig.skills_instructions || "on")
+      .trim()
+      .toLowerCase() !== "off",
 } as const;
 
 // Multi-round-trip (MRTR) requestState integrity codec (2026-07-28). requestState
@@ -500,6 +514,11 @@ const createMcpServer = (requestCtx: RequestContext): McpServer => {
         // initialize result — so this is not gated on protocol revision.
         ...(skillCatalog.skills.length > 0 ? SKILLS_CAPABILITIES : {}),
       },
+      // SEP-2640's instructions pointer, the discovery mechanism the spec
+      // defines alongside skills/list: name the skills we serve so a client
+      // that has implemented nothing beyond base MCP still learns they exist
+      // and can read them over resources/read. Costs no tools/list entry.
+      ...(skillsInstructions ? { instructions: skillsInstructions } : {}),
       // Cache hint for the SDK-built tools/list result (2026-07-28). The tool set
       // is static per process, so a short shared TTL is safe. cacheScope is
       // 'public' | 'private' ('shared' does not exist); tools/call is not a
@@ -774,6 +793,12 @@ const skillCatalog: SkillCatalog = loadSkills({
   prefix: CONFIG.SKILLS_URI_PREFIX,
 });
 
+// Derived from the catalog and identical for every connection, so build it once
+// here rather than on each request alongside the McpServer that carries it.
+const skillsInstructions = CONFIG.SKILLS_INSTRUCTIONS
+  ? buildSkillsInstructions(skillCatalog)
+  : undefined;
+
 // Set up routes - POST only, no GET/DELETE (no sessions to stream or terminate)
 app.post("/mcp", (req, res) => mcpPostHandler(req, res));
 
@@ -949,6 +974,16 @@ async function main(): Promise<void> {
     console.log(
       "  Served from every MCP endpoint, including toolset-specific ones.",
     );
+    if (skillsInstructions) {
+      console.log(
+        `  Advertised in the server instructions (${skillsInstructions.length} chars), so a client`,
+      );
+      console.log("  reaches them without implementing the skills extension.");
+    } else {
+      console.log(
+        "  Instructions pointer OFF — only a SEP-2640 client will find these.",
+      );
+    }
   }
 
   console.log("");

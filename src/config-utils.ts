@@ -16,6 +16,8 @@ export interface AapMcpConfig {
   skills_path?: string;
   /** Organizational prefix for skill URIs (skill://<prefix>/<name>/…). */
   skills_uri_prefix?: string;
+  /** Advertise served skills in the server's `instructions` field: on | off. */
+  skills_instructions?: string;
 }
 
 /**

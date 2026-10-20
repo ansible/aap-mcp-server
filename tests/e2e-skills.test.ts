@@ -252,6 +252,23 @@ describe("End-to-End: SEP-2640 skills", () => {
       // promise we do not keep. The SDK defaults it to true.
       expect(capabilities.resources?.listChanged).toBe(false);
     });
+
+    it("points at every served skill from the instructions field", async () => {
+      // SEP-2640's second discovery mechanism, and in practice the only one a
+      // client without the extension uses: the URIs ride in the model's
+      // context from connection, so nothing has to be discovered. This asserts
+      // the pointer survives the trip to the wire — a builder that works in
+      // isolation is useless if the SDK drops the field on server/discover,
+      // which is the half that cannot be unit tested.
+      const message = await call("server/discover");
+      const instructions = message.result.instructions;
+
+      expect(typeof instructions).toBe("string");
+      expect(instructions).toContain(SKILL_URI);
+      // The trigger conditions are the load-bearing part: they are what lets a
+      // model match a prompt to this skill with no round trip.
+      expect(instructions).toContain('"Is my platform healthy?"');
+    });
   });
 
   describe("skills/list", () => {

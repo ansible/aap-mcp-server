@@ -321,11 +321,36 @@ listing advertised, before loading a skill.
 
 `resources/list` is worth knowing about even though the extension does not require it. No
 mainstream client implements `skills/list` yet, so in practice a client that knows nothing
-about SEP-2640 still finds these skills: it lists resources, sees the `skill://` URIs, and
-reads the `SKILL.md` through `resources/read`. That path has been confirmed working against a
-real client. What it does not get you is discovery without being asked — nothing draws a model
-to a resource the way a tool name does — so a user generally has to point the client at the
-skill first.
+about SEP-2640 still reaches these skills: it lists resources, sees the `skill://` URIs, and
+reads the `SKILL.md` through `resources/read`.
+
+### Discovery: the instructions pointer
+
+Reachable is not the same as findable. Asked "is my AAP platform healthy?" against a server
+serving a skill whose trigger conditions contain that question almost verbatim, a real client
+made seven tool calls, zero resource calls, and never found the skill. Nothing draws a model to
+the resource list.
+
+SEP-2640 anticipates this and defines a second discovery mechanism alongside `skills/list`:
+
+> A server MAY direct the agent to specific skill URIs from its `instructions` field. This
+> requires no discovery machinery on the host; the URI is simply present in the model's context
+> and readable via `resources/read`.
+
+So the server names every skill it serves — URI plus description, trigger conditions included —
+in the `instructions` field of its `server/discover` result. The client injects that into the
+model's context at connection, which means there is nothing to discover: the model already
+holds the URI and reads it directly. On the same prompt that failed above, the skill is read as
+the client's first action.
+
+This is base protocol rather than an extension, so it works on any MCP client, and it costs no
+entry in `tools/list`. It is on by default; set `skills_instructions: "off"` (or
+`SKILLS_INSTRUCTIONS=off`) to leave only the SEP-2640 methods.
+
+Two caveats worth knowing. A client that does not surface server instructions gets no benefit —
+the pointer is passive text, not something the model can stumble into. And a client reaching a
+skill this way reads it over `resources/read` without ever seeing the digests published on
+`skills/list`, so the integrity check in the next paragraph goes unexercised on that path.
 
 ### A skill that fails to load
 
