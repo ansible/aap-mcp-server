@@ -32,8 +32,8 @@
   "author": "",
   "license": "Apache-2.0",
   "dependencies": {
-    "@modelcontextprotocol/node": "^2.0.0",
-    "@modelcontextprotocol/server": "^2.0.0",
+    "@modelcontextprotocol/node": "^2.1.2",
+    "@modelcontextprotocol/server": "^2.4.0",
     "@segment/analytics-node": "^2.3.0",
     "cors": "^2.8.5",
     "dotenv": "^17.2.2",
@@ -53,7 +53,7 @@
   "devDependencies": {
     "@endorhq/cli": "^0.2.0",
     "@eslint/js": "^10.0.1",
-    "@modelcontextprotocol/client": "^2.0.0",
+    "@modelcontextprotocol/client": "^2.4.0",
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.3",
     "@types/js-yaml": "^4.0.9",
