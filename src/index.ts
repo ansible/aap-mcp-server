@@ -82,6 +82,19 @@ const CONFIG = {
   )
     .map((origin) => origin.trim())
     .filter((origin) => origin.length > 0),
+  // SEP-2640 skills serving. A plain directory path, so the server stays
+  // ignorant of how the content arrived: a git submodule in the container
+  // image, a working copy in local development, or an unpacked OCI artifact
+  // later all look the same to it. Empty disables skills entirely.
+  SKILLS_PATH: (process.env.SKILLS_PATH || localConfig.skills_path || "").trim(),
+  // Organizational prefix for skill URIs: skill://<prefix>/<name>/<file>.
+  // SEP-2640 constrains only the final segment of the skill path — it MUST
+  // equal the frontmatter name — so preceding segments are ours to choose.
+  SKILLS_URI_PREFIX: (
+    process.env.SKILLS_URI_PREFIX ||
+    localConfig.skills_uri_prefix ||
+    "aap"
+  ).trim(),
 } as const;
 
 // Multi-round-trip (MRTR) requestState integrity codec (2026-07-28). requestState
