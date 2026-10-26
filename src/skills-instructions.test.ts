@@ -7,17 +7,13 @@ import { buildSkillsInstructions } from "./skills-instructions.js";
 
 /**
  * A reference skill close enough to ansible/aap-skills to exercise the YAML the
- * pointer has to survive: a literal block scalar (|) for description, a folded
- * scalar with strip chomping (>-) for allowed-tools, a comment, and a nested
- * mapping.
+ * pointer has to survive: a literal block scalar for description, a folded
+ * scalar for allowed-tools, a comment, and a nested mapping.
  *
- * `tools` is a block sequence rather than a flow sequence on purpose. The SDK
- * reads frontmatter with a hand-rolled parser over the restricted subset skills
- * actually use, and rejects a flow collection spanning lines rather than risk
- * parsing it differently from a full YAML parser — SEP-2640 makes a host
- * re-parse SKILL.md and compare frontmatter field by field, so cross-parser
- * disagreement is a verification failure. ansible/aap-skills#11 moved the real
- * content into this subset and added CI to keep it there.
+ * `tools` is a block sequence rather than a flow sequence on purpose: the SDK
+ * parses frontmatter over a restricted subset and rejects a flow collection
+ * spanning lines (ansible/aap-skills#11 moved the real content into the subset
+ * and added CI to keep it there).
  */
 const REFERENCE_SKILL_MD = `---
 # ─── agentskills.io Base Fields ─────────────────────────────────────────────
@@ -100,21 +96,12 @@ describe("buildSkillsInstructions", () => {
     }
   });
 
-  it("carries the trigger conditions a model matches a prompt against", async () => {
-    // The whole mechanism rests on this: the description is what lets a model
-    // connect "is my platform healthy?" to this skill with no discovery round
-    // trip. Dropping to name-only would quietly defeat the feature.
-    writeSkill("aap-platform-health-check", REFERENCE_SKILL_MD);
-
-    const instructions = buildSkillsInstructions(await load())!;
-
-    expect(instructions).toContain('"Is my platform healthy?"');
-    expect(instructions).toContain("NOT for: remediation actions");
-  });
-
-  it("collapses a multi-line description onto one line", async () => {
-    // Descriptions are routinely literal block scalars. Emitted raw, their
-    // newlines break the one-entry-per-line shape of the list.
+  it("carries the trigger conditions, collapsed onto one line", async () => {
+    // Two things at once because they fail together. The description is what
+    // lets a model connect "is my platform healthy?" to this skill with no
+    // discovery round trip, so dropping to name-only defeats the feature; and
+    // descriptions are routinely block scalars, whose newlines emitted raw
+    // would break the one-entry-per-line shape of the list.
     writeSkill("aap-platform-health-check", REFERENCE_SKILL_MD);
 
     const instructions = buildSkillsInstructions(await load())!;
@@ -122,18 +109,15 @@ describe("buildSkillsInstructions", () => {
     const entry = instructions
       .split("\n")
       .find((line) => line.trim().startsWith("Run comprehensive"));
-    expect(entry).toBeDefined();
-    expect(entry).toContain("Use when:");
+    expect(entry).toContain('"Is my platform healthy?"');
+    expect(entry).toContain("NOT for: remediation actions");
   });
 
   it("truncates a description that would blow the instructions budget", async () => {
-    // SEP-2640 calls `instructions` practically bounded in size and cites that
-    // bound as a reason skills exist at all. The pointer has to stay a pointer.
-    //
-    // 900 characters rather than something arbitrarily large: the Agent Skills
-    // specification caps `description` at 1024 and the SDK enforces it, so a
-    // skill with a 5000-character description is never truncated here — it is
-    // never served at all. 900 is the case this actually guards.
+    // SEP-2640 calls `instructions` practically bounded in size, so the
+    // pointer has to stay a pointer. 900 characters rather than something
+    // arbitrarily large because Agent Skills caps `description` at 1024 and
+    // the SDK enforces it: a longer one is never served, let alone truncated.
     writeSkill(
       "verbose-skill",
       `---\nname: verbose-skill\ndescription: ${"x".repeat(900)}\n---\nBody\n`,
@@ -150,9 +134,8 @@ describe("buildSkillsInstructions", () => {
 
   it("omits a skill the loader refused to serve", async () => {
     // A pointer to an unservable skill is worse than no pointer: the model
-    // spends a call to be told the resource does not exist. The SDK skips a
-    // skill whose directory name and frontmatter name disagree, so the pointer
-    // must be built from what the catalog holds, never from a directory listing.
+    // spends a call to be told the resource does not exist. So the pointer
+    // must be built from the catalog, never from a directory listing.
     writeSkill("aap-platform-health-check", REFERENCE_SKILL_MD);
     writeSkill(
       "mismatched",
