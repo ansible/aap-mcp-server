@@ -11,6 +11,8 @@ import {
   McpServer,
   type McpRequestContext,
 } from "@modelcontextprotocol/server";
+import type { SkillCatalog } from "@modelcontextprotocol/server/ext/skills";
+import { loadSkills } from "@modelcontextprotocol/server/ext/skills/node";
 import {
   extractToolsFromApi,
   getDefaultPageSize,
@@ -471,6 +473,32 @@ const executeToolRequest = async (
   }
 };
 
+// SEP-2640 skill catalog, read once at startup rather than per request: the
+// content is static for the life of the process, and createMcpServer runs on
+// every request. Re-reading the tree there would put disk IO and SHA-256
+// hashing of every skill file on the hot path.
+//
+// Loading is deliberately forgiving — the SDK's default is skip-with-warning
+// rather than `strict`, so one malformed SKILL.md in a content directory
+// cannot take the server's tools down with it. Warnings are collected here and
+// reported at startup so a skipped skill is visible rather than silent.
+const skillWarnings: string[] = [];
+const skillCatalog: SkillCatalog | undefined = CONFIG.SKILLS_PATH
+  ? await loadSkills(CONFIG.SKILLS_PATH, {
+      ...(CONFIG.SKILLS_URI_PREFIX
+        ? { prefix: CONFIG.SKILLS_URI_PREFIX }
+        : {}),
+      // One hint covers skills/list, skills/get, directory reads and skill
+      // files together. It defaults to ttlMs:0/private, which would make
+      // skills the only uncacheable surface on an otherwise cached server.
+      cacheHint: { ttlMs: 300_000, cacheScope: "public" },
+      onWarning: (warning) =>
+        skillWarnings.push(`${warning.path}: ${warning.message}`),
+    })
+  : undefined;
+
+const skillsEnabled = Boolean(skillCatalog && skillCatalog.entries.length > 0);
+
 // Factory function to create a new McpServer instance with request handlers.
 // Called once per request by createMcpHandler; closes over the per-request
 // RequestContext (toolset + identity) resolved from authInfo.extra.
@@ -487,6 +515,11 @@ const createMcpServer = (requestCtx: RequestContext): McpServer => {
         // the SDK default listChanged to true, which would advertise a capability
         // we don't honor on server/discover; pin it false.
         tools: { listChanged: false },
+        // Same reasoning for resources. attach() registers the skill:// files
+        // via registerResource, which makes the SDK default resources.listChanged
+        // to true; the catalog is read once at startup and never changes, so we
+        // would be advertising a notification we never send.
+        ...(skillsEnabled ? { resources: { listChanged: false } } : {}),
       },
       // Cache hint for the SDK-built tools/list result (2026-07-28). The tool set
       // is static per process, so a short shared TTL is safe. cacheScope is
@@ -543,6 +576,16 @@ const createMcpServer = (requestCtx: RequestContext): McpServer => {
 
     return executeToolRequest(tool, args, requestCtx);
   });
+
+  // Register skills/list, skills/get and the skill:// resource template, and
+  // declare the extension. Attached per server instance because the handler
+  // builds a fresh McpServer per request; the catalog itself is shared.
+  //
+  // Unlike tools, skills are not narrowed by toolset — every endpoint,
+  // /mcp/{toolset} included, serves the whole catalog.
+  if (skillCatalog && skillsEnabled) {
+    skillCatalog.attach(server);
+  }
 
   return server;
 };
@@ -892,6 +935,31 @@ async function main(): Promise<void> {
   console.log(`Total tools loaded: ${allTools.length}`);
   for (const [toolsetName, toolsetTools] of Object.entries(allToolsets)) {
     console.log(`  ${toolsetName}: ${toolsetTools.length}`);
+  }
+
+  // Skill catalog. A skill that fails to load is skipped rather than fatal, so
+  // without this the only symptom is a skill quietly absent from skills/list.
+  console.log("");
+  if (!CONFIG.SKILLS_PATH) {
+    console.log("Skills: disabled (no skills_path / SKILLS_PATH configured)");
+  } else if (!skillsEnabled) {
+    console.log(`Skills: none loaded from ${CONFIG.SKILLS_PATH}`);
+  } else {
+    console.log(
+      `Skills: ${skillCatalog!.entries.length} loaded from ${CONFIG.SKILLS_PATH}`,
+    );
+    for (const entry of skillCatalog!.entries) {
+      console.log(`  ✓ ${entry.uri}`);
+    }
+  }
+  if (skillWarnings.length > 0) {
+    const plural = skillWarnings.length === 1 ? "" : "s";
+    console.log(
+      `  ${skillWarnings.length} skill${plural} SKIPPED and NOT served:`,
+    );
+    for (const warning of skillWarnings) {
+      console.log(`  ✗ ${warning}`);
+    }
   }
 
   console.log("");
