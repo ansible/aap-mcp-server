@@ -14,6 +14,7 @@ export interface AapMcpConfig {
   allowed_origins?: string[];
   skills_path?: string;
   skills_uri_prefix?: string;
+  skills_instructions?: string;
 }
 
 /**

@@ -33,6 +33,7 @@ import { DISCOVER_TOOLS, handleDiscoverTool } from "./discover.js";
 import { JsonRpcErrorCode } from "./error-codes.js";
 import { createOriginValidationMiddleware } from "./middleware/origin-validation.js";
 import { resolveMcpPort } from "./port.js";
+import { buildSkillsInstructions } from "./skills-instructions.js";
 import {
   buildConfig,
   buildResourceMetadataUrl,
@@ -66,6 +67,38 @@ const localConfig = loadConfig();
 
 const MCP_PORT = resolveMcpPort(process.env.MCP_PORT);
 
+// Helper function to get timestamps. Declared above CONFIG because the config
+// parsers below log through it.
+const getTimestamp = (): string => {
+  return new Date().toISOString().split(".")[0] + "Z";
+};
+
+/**
+ * Parse an on/off setting without guessing at a value we do not recognise.
+ *
+ * These settings reach the server through the installers' generic pass-through
+ * rather than a dedicated variable, and neither installer schema-validates it —
+ * the operator CRD preserves unknown fields and the containerized role merges a
+ * raw dictionary — so a typo arrives here unchallenged. The server is the only
+ * place it can surface. Report the offending value and the accepted set rather
+ * than silently falling back, so the failure mode is not "an administrator
+ * believes a capability is set and it quietly is not".
+ */
+const parseOnOff = (
+  name: string,
+  raw: string | undefined,
+  fallback: boolean,
+): boolean => {
+  const value = (raw ?? "").trim().toLowerCase();
+  if (value === "") return fallback;
+  if (value === "on" || value === "off") return value === "on";
+  console.warn(
+    `${getTimestamp()} WARNING: ${name}="${raw}" is not a recognised value ` +
+      `(accepted: "on", "off"). Falling back to "${fallback ? "on" : "off"}".`,
+  );
+  return fallback;
+};
+
 // Configuration constants (with priority: env var > config file > default)
 const CONFIG = {
   BASE_URL: process.env.BASE_URL || localConfig.base_url || "https://localhost",
@@ -97,6 +130,17 @@ const CONFIG = {
     localConfig.skills_uri_prefix ||
     "aap"
   ).trim(),
+  // Name the served skills in the server's `instructions` field — the second
+  // discovery mechanism SEP-2640 defines alongside skills/list. On by default:
+  // it is base protocol rather than an extension, so it reaches a client that
+  // has implemented nothing beyond core MCP, and it costs no tools/list entry.
+  // The toggle exists so the mechanism can be isolated when measuring which
+  // discovery path a client actually takes.
+  SKILLS_INSTRUCTIONS: parseOnOff(
+    "skills_instructions",
+    process.env.SKILLS_INSTRUCTIONS || localConfig.skills_instructions,
+    true,
+  ),
 } as const;
 
 // Multi-round-trip (MRTR) requestState integrity codec (2026-07-28). requestState
@@ -153,11 +197,6 @@ const { value: defaultPageSize, source: defaultPageSizeSource } =
 
 // Get services configuration
 const servicesConfig = localConfig.services || [];
-
-// Helper function to get timestamps
-const getTimestamp = (): string => {
-  return new Date().toISOString().split(".")[0] + "Z";
-};
 
 // Configure HTTPS certificate validation globally
 if (ignoreCertificateErrors) {
@@ -499,6 +538,12 @@ const skillCatalog: SkillCatalog | undefined = CONFIG.SKILLS_PATH
 
 const skillsEnabled = Boolean(skillCatalog && skillCatalog.entries.length > 0);
 
+// Built once alongside the catalog: the text is identical for every request.
+const skillsInstructions =
+  skillCatalog && skillsEnabled && CONFIG.SKILLS_INSTRUCTIONS
+    ? buildSkillsInstructions(skillCatalog)
+    : undefined;
+
 // Factory function to create a new McpServer instance with request handlers.
 // Called once per request by createMcpHandler; closes over the per-request
 // RequestContext (toolset + identity) resolved from authInfo.extra.
@@ -521,6 +566,9 @@ const createMcpServer = (requestCtx: RequestContext): McpServer => {
         // would be advertising a notification we never send.
         ...(skillsEnabled ? { resources: { listChanged: false } } : {}),
       },
+      // SEP-2640's second discovery mechanism. Omitted entirely when there is
+      // nothing to point at, rather than sent as an empty string.
+      ...(skillsInstructions ? { instructions: skillsInstructions } : {}),
       // Cache hint for the SDK-built tools/list result (2026-07-28). The tool set
       // is static per process, so a short shared TTL is safe. cacheScope is
       // 'public' | 'private' ('shared' does not exist); tools/call is not a

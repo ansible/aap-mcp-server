@@ -49,6 +49,16 @@
 # Lower priority than the SKILLS_URI_PREFIX env var.
 # skills_uri_prefix: "aap"
 
+# Name the served skills in the server's `instructions` field, the discovery
+# pointer SEP-2640 defines alongside skills/list. Accepted: "on" (default),
+# "off"; any other value is reported at startup and the default is kept.
+# This is what makes skills findable rather than merely reachable: the URIs
+# land in the model's context at connection, so a client that implements
+# nothing beyond base MCP reads a skill directly instead of never noticing it.
+# Set to "off" to serve skills only through the SEP-2640 methods.
+# Lower priority than the SKILLS_INSTRUCTIONS env var.
+# skills_instructions: "on"
+
 services:
   - name: controller
     # url: "https://custom-controller.example.com/api/v2/schema/"
