@@ -370,13 +370,19 @@ Loading is deliberately forgiving: a skill is skipped with a warning rather than
 startup, so one bad `SKILL.md` in a content directory cannot take the server's tools down with
 it. A skill is skipped when it has no `SKILL.md`; its frontmatter is missing, malformed, or not
 a mapping; it lacks `name` or `description`; its `name` disagrees with its directory; it
-exceeds the SEP-2640 limits of 512 files or 16 MiB; or it contains a symlink. A missing
+contains a symlink; or one of its file names cannot be represented in a URI. A missing
 `SKILLS_PATH` directory yields an empty catalog and a warning.
 
 Note the symlink rule is absolute, not a containment check: the loader refuses **any** symlink,
 including one pointing at a sibling file inside the same skill directory, and drops the whole
 skill rather than just that file (`symlinks and other special files are not followed; copy the
 file instead`). Shared content has to be copied in, not linked.
+
+**Exceeding the SEP-2640 limits is not a skip.** A skill over 512 files or 16 MiB is still
+built and still served in full — the loader warns that "some hosts may decline it" and carries
+on. So the skill works against this server and is refused by a conforming host instead, which
+is the more confusing direction for that failure to run. The startup log reports these
+separately from skips, under `warning(s), still served`.
 
 One skip reason is easy to hit by accident. The SDK does not use a general YAML parser for
 frontmatter — it reads a **restricted subset** (block mappings and sequences, plain, quoted and

@@ -525,7 +525,7 @@ const executeToolRequest = async (
 // rather than `strict`, so one malformed SKILL.md in a content directory
 // cannot take the server's tools down with it. Warnings are collected here and
 // reported at startup so a skipped skill is visible rather than silent.
-const skillWarnings: string[] = [];
+const skillWarnings: { path: string; message: string }[] = [];
 const skillCatalog: SkillCatalog | undefined = CONFIG.SKILLS_PATH
   ? await loadSkills(CONFIG.SKILLS_PATH, {
       ...(CONFIG.SKILLS_URI_PREFIX ? { prefix: CONFIG.SKILLS_URI_PREFIX } : {}),
@@ -533,12 +533,37 @@ const skillCatalog: SkillCatalog | undefined = CONFIG.SKILLS_PATH
       // files together. It defaults to ttlMs:0/private, which would make
       // skills the only uncacheable surface on an otherwise cached server.
       cacheHint: { ttlMs: 300_000, cacheScope: "public" },
-      onWarning: (warning) =>
-        skillWarnings.push(`${warning.path}: ${warning.message}`),
+      onWarning: (warning) => skillWarnings.push(warning),
     })
   : undefined;
 
 const skillsEnabled = Boolean(skillCatalog && skillCatalog.entries.length > 0);
+
+/**
+ * Split loader warnings into the ones that cost us a skill and the ones that
+ * did not.
+ *
+ * Not every warning is a skip, and conflating them misleads an operator in the
+ * more dangerous direction. Exceeding the SEP-2640 limits of 512 files or
+ * 16 MiB, for instance, only warns — the skill is still built and served, and
+ * the message says "some hosts may decline it". Reporting that as "skipped and
+ * not served" would describe a skill that works here and is refused at a
+ * conforming host as though it were simply absent.
+ *
+ * `SkillWarning` carries no severity, only `{path, message}`, so classify
+ * structurally rather than by matching message text: a warning belongs to a
+ * skill directory, and that skill either made it into the catalog or did not.
+ */
+const skillDirOf = (path: string): string => path.split("/")[0];
+const servedDirs = new Set(
+  (skillCatalog?.entries ?? []).map((entry) => entry.uri.split("/").at(-2)),
+);
+const skippedWarnings = skillWarnings.filter(
+  (warning) => !servedDirs.has(skillDirOf(warning.path)),
+);
+const servedWithWarnings = skillWarnings.filter((warning) =>
+  servedDirs.has(skillDirOf(warning.path)),
+);
 
 // Built once alongside the catalog: the text is identical for every request.
 const skillsInstructions =
@@ -1002,13 +1027,25 @@ async function main(): Promise<void> {
       console.log(`  ✓ ${entry.uri}`);
     }
   }
-  if (skillWarnings.length > 0) {
-    const plural = skillWarnings.length === 1 ? "" : "s";
+  if (skippedWarnings.length > 0) {
+    const plural = skippedWarnings.length === 1 ? "" : "s";
     console.log(
-      `  ${skillWarnings.length} skill${plural} SKIPPED and NOT served:`,
+      `  ${skippedWarnings.length} skill${plural} SKIPPED and NOT served:`,
     );
-    for (const warning of skillWarnings) {
-      console.log(`  ✗ ${warning}`);
+    for (const warning of skippedWarnings) {
+      console.log(`  ✗ ${warning.path}: ${warning.message}`);
+    }
+  }
+  // Served, but with something an operator should know about — most usefully
+  // a skill over the SEP-2640 limits, which this server will happily serve and
+  // a conforming host may refuse.
+  if (servedWithWarnings.length > 0) {
+    const plural = servedWithWarnings.length === 1 ? "" : "s";
+    console.log(
+      `  ${servedWithWarnings.length} warning${plural}, still served:`,
+    );
+    for (const warning of servedWithWarnings) {
+      console.log(`  ! ${warning.path}: ${warning.message}`);
     }
   }
 
