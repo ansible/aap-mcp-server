@@ -121,7 +121,11 @@ const CONFIG = {
   // ignorant of how the content arrived: a git submodule in the container
   // image, a working copy in local development, or an unpacked OCI artifact
   // later all look the same to it. Empty disables skills entirely.
-  SKILLS_PATH: (process.env.SKILLS_PATH || localConfig.skills_path || "").trim(),
+  SKILLS_PATH: (
+    process.env.SKILLS_PATH ||
+    localConfig.skills_path ||
+    ""
+  ).trim(),
   // Organizational prefix for skill URIs: skill://<prefix>/<name>/<file>.
   // SEP-2640 constrains only the final segment of the skill path — it MUST
   // equal the frontmatter name — so preceding segments are ours to choose.
@@ -524,9 +528,7 @@ const executeToolRequest = async (
 const skillWarnings: string[] = [];
 const skillCatalog: SkillCatalog | undefined = CONFIG.SKILLS_PATH
   ? await loadSkills(CONFIG.SKILLS_PATH, {
-      ...(CONFIG.SKILLS_URI_PREFIX
-        ? { prefix: CONFIG.SKILLS_URI_PREFIX }
-        : {}),
+      ...(CONFIG.SKILLS_URI_PREFIX ? { prefix: CONFIG.SKILLS_URI_PREFIX } : {}),
       // One hint covers skills/list, skills/get, directory reads and skill
       // files together. It defaults to ttlMs:0/private, which would make
       // skills the only uncacheable surface on an otherwise cached server.
