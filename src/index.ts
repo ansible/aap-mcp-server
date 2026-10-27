@@ -67,23 +67,15 @@ const localConfig = loadConfig();
 
 const MCP_PORT = resolveMcpPort(process.env.MCP_PORT);
 
-// Helper function to get timestamps. Declared above CONFIG because the config
+// Helper function to get timestamps. Must stay above CONFIG: the config
 // parsers below log through it.
 const getTimestamp = (): string => {
   return new Date().toISOString().split(".")[0] + "Z";
 };
 
-/**
- * Parse an on/off setting without guessing at a value we do not recognise.
- *
- * These settings reach the server through the installers' generic pass-through
- * rather than a dedicated variable, and neither installer schema-validates it —
- * the operator CRD preserves unknown fields and the containerized role merges a
- * raw dictionary — so a typo arrives here unchallenged. The server is the only
- * place it can surface. Report the offending value and the accepted set rather
- * than silently falling back, so the failure mode is not "an administrator
- * believes a capability is set and it quietly is not".
- */
+// Parse an on/off setting. Reports an unrecognised value rather than silently
+// defaulting: these arrive through the installers' generic pass-through, which
+// does not schema-validate, so this is the only place a typo can surface.
 const parseOnOff = (
   name: string,
   raw: string | undefined,
@@ -117,29 +109,20 @@ const CONFIG = {
   )
     .map((origin) => origin.trim())
     .filter((origin) => origin.length > 0),
-  // SEP-2640 skills serving. A plain directory path, so the server stays
-  // ignorant of how the content arrived: a git submodule in the container
-  // image, a working copy in local development, or an unpacked OCI artifact
-  // later all look the same to it. Empty disables skills entirely.
+  // Directory of SEP-2640 skills to serve. Empty disables skills entirely.
   SKILLS_PATH: (
     process.env.SKILLS_PATH ||
     localConfig.skills_path ||
     ""
   ).trim(),
-  // Organizational prefix for skill URIs: skill://<prefix>/<name>/<file>.
-  // SEP-2640 constrains only the final segment of the skill path — it MUST
-  // equal the frontmatter name — so preceding segments are ours to choose.
+  // Prefix in skill://<prefix>/<name>/<file>. Only the final segment is
+  // constrained by SEP-2640 (it must equal the frontmatter name).
   SKILLS_URI_PREFIX: (
     process.env.SKILLS_URI_PREFIX ||
     localConfig.skills_uri_prefix ||
     "aap"
   ).trim(),
-  // Name the served skills in the server's `instructions` field — the second
-  // discovery mechanism SEP-2640 defines alongside skills/list. On by default:
-  // it is base protocol rather than an extension, so it reaches a client that
-  // has implemented nothing beyond core MCP, and it costs no tools/list entry.
-  // The toggle exists so the mechanism can be isolated when measuring which
-  // discovery path a client actually takes.
+  // Name the served skills in the server's `instructions` field.
   SKILLS_INSTRUCTIONS: parseOnOff(
     "skills_instructions",
     process.env.SKILLS_INSTRUCTIONS || localConfig.skills_instructions,
@@ -516,22 +499,14 @@ const executeToolRequest = async (
   }
 };
 
-// SEP-2640 skill catalog, read once at startup rather than per request: the
-// content is static for the life of the process, and createMcpServer runs on
-// every request. Re-reading the tree there would put disk IO and SHA-256
-// hashing of every skill file on the hot path.
-//
-// Loading is deliberately forgiving — the SDK's default is skip-with-warning
-// rather than `strict`, so one malformed SKILL.md in a content directory
-// cannot take the server's tools down with it. Warnings are collected here and
-// reported at startup so a skipped skill is visible rather than silent.
+// SEP-2640 skill catalog, read once at startup rather than per request:
+// createMcpServer runs on every request, and loading hashes every skill file.
 const skillWarnings: { path: string; message: string }[] = [];
 const skillCatalog: SkillCatalog | undefined = CONFIG.SKILLS_PATH
   ? await loadSkills(CONFIG.SKILLS_PATH, {
       ...(CONFIG.SKILLS_URI_PREFIX ? { prefix: CONFIG.SKILLS_URI_PREFIX } : {}),
-      // One hint covers skills/list, skills/get, directory reads and skill
-      // files together. It defaults to ttlMs:0/private, which would make
-      // skills the only uncacheable surface on an otherwise cached server.
+      // Defaults to ttlMs:0/private, which would leave skills the only
+      // uncacheable surface on the server.
       cacheHint: { ttlMs: 300_000, cacheScope: "public" },
       onWarning: (warning) => skillWarnings.push(warning),
     })
@@ -539,21 +514,10 @@ const skillCatalog: SkillCatalog | undefined = CONFIG.SKILLS_PATH
 
 const skillsEnabled = Boolean(skillCatalog && skillCatalog.entries.length > 0);
 
-/**
- * Split loader warnings into the ones that cost us a skill and the ones that
- * did not.
- *
- * Not every warning is a skip, and conflating them misleads an operator in the
- * more dangerous direction. Exceeding the SEP-2640 limits of 512 files or
- * 16 MiB, for instance, only warns — the skill is still built and served, and
- * the message says "some hosts may decline it". Reporting that as "skipped and
- * not served" would describe a skill that works here and is refused at a
- * conforming host as though it were simply absent.
- *
- * `SkillWarning` carries no severity, only `{path, message}`, so classify
- * structurally rather than by matching message text: a warning belongs to a
- * skill directory, and that skill either made it into the catalog or did not.
- */
+// Split loader warnings into the ones that cost us a skill and the ones that
+// did not: exceeding the SEP-2640 limits only warns, and the skill is still
+// served. Warnings carry no severity, so classify structurally — by whether
+// the skill reached the catalog — rather than by matching message text.
 const skillDirOf = (path: string): string => path.split("/")[0];
 const servedDirs = new Set(
   (skillCatalog?.entries ?? []).map((entry) => entry.uri.split("/").at(-2)),
@@ -587,14 +551,11 @@ const createMcpServer = (requestCtx: RequestContext): McpServer => {
         // the SDK default listChanged to true, which would advertise a capability
         // we don't honor on server/discover; pin it false.
         tools: { listChanged: false },
-        // Same reasoning for resources. attach() registers the skill:// files
-        // via registerResource, which makes the SDK default resources.listChanged
-        // to true; the catalog is read once at startup and never changes, so we
-        // would be advertising a notification we never send.
+        // Same reasoning for resources: attach() registers the skill:// files,
+        // defaulting listChanged to true, but the catalog never changes.
         ...(skillsEnabled ? { resources: { listChanged: false } } : {}),
       },
-      // SEP-2640's second discovery mechanism. Omitted entirely when there is
-      // nothing to point at, rather than sent as an empty string.
+      // SEP-2640's second discovery mechanism, pointing at the served skills.
       ...(skillsInstructions ? { instructions: skillsInstructions } : {}),
       // Cache hint for the SDK-built tools/list result (2026-07-28). The tool set
       // is static per process, so a short shared TTL is safe. cacheScope is
@@ -652,12 +613,10 @@ const createMcpServer = (requestCtx: RequestContext): McpServer => {
     return executeToolRequest(tool, args, requestCtx);
   });
 
-  // Register skills/list, skills/get and the skill:// resource template, and
-  // declare the extension. Attached per server instance because the handler
-  // builds a fresh McpServer per request; the catalog itself is shared.
-  //
-  // Unlike tools, skills are not narrowed by toolset — every endpoint,
-  // /mcp/{toolset} included, serves the whole catalog.
+  // Registers skills/list, skills/get and the skill:// resource template, per
+  // server instance because the handler builds a fresh McpServer per request.
+  // Unlike tools, skills are not narrowed by toolset: every endpoint serves
+  // the whole catalog.
   if (skillCatalog && skillsEnabled) {
     skillCatalog.attach(server);
   }
@@ -1012,8 +971,6 @@ async function main(): Promise<void> {
     console.log(`  ${toolsetName}: ${toolsetTools.length}`);
   }
 
-  // Skill catalog. A skill that fails to load is skipped rather than fatal, so
-  // without this the only symptom is a skill quietly absent from skills/list.
   console.log("");
   if (!CONFIG.SKILLS_PATH) {
     console.log("Skills: disabled (no skills_path / SKILLS_PATH configured)");
@@ -1036,9 +993,6 @@ async function main(): Promise<void> {
       console.log(`  ✗ ${warning.path}: ${warning.message}`);
     }
   }
-  // Served, but with something an operator should know about — most usefully
-  // a skill over the SEP-2640 limits, which this server will happily serve and
-  // a conforming host may refuse.
   if (servedWithWarnings.length > 0) {
     const plural = servedWithWarnings.length === 1 ? "" : "s";
     console.log(

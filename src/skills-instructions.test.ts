@@ -6,14 +6,10 @@ import { loadSkills } from "@modelcontextprotocol/server/ext/skills/node";
 import { buildSkillsInstructions } from "./skills-instructions.js";
 
 /**
- * A reference skill close enough to ansible/aap-skills to exercise the YAML the
- * pointer has to survive: a literal block scalar for description, a folded
- * scalar for allowed-tools, a comment, and a nested mapping.
- *
- * `tools` is a block sequence rather than a flow sequence on purpose: the SDK
- * parses frontmatter over a restricted subset and rejects a flow collection
- * spanning lines (ansible/aap-skills#11 moved the real content into the subset
- * and added CI to keep it there).
+ * A reference skill close enough to ansible/aap-skills to exercise the YAML
+ * the pointer has to survive. `tools` is a block sequence rather than a flow
+ * sequence on purpose: the SDK parses frontmatter over a restricted subset and
+ * rejects a flow collection spanning lines.
  */
 const REFERENCE_SKILL_MD = `---
 # ─── agentskills.io Base Fields ─────────────────────────────────────────────
@@ -74,8 +70,6 @@ afterEach(() => {
 
 describe("buildSkillsInstructions", () => {
   it("returns undefined for an empty catalog", async () => {
-    // Nothing to point at: advertising skills we do not serve would send a
-    // model after URIs that answer ResourceNotFound.
     expect(buildSkillsInstructions(await load())).toBeUndefined();
   });
 
@@ -97,11 +91,10 @@ describe("buildSkillsInstructions", () => {
   });
 
   it("carries the trigger conditions, collapsed onto one line", async () => {
-    // Two things at once because they fail together. The description is what
-    // lets a model connect "is my platform healthy?" to this skill with no
-    // discovery round trip, so dropping to name-only defeats the feature; and
-    // descriptions are routinely block scalars, whose newlines emitted raw
-    // would break the one-entry-per-line shape of the list.
+    // Asserted together because they fail together: the trigger conditions
+    // are what let a model match a prompt with no discovery round trip, and
+    // they arrive in a block scalar whose newlines would otherwise break the
+    // one-entry-per-line shape of the list.
     writeSkill("aap-platform-health-check", REFERENCE_SKILL_MD);
 
     const instructions = buildSkillsInstructions(await load())!;
@@ -114,10 +107,9 @@ describe("buildSkillsInstructions", () => {
   });
 
   it("truncates a description that would blow the instructions budget", async () => {
-    // SEP-2640 calls `instructions` practically bounded in size, so the
-    // pointer has to stay a pointer. 900 characters rather than something
-    // arbitrarily large because Agent Skills caps `description` at 1024 and
-    // the SDK enforces it: a longer one is never served, let alone truncated.
+    // 900 rather than something arbitrarily large: Agent Skills caps
+    // `description` at 1024 and the SDK enforces it, so a longer one is never
+    // served, let alone truncated.
     writeSkill(
       "verbose-skill",
       `---\nname: verbose-skill\ndescription: ${"x".repeat(900)}\n---\nBody\n`,

@@ -11,12 +11,9 @@ import { join } from "node:path";
 import { loadSkills } from "@modelcontextprotocol/server/ext/skills/node";
 
 /**
- * SDK catalog behaviour this server depends on.
- *
- * Not tests of our code — the SDK owns the loader. They pin the behaviour our
- * wiring and our operator-facing documentation assume, so an SDK bump that
- * changes it fails here rather than in production. AAP-99339 asks for exactly
- * this: "everything the SDK provides is verified here rather than built".
+ * SDK catalog behaviour this server depends on. Not tests of our code — they
+ * pin what our wiring and our operator-facing docs assume, so an SDK bump that
+ * changes it fails here rather than in production.
  */
 
 let root: string;
@@ -47,18 +44,15 @@ afterEach(() => {
 });
 
 describe("path containment at catalog build time", () => {
-  // AAP-99339 asks us to confirm containment holds "for the catalog build as
-  // well as the read path". The 2.4.0 source settles the shape of the answer:
-  // the catalog enumerates a walked tree and assigns files to skills by path
+  // The catalog enumerates a walked tree and assigns files to skills by path
   // prefix, so no path is built from untrusted input and there is nothing to
   // traverse at build time (tests/e2e-skills.test.ts covers the read path,
   // which does take input). That leaves symlinks as the only way in from
   // outside the tree, and these tests pin it.
 
   it("drops a skill whose symlink escapes, and only that skill", async () => {
-    // Also the reason we take the default skip-with-warning over `strict`: one
-    // unreadable skill in a content directory must not cost the server its
-    // other skills, nor its tools.
+    // Also why we take the default skip-with-warning over `strict`: one bad
+    // skill must not cost the server its other skills, nor its tools.
     writeFileSync(join(outside, "secret.md"), "# Secret\n");
     writeSkill("good-skill");
     writeSkill("escaping-skill", () =>
@@ -99,11 +93,9 @@ describe("path containment at catalog build time", () => {
 
 describe("SEP-2640 per-skill limits", () => {
   it("warns past 512 files but still serves the skill", async () => {
-    // The surprising half: exceeding the limits does NOT skip the skill. The
-    // catalog is built and every resource served, with a warning saying "some
-    // hosts may decline it" — so the failure lands at a conforming host rather
-    // than here, which is why the startup log reports this separately from a
-    // skip instead of calling it "not served".
+    // The surprising half: exceeding the limits does NOT skip the skill, so
+    // the failure lands at a conforming host rather than here. Hence the
+    // startup log reporting this separately from a skip.
     writeSkill("oversized-skill", () => {
       const dir = join(root, "oversized-skill");
       for (let i = 0; i < 600; i++) {

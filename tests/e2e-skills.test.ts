@@ -38,10 +38,8 @@ const SKILL_URI = `skill://aap/${SKILL_NAME}/SKILL.md`;
 const REFERENCE_URI = `skill://aap/${SKILL_NAME}/references/sources.md`;
 
 /**
- * A fixture mirroring the constructs in the real ansible/aap-skills SKILL.md
- * that a careless loader normalizes: a comment, a literal block scalar, a
- * folded scalar with strip chomping, a quoted version that must not become a
- * number, and a nested mapping.
+ * A fixture carrying the constructs in the real ansible/aap-skills SKILL.md
+ * that a careless loader normalizes away.
  */
 const SKILL_MD = `---
 # ─── agentskills.io Base Fields ───────────────────────────────────────────
@@ -248,16 +246,14 @@ describe("End-to-End: SEP-2640 skills", () => {
         capabilities.extensions?.["io.modelcontextprotocol/skills"],
       ).toEqual({ directoryRead: true });
       // Resources are registered statically and we never send
-      // notifications/resources/list_changed, so advertising it (the SDK
-      // default) would be a promise we do not keep.
+      // notifications/resources/list_changed, so the SDK default of true
+      // would be a promise we do not keep.
       expect(capabilities.resources?.listChanged).toBe(false);
     });
 
     it("points at every served skill from the instructions field", async () => {
-      // What the pointer contains is unit-tested in
-      // src/skills-instructions.test.ts. The half that cannot be: whether the
-      // field survives to the wire at all. A builder that works in isolation
-      // is useless if server/discover drops the field.
+      // Contents are unit-tested; the half that cannot be is whether the
+      // field survives to the wire at all.
       const message = await call("server/discover");
 
       expect(message.result.instructions).toContain(SKILL_URI);
@@ -278,9 +274,8 @@ describe("End-to-End: SEP-2640 skills", () => {
         "resources",
         "uri",
       ]);
-      // SKILL_URI embeds SKILL_NAME, so these two together also pin SEP-2640's
-      // requirement that the skill path's final segment equal the frontmatter
-      // name.
+      // SKILL_URI embeds SKILL_NAME, so together these also pin SEP-2640's
+      // requirement that the path's final segment equal the frontmatter name.
       expect(entry.uri).toBe(SKILL_URI);
       expect(entry.frontmatter.name).toBe(SKILL_NAME);
     });
@@ -300,9 +295,7 @@ describe("End-to-End: SEP-2640 skills", () => {
     });
 
     it("carries the cache hints configured on the catalog", async () => {
-      // One `cacheHint` on loadSkills covers skills/list, skills/get,
-      // directory reads and skill files together, and defaults to 0/private —
-      // so this asserts we set it. Without it skills would be the only
+      // The hint defaults to 0/private, which would leave skills the only
       // uncacheable surface on the server.
       const result = (await call("skills/list")).result;
       expect(result.ttlMs).toBe(300_000);
@@ -367,14 +360,12 @@ describe("End-to-End: SEP-2640 skills", () => {
 
   describe("frontmatter fidelity", () => {
     // SEP-2640's load-bearing MUST: a host re-parses the fetched SKILL.md and
-    // compares its frontmatter field-by-field against the advertised entry.
-    // Any discrepancy is a verification failure and the skill is not loaded,
-    // so a helpful normalization in the loader silently breaks every host.
+    // compares frontmatter field-by-field against the advertised entry, so a
+    // helpful normalization in the loader silently breaks every host.
     //
-    // The second test is not redundant with the first: equality only shows
-    // the SDK agrees with js-yaml. If the SDK normalized the bytes it serves
-    // as well as the frontmatter it advertises, both sides would shift
-    // together and still match. The second pins them against the fixture.
+    // The second test is not redundant: equality only shows the SDK agrees
+    // with js-yaml. Were it normalizing the bytes it serves as well as the
+    // frontmatter it advertises, both would shift together and still match.
     it("re-parsing the served SKILL.md reproduces the advertised frontmatter", async () => {
       const entry = (await call("skills/list")).result.skills[0];
       const served = (await readBytes(SKILL_URI)).toString("utf8");
@@ -408,13 +399,12 @@ describe("End-to-End: SEP-2640 skills", () => {
 
   describe("resources/list", () => {
     it("lists one entry point per skill, not every file", async () => {
-      // The SDK advertises each skill's SKILL.md and stops there; reference
-      // files stay reachable through the skill:// template (the digest test
-      // above reads REFERENCE_URI) but are not enumerated. That is progressive
-      // disclosure working as designed — the listing stays one line per skill
-      // however many files it carries — and the consequence is an authoring
-      // constraint, not a serving bug: a client that never reads SKILL.md
-      // never learns a reference file exists, so a skill must cite its own.
+      // Reference files stay reachable through the skill:// template (the
+      // digest test above reads REFERENCE_URI) but are not enumerated. That
+      // is progressive disclosure by design, and the consequence is an
+      // authoring constraint rather than a serving bug: a client that never
+      // reads SKILL.md never learns a reference file exists, so a skill has
+      // to cite its own.
       const message = await call("resources/list");
       expect(message.error).toBeUndefined();
 
