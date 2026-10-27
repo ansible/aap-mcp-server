@@ -264,13 +264,8 @@ Tool availability depends on your configured toolsets and user permissions.
 
 Alongside tools, the service can serve **skills** — packaged procedural instructions a client
 loads to carry out a multi-step task, defined by the MCP skills extension
-([SEP-2640](https://modelcontextprotocol.io/seps/2640-skills-extension),
-[overview](https://modelcontextprotocol.io/extensions/skills/overview)). A tool is a single
-call the model can make; a skill is a document telling it which calls to make, in what order,
-and how to interpret the results.
-
-The protocol mechanics come from the MCP TypeScript SDK (2.4.0 or later), which carries the
-SEP-2640 implementation.
+([SEP-2640](https://modelcontextprotocol.io/seps/2640-skills-extension)) and implemented by
+the MCP TypeScript SDK 2.4.0 or later.
 
 Skills are **off by default**. Point the server at a directory to enable them:
 
@@ -286,11 +281,9 @@ skills_uri_prefix: "aap" # optional, defaults to "aap"
 ```
 
 With `SKILLS_PATH` unset or empty the extension is not advertised and `skills/list` and
-`skills/get` are not registered — the server behaves exactly as it did before skills existed.
-
-The catalog is read once at startup, so adding or editing a skill needs a restart. Unlike
-tools, it is not narrowed by toolset: every endpoint, `/mcp/{toolset}` included, serves the
-whole catalog.
+`skills/get` are not registered. The catalog is read once at startup, so content changes need
+a restart, and unlike tools it is not narrowed by toolset: every endpoint, `/mcp/{toolset}`
+included, serves the whole catalog.
 
 ### Directory layout
 
@@ -308,10 +301,6 @@ skills/
 must equal the directory name** — SEP-2640 requires the last segment of a skill's URI path to
 match its frontmatter name.
 
-The path is a plain directory, which keeps the server ignorant of how the content arrived: a
-git submodule in the container image, a working copy in local development, or an unpacked OCI
-artifact later all look the same to it.
-
 ### What clients see
 
 | Method           | Returns                                                                 |
@@ -321,76 +310,34 @@ artifact later all look the same to it.
 | `resources/list` | One entry per skill — its `SKILL.md`, and nothing below it              |
 | `resources/read` | The bytes of any skill file, addressed `skill://<prefix>/<name>/<file>` |
 
-Every file in a `skills/list` entry carries a SHA-256 `digest` and byte `size`. Clients are
-expected to verify both, and to re-parse the fetched `SKILL.md` and confirm its frontmatter
-matches what the listing advertised, before loading a skill.
+Every file in a `skills/list` entry carries a SHA-256 `digest` and byte `size` for clients to
+verify. Note that `resources/list` advertises each skill's `SKILL.md` only, while
+`resources/read` serves any file in the skill directory — **so a skill must cite its own
+reference files**, or a client never learns they exist.
 
-Note the asymmetry between the last two rows: `resources/list` advertises each skill's
-`SKILL.md` only, while `resources/read` will serve any file in the skill directory. That is
-progressive disclosure working as intended — the listing stays one line per skill however
-many files it carries — but it is an authoring constraint. **A client that never reads
-`SKILL.md` never learns a reference file exists, so a skill must cite its own files.**
-
-`resources/list` is worth knowing about even though the extension does not require it. No
-mainstream client implements `skills/list` yet, so in practice a client that knows nothing
-about SEP-2640 still reaches these skills: it lists resources, sees the `skill://` URI, and
-reads the `SKILL.md` through `resources/read`.
-
-### Discovery: the instructions pointer
-
-Reachable is not the same as findable. Asked "is my AAP platform healthy?" against a server
-serving a skill whose trigger conditions contain that question almost verbatim, a real client
-made seven tool calls, zero resource calls, and never found the skill. Nothing draws a model to
-the resource list.
-
-SEP-2640 anticipates this and defines a second discovery mechanism alongside `skills/list`:
-
-> A server MAY direct the agent to specific skill URIs from its `instructions` field. This
-> requires no discovery machinery on the host; the URI is simply present in the model's context
-> and readable via `resources/read`.
-
-So the server names every skill it serves — URI plus description, trigger conditions included —
-in the `instructions` field of its `server/discover` result. The client injects that into the
-model's context at connection, which means there is nothing to discover: the model already
-holds the URI and reads it directly. On the same prompt that failed above, the skill is read as
-the client's first action.
-
-This is base protocol rather than an extension, so it works on any MCP client, and it costs no
-entry in `tools/list`. It is on by default; set `skills_instructions: "off"` (or
-`SKILLS_INSTRUCTIONS=off`) to leave only the SEP-2640 methods.
-
-Two caveats worth knowing. A client that does not surface server instructions gets no benefit —
-the pointer is passive text, not something the model can stumble into. And a client reaching a
-skill this way reads it over `resources/read` without ever seeing the digests published on
-`skills/list`, so the integrity check described above goes unexercised on that path.
+The server also names every skill it serves, by URI and description, in the `instructions`
+field of `server/discover`. That is base protocol rather than an extension, so clients that
+implement nothing of SEP-2640 still find the skills; without it, in testing, they did not. Set
+`skills_instructions: "off"` (or `SKILLS_INSTRUCTIONS=off`) to serve skills only through the
+extension methods.
 
 ### A skill that fails to load
 
-Loading is deliberately forgiving: a skill is skipped with a warning rather than failing
-startup, so one bad `SKILL.md` in a content directory cannot take the server's tools down with
-it. A skill is skipped when it has no `SKILL.md`; its frontmatter is missing, malformed, or not
-a mapping; it lacks `name` or `description`; its `name` disagrees with its directory; it
-contains a symlink; or one of its file names cannot be represented in a URI. A missing
-`SKILLS_PATH` directory yields an empty catalog and a warning.
+A bad skill is skipped with a warning rather than failing startup, so one bad `SKILL.md`
+cannot take the server's tools down with it. A skill is skipped when:
 
-Note the symlink rule is absolute, not a containment check: the loader refuses **any** symlink,
-including one pointing at a sibling file inside the same skill directory, and drops the whole
-skill rather than just that file (`symlinks and other special files are not followed; copy the
-file instead`). Shared content has to be copied in, not linked.
+- it has no `SKILL.md`, or its frontmatter is missing, malformed, or not a mapping;
+- it lacks `name` or `description`, or its `name` disagrees with its directory;
+- it contains a symlink — **any** symlink, even to a file inside the same skill, so shared
+  content has to be copied in rather than linked;
+- its frontmatter uses YAML outside the SDK's restricted subset (block mappings and sequences,
+  plain, quoted and block scalars, comments, and flow collections only if they open and close
+  on one line), so a multi-line `tools: [ ... ]` is rejected;
+- one of its file names cannot be represented in a URI.
 
-**Exceeding the SEP-2640 limits is not a skip.** A skill over 512 files or 16 MiB is still
-built and still served in full — the loader warns that "some hosts may decline it" and carries
-on. So the skill works against this server and is refused by a conforming host instead, which
-is the more confusing direction for that failure to run. The startup log reports these
-separately from skips, under `warning(s), still served`.
-
-One skip reason is easy to hit by accident. The SDK does not use a general YAML parser for
-frontmatter — it reads a **restricted subset** (block mappings and sequences, plain, quoted and
-block scalars, comments, and flow collections only if they open and close on the same line) and
-refuses anything outside it. A multi-line `tools: [ ... ]` is legal YAML and will be rejected.
-The reason is deliberate: SEP-2640 makes a host re-parse `SKILL.md` and compare frontmatter
-field by field, so any disagreement between the server's parser and the host's is a
-verification failure. The SDK stays where disagreement is improbable and declines to guess.
+Exceeding the SEP-2640 limits of 512 files or 16 MiB is **not** a skip: the skill is still
+served in full, though a conforming host may decline it. The startup log reports those under
+`warning(s), still served`.
 
 Every skipped skill is named in the startup log with its file, line and reason:
 
@@ -401,8 +348,6 @@ Skills: 2 loaded from /opt/aap-mcp/skills
   1 skill SKIPPED and NOT served:
   ✗ aap-platform-health-check/SKILL.md: SKILL.md frontmatter: line 43: a flow collection must close on the same line (skill skipped)
 ```
-
-If a skill you expect is absent from `skills/list`, that log says which one and why.
 
 ### Verifying a deployment
 
@@ -416,10 +361,9 @@ npx @modelcontextprotocol/inspector --cli \
   --method skills/list --verify
 ```
 
-It fetches each file, verifies it against the advertised digest and size, re-parses the served
-`SKILL.md` and compares frontmatter field by field, and checks the size limits. Exit `0` means
-clean, `7` a verification failure, `8` a skill too large to check fully. Findings name the
-offending file or frontmatter field.
+It verifies digests, sizes, frontmatter fidelity and the size limits, naming the offending
+file or field. Exit `0` means clean, `7` a verification failure, `8` a skill too large to
+check fully.
 
 ## Prometheus Metrics
 
