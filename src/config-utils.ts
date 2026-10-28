@@ -12,6 +12,9 @@ export interface AapMcpConfig {
   toolsets: Record<string, string[]>;
   analytics_key?: string;
   allowed_origins?: string[];
+  skills_path?: string;
+  skills_uri_prefix?: string;
+  skills_instructions?: string;
 }
 
 /**

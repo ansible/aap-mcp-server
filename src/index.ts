@@ -11,6 +11,8 @@ import {
   McpServer,
   type McpRequestContext,
 } from "@modelcontextprotocol/server";
+import type { SkillCatalog } from "@modelcontextprotocol/server/ext/skills";
+import { loadSkills } from "@modelcontextprotocol/server/ext/skills/node";
 import {
   extractToolsFromApi,
   getDefaultPageSize,
@@ -31,6 +33,13 @@ import { DISCOVER_TOOLS, handleDiscoverTool } from "./discover.js";
 import { JsonRpcErrorCode } from "./error-codes.js";
 import { createOriginValidationMiddleware } from "./middleware/origin-validation.js";
 import { resolveMcpPort } from "./port.js";
+import { buildSkillsInstructions } from "./skills-instructions.js";
+import {
+  classifySkillWarnings,
+  formatSkillsReport,
+  parseOnOff,
+  type SkillWarning,
+} from "./skills-startup.js";
 import {
   buildConfig,
   buildResourceMetadataUrl,
@@ -64,6 +73,22 @@ const localConfig = loadConfig();
 
 const MCP_PORT = resolveMcpPort(process.env.MCP_PORT);
 
+// Must stay above CONFIG: the setting parsed below logs through it.
+const getTimestamp = (): string => {
+  return new Date().toISOString().split(".")[0] + "Z";
+};
+
+const skillsInstructionsSetting = parseOnOff(
+  "skills_instructions",
+  process.env.SKILLS_INSTRUCTIONS || localConfig.skills_instructions,
+  true,
+);
+if (skillsInstructionsSetting.warning) {
+  console.warn(
+    `${getTimestamp()} WARNING: ${skillsInstructionsSetting.warning}`,
+  );
+}
+
 // Configuration constants (with priority: env var > config file > default)
 const CONFIG = {
   BASE_URL: process.env.BASE_URL || localConfig.base_url || "https://localhost",
@@ -82,6 +107,20 @@ const CONFIG = {
   )
     .map((origin) => origin.trim())
     .filter((origin) => origin.length > 0),
+  // Directory of SEP-2640 skills to serve. Empty disables skills entirely.
+  SKILLS_PATH: (
+    process.env.SKILLS_PATH ||
+    localConfig.skills_path ||
+    ""
+  ).trim(),
+  // Prefix in skill://<prefix>/<name>/<file>. Only the final segment is
+  // constrained by SEP-2640 (it must equal the frontmatter name).
+  SKILLS_URI_PREFIX: (
+    process.env.SKILLS_URI_PREFIX ||
+    localConfig.skills_uri_prefix ||
+    "aap"
+  ).trim(),
+  SKILLS_INSTRUCTIONS: skillsInstructionsSetting.value,
 } as const;
 
 // Multi-round-trip (MRTR) requestState integrity codec (2026-07-28). requestState
@@ -138,11 +177,6 @@ const { value: defaultPageSize, source: defaultPageSizeSource } =
 
 // Get services configuration
 const servicesConfig = localConfig.services || [];
-
-// Helper function to get timestamps
-const getTimestamp = (): string => {
-  return new Date().toISOString().split(".")[0] + "Z";
-};
 
 // Configure HTTPS certificate validation globally
 if (ignoreCertificateErrors) {
@@ -458,6 +492,42 @@ const executeToolRequest = async (
   }
 };
 
+// Read once at startup, not per request: createMcpServer runs on every request,
+// and loading hashes every skill file.
+const skillWarnings: SkillWarning[] = [];
+let loadedCatalog: SkillCatalog | undefined;
+let skillLoadError: string | undefined;
+if (CONFIG.SKILLS_PATH) {
+  try {
+    loadedCatalog = await loadSkills(CONFIG.SKILLS_PATH, {
+      ...(CONFIG.SKILLS_URI_PREFIX ? { prefix: CONFIG.SKILLS_URI_PREFIX } : {}),
+      // Defaults to ttlMs:0/private, which would leave skills the only
+      // uncacheable surface on the server.
+      cacheHint: { ttlMs: 300_000, cacheScope: "public" },
+      onWarning: (warning) => skillWarnings.push(warning),
+    });
+  } catch (error) {
+    // A root the loader cannot enumerate throws, unlike a per-skill problem,
+    // which only warns. Skills ship inside the image, so a missing COPY must
+    // not cost the server its tools.
+    skillLoadError = error instanceof Error ? error.message : String(error);
+    console.error(
+      `${getTimestamp()} ERROR: skills_path="${CONFIG.SKILLS_PATH}" could not be ` +
+        `loaded; serving without skills. ${skillLoadError}`,
+    );
+  }
+}
+
+const skillCatalog = loadedCatalog?.entries.length ? loadedCatalog : undefined;
+
+const classifiedWarnings = classifySkillWarnings(skillWarnings, skillCatalog);
+
+// Built once: the text is identical for every request.
+const skillsInstructions =
+  skillCatalog && CONFIG.SKILLS_INSTRUCTIONS
+    ? buildSkillsInstructions(skillCatalog)
+    : undefined;
+
 // Factory function to create a new McpServer instance with request handlers.
 // Called once per request by createMcpHandler; closes over the per-request
 // RequestContext (toolset + identity) resolved from authInfo.extra.
@@ -474,7 +544,11 @@ const createMcpServer = (requestCtx: RequestContext): McpServer => {
         // the SDK default listChanged to true, which would advertise a capability
         // we don't honor on server/discover; pin it false.
         tools: { listChanged: false },
+        // Same reasoning for resources: attach() registers the skill:// files,
+        // defaulting listChanged to true, but the catalog never changes.
+        ...(skillCatalog ? { resources: { listChanged: false } } : {}),
       },
+      ...(skillsInstructions ? { instructions: skillsInstructions } : {}),
       // Cache hint for the SDK-built tools/list result (2026-07-28). The tool set
       // is static per process, so a short shared TTL is safe. cacheScope is
       // 'public' | 'private' ('shared' does not exist); tools/call is not a
@@ -530,6 +604,12 @@ const createMcpServer = (requestCtx: RequestContext): McpServer => {
 
     return executeToolRequest(tool, args, requestCtx);
   });
+
+  // Unlike tools, skills are not narrowed by toolset: every endpoint serves
+  // the whole catalog.
+  if (skillCatalog) {
+    skillCatalog.attach(server);
+  }
 
   return server;
 };
@@ -879,6 +959,16 @@ async function main(): Promise<void> {
   console.log(`Total tools loaded: ${allTools.length}`);
   for (const [toolsetName, toolsetTools] of Object.entries(allToolsets)) {
     console.log(`  ${toolsetName}: ${toolsetTools.length}`);
+  }
+
+  console.log("");
+  for (const line of formatSkillsReport({
+    skillsPath: CONFIG.SKILLS_PATH,
+    catalog: skillCatalog,
+    loadError: skillLoadError,
+    warnings: classifiedWarnings,
+  })) {
+    console.log(line);
   }
 
   console.log("");

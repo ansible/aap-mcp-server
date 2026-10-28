@@ -132,6 +132,18 @@ MCP_PORT=3000
 # NOTE: if you add such a handler, its `requestState` MUST be produced via
 # `requestStateCodec.mint(...)` or verification will reject the client's retry.
 #REQUEST_STATE_SECRET=<random-high-entropy-string>
+
+# Directory of skills to serve over the MCP skills extension (SEP-2640).
+# Unset or empty disables skills entirely. See "Serving Skills" below.
+# Also settable via `skills_path` in aap-mcp.yaml (env var takes precedence).
+#SKILLS_PATH=/opt/aap-mcp/skills
+
+# Organizational prefix for skill URIs (optional, defaults to "aap").
+#SKILLS_URI_PREFIX=aap
+
+# Name the served skills in the server's `instructions` field: "on" (default)
+# or "off". Any other value is reported at startup and the default kept.
+#SKILLS_INSTRUCTIONS=on
 ```
 
 ### Configuration Priority
@@ -173,6 +185,10 @@ The service provides several MCP endpoints:
 
 - **Standard MCP**: `/mcp` (POST, GET, DELETE)
 - **Toolset-specific**: `/mcp/{toolset}` where toolset matches your configured toolsets
+
+Toolset endpoints narrow the _tools_ on offer. When skills are enabled, the full skill catalog
+is served from every endpoint, toolset-specific ones included — see
+[Serving Skills](#serving-skills).
 
 ### Authentication
 
@@ -243,6 +259,120 @@ The service generates tools from AAP OpenAPI specifications for:
 - **Galaxy**: Collection management and versions
 
 Tool availability depends on your configured toolsets and user permissions.
+
+## Serving Skills
+
+Alongside tools, the service can serve **skills** — packaged procedural instructions a client
+loads to carry out a multi-step task, defined by the MCP skills extension
+([SEP-2640](https://modelcontextprotocol.io/seps/2640-skills-extension)) and implemented by
+the MCP TypeScript SDK 2.4.0 or later.
+
+Skills are **off by default**. Point the server at a directory to enable them:
+
+```bash
+SKILLS_PATH=/opt/aap-mcp/skills npm start
+```
+
+or in `aap-mcp.yaml`:
+
+```yaml
+skills_path: "/opt/aap-mcp/skills"
+skills_uri_prefix: "aap" # optional, defaults to "aap"
+```
+
+With `SKILLS_PATH` unset or empty the extension is not advertised and `skills/list` and
+`skills/get` are not registered. The catalog is read once at startup, so content changes need
+a restart, and unlike tools it is not narrowed by toolset: every endpoint, `/mcp/{toolset}`
+included, serves the whole catalog.
+
+### Directory layout
+
+Each immediate subdirectory of `SKILLS_PATH` is one skill:
+
+```
+skills/
+└── aap-platform-health-check/
+    ├── SKILL.md                     # required
+    └── references/
+        └── red-hat-sources.md       # optional supporting files
+```
+
+`SKILL.md` needs YAML frontmatter carrying at least `name` and `description`, and **`name`
+must equal the directory name** — SEP-2640 requires the last segment of a skill's URI path to
+match its frontmatter name.
+
+### What clients see
+
+| Method           | Returns                                                                 |
+| ---------------- | ----------------------------------------------------------------------- |
+| `skills/list`    | Every skill, each as `{uri, frontmatter, resources}`                    |
+| `skills/get`     | One skill by URI, wrapped as `{"skill": {…}}`                           |
+| `resources/list` | One entry per skill — its `SKILL.md`, and nothing below it              |
+| `resources/read` | The bytes of any skill file, addressed `skill://<prefix>/<name>/<file>` |
+
+Every file in a `skills/list` entry carries a SHA-256 `digest` and byte `size` for clients to
+verify. Note that `resources/list` advertises each skill's `SKILL.md` only, while
+`resources/read` serves any file in the skill directory — **so a skill must cite its own
+reference files**, or a client never learns they exist.
+
+The extension is advertised as `{"directoryRead": true}`, so `resources/directory/read` also
+works. That value is derived by the SDK from the catalog source rather than configured here:
+the Node source implements directory reads, and declining them would mean not using the
+catalog.
+
+The server also names every skill it serves, by URI and description, in the `instructions`
+field of `server/discover`. That is base protocol rather than an extension, so clients that
+implement nothing of SEP-2640 still find the skills; without it, in testing, they did not. Set
+`skills_instructions: "off"` (or `SKILLS_INSTRUCTIONS=off`) to serve skills only through the
+extension methods.
+
+### A skill that fails to load
+
+A bad skill is skipped with a warning rather than failing startup, so one bad `SKILL.md`
+cannot take the server's tools down with it. A skill is skipped when:
+
+- it has no `SKILL.md`, or its frontmatter is missing, malformed, or not a mapping;
+- it lacks `name` or `description`, or its `name` disagrees with its directory;
+- it contains a symlink — **any** symlink, even to a file inside the same skill, so shared
+  content has to be copied in rather than linked;
+- its frontmatter uses YAML outside the SDK's restricted subset (block mappings and sequences,
+  plain, quoted and block scalars, comments, and flow collections only if they open and close
+  on one line), so a multi-line `tools: [ ... ]` is rejected;
+- one of its file names cannot be represented in a URI.
+
+Exceeding the SEP-2640 limits of 512 files or 16 MiB is **not** a skip: the skill is still
+served in full, though a conforming host may decline it. The startup log reports those under
+`warning(s), still served`.
+
+A `skills_path` the server cannot read at all — missing, not a directory, no permission — is
+reported as an error and skills are disabled for that run. The server still starts and serves
+its tools.
+
+Every skipped skill is named in the startup log with its file, line and reason:
+
+```
+Skills: 2 loaded from /opt/aap-mcp/skills
+  ✓ skill://aap/aap-effective-access-review/SKILL.md
+  ✓ skill://aap/aap-skill-creator/SKILL.md
+  1 skill SKIPPED and NOT served:
+  ✗ aap-platform-health-check/SKILL.md: SKILL.md frontmatter: line 43: a flow collection must close on the same line (skill skipped)
+```
+
+### Verifying a deployment
+
+The [MCP Inspector](https://github.com/modelcontextprotocol/inspector) (2.6.0 or later) checks
+conformance rather than just displaying results:
+
+```bash
+npx @modelcontextprotocol/inspector --cli \
+  --server-url http://localhost:3000/mcp --transport http \
+  --header "Authorization: Bearer your_aap_token_here" \
+  --method skills/list --verify
+```
+
+It verifies digests, sizes, frontmatter fidelity and the size limits, naming the offending
+file or field. Exit `0` means clean, `7` a verification failure, `8` a skill too large to
+check fully.
 
 ## Prometheus Metrics
 
