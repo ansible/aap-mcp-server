@@ -55,6 +55,38 @@ export const classifySkillWarnings = (
   };
 };
 
+const plural = (count: number): string => (count === 1 ? "" : "s");
+
+const headerLines = (
+  skillsPath: string,
+  catalog: SkillCatalog | undefined,
+  loadError: string | undefined,
+): string[] => {
+  if (!skillsPath) {
+    return ["Skills: disabled (no skills_path / SKILLS_PATH configured)"];
+  }
+  if (loadError) {
+    return [
+      `Skills: FAILED to load from ${skillsPath}, serving without skills`,
+      `  ✗ ${loadError}`,
+    ];
+  }
+  if (!catalog) return [`Skills: none loaded from ${skillsPath}`];
+  return [
+    `Skills: ${catalog.entries.length} loaded from ${skillsPath}`,
+    ...catalog.entries.map((entry) => `  ✓ ${entry.uri}`),
+  ];
+};
+
+const warningLines = (
+  warnings: SkillWarning[],
+  heading: string,
+  mark: string,
+): string[] =>
+  warnings.length === 0
+    ? []
+    : [heading, ...warnings.map((w) => `  ${mark} ${w.path}: ${w.message}`)];
+
 export const formatSkillsReport = (input: {
   skillsPath: string;
   catalog: SkillCatalog | undefined;
@@ -62,43 +94,20 @@ export const formatSkillsReport = (input: {
   warnings: ClassifiedWarnings;
 }): string[] => {
   const { skillsPath, catalog, loadError, warnings } = input;
-  const lines: string[] = [];
+  const { skipped, served } = warnings;
 
-  if (!skillsPath) {
-    lines.push("Skills: disabled (no skills_path / SKILLS_PATH configured)");
-  } else if (loadError) {
-    lines.push(
-      `Skills: FAILED to load from ${skillsPath}, serving without skills`,
-    );
-    lines.push(`  ✗ ${loadError}`);
-  } else if (!catalog) {
-    lines.push(`Skills: none loaded from ${skillsPath}`);
-  } else {
-    lines.push(`Skills: ${catalog.entries.length} loaded from ${skillsPath}`);
-    for (const entry of catalog.entries) {
-      lines.push(`  ✓ ${entry.uri}`);
-    }
-  }
-
-  for (const warning of warnings.catalog) {
-    lines.push(`  ! ${warning.message}`);
-  }
-  if (warnings.skipped.length > 0) {
-    const plural = warnings.skipped.length === 1 ? "" : "s";
-    lines.push(
-      `  ${warnings.skipped.length} skill${plural} SKIPPED and NOT served:`,
-    );
-    for (const warning of warnings.skipped) {
-      lines.push(`  ✗ ${warning.path}: ${warning.message}`);
-    }
-  }
-  if (warnings.served.length > 0) {
-    const plural = warnings.served.length === 1 ? "" : "s";
-    lines.push(`  ${warnings.served.length} warning${plural}, still served:`);
-    for (const warning of warnings.served) {
-      lines.push(`  ! ${warning.path}: ${warning.message}`);
-    }
-  }
-
-  return lines;
+  return [
+    ...headerLines(skillsPath, catalog, loadError),
+    ...warnings.catalog.map((warning) => `  ! ${warning.message}`),
+    ...warningLines(
+      skipped,
+      `  ${skipped.length} skill${plural(skipped.length)} SKIPPED and NOT served:`,
+      "✗",
+    ),
+    ...warningLines(
+      served,
+      `  ${served.length} warning${plural(served.length)}, still served:`,
+      "!",
+    ),
+  ];
 };
