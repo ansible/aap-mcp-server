@@ -35,6 +35,12 @@ import { createOriginValidationMiddleware } from "./middleware/origin-validation
 import { resolveMcpPort } from "./port.js";
 import { buildSkillsInstructions } from "./skills-instructions.js";
 import {
+  classifySkillWarnings,
+  formatSkillsReport,
+  parseOnOff,
+  type SkillWarning,
+} from "./skills-startup.js";
+import {
   buildConfig,
   buildResourceMetadataUrl,
   buildWwwAuthenticateHeader,
@@ -67,29 +73,22 @@ const localConfig = loadConfig();
 
 const MCP_PORT = resolveMcpPort(process.env.MCP_PORT);
 
-// Helper function to get timestamps. Must stay above CONFIG: the config
-// parsers below log through it.
+// Helper function to get timestamps. Must stay above CONFIG: the setting
+// parsed below logs through it.
 const getTimestamp = (): string => {
   return new Date().toISOString().split(".")[0] + "Z";
 };
 
-// Parse an on/off setting. Reports an unrecognised value rather than silently
-// defaulting: these arrive through the installers' generic pass-through, which
-// does not schema-validate, so this is the only place a typo can surface.
-const parseOnOff = (
-  name: string,
-  raw: string | undefined,
-  fallback: boolean,
-): boolean => {
-  const value = (raw ?? "").trim().toLowerCase();
-  if (value === "") return fallback;
-  if (value === "on" || value === "off") return value === "on";
+const skillsInstructionsSetting = parseOnOff(
+  "skills_instructions",
+  process.env.SKILLS_INSTRUCTIONS || localConfig.skills_instructions,
+  true,
+);
+if (skillsInstructionsSetting.warning) {
   console.warn(
-    `${getTimestamp()} WARNING: ${name}="${raw}" is not a recognised value ` +
-      `(accepted: "on", "off"). Falling back to "${fallback ? "on" : "off"}".`,
+    `${getTimestamp()} WARNING: ${skillsInstructionsSetting.warning}`,
   );
-  return fallback;
-};
+}
 
 // Configuration constants (with priority: env var > config file > default)
 const CONFIG = {
@@ -123,11 +122,7 @@ const CONFIG = {
     "aap"
   ).trim(),
   // Name the served skills in the server's `instructions` field.
-  SKILLS_INSTRUCTIONS: parseOnOff(
-    "skills_instructions",
-    process.env.SKILLS_INSTRUCTIONS || localConfig.skills_instructions,
-    true,
-  ),
+  SKILLS_INSTRUCTIONS: skillsInstructionsSetting.value,
 } as const;
 
 // Multi-round-trip (MRTR) requestState integrity codec (2026-07-28). requestState
@@ -501,7 +496,7 @@ const executeToolRequest = async (
 
 // SEP-2640 skill catalog, read once at startup rather than per request:
 // createMcpServer runs on every request, and loading hashes every skill file.
-const skillWarnings: { path: string; message: string }[] = [];
+const skillWarnings: SkillWarning[] = [];
 let loadedCatalog: SkillCatalog | undefined;
 let skillLoadError: string | undefined;
 if (CONFIG.SKILLS_PATH) {
@@ -528,24 +523,7 @@ if (CONFIG.SKILLS_PATH) {
 // An empty catalog is no catalog: nothing to attach, nothing to advertise.
 const skillCatalog = loadedCatalog?.entries.length ? loadedCatalog : undefined;
 
-// Split loader warnings into the ones that cost us a skill and the ones that
-// did not: exceeding the SEP-2640 limits only warns, and the skill is still
-// served. Warnings carry no severity, so classify structurally — by whether
-// the skill reached the catalog — rather than by matching message text.
-const skillDirOf = (path: string): string => path.split("/")[0];
-const servedDirs = new Set(
-  (skillCatalog?.entries ?? []).map((entry) => entry.uri.split("/").at(-2)),
-);
-// Catalog-level problems are reported against ".", which is no skill's
-// directory and must not be counted as a skipped skill.
-const catalogWarnings = skillWarnings.filter((w) => w.path === ".");
-const perSkillWarnings = skillWarnings.filter((w) => w.path !== ".");
-const skippedWarnings = perSkillWarnings.filter(
-  (warning) => !servedDirs.has(skillDirOf(warning.path)),
-);
-const servedWithWarnings = perSkillWarnings.filter((warning) =>
-  servedDirs.has(skillDirOf(warning.path)),
-);
+const classifiedWarnings = classifySkillWarnings(skillWarnings, skillCatalog);
 
 // Built once alongside the catalog: the text is identical for every request.
 const skillsInstructions =
@@ -990,43 +968,13 @@ async function main(): Promise<void> {
   }
 
   console.log("");
-  if (!CONFIG.SKILLS_PATH) {
-    console.log("Skills: disabled (no skills_path / SKILLS_PATH configured)");
-  } else if (skillLoadError) {
-    console.log(
-      `Skills: FAILED to load from ${CONFIG.SKILLS_PATH}, serving without skills`,
-    );
-    console.log(`  ✗ ${skillLoadError}`);
-  } else if (!skillCatalog) {
-    console.log(`Skills: none loaded from ${CONFIG.SKILLS_PATH}`);
-  } else {
-    console.log(
-      `Skills: ${skillCatalog.entries.length} loaded from ${CONFIG.SKILLS_PATH}`,
-    );
-    for (const entry of skillCatalog.entries) {
-      console.log(`  ✓ ${entry.uri}`);
-    }
-  }
-  for (const warning of catalogWarnings) {
-    console.log(`  ! ${warning.message}`);
-  }
-  if (skippedWarnings.length > 0) {
-    const plural = skippedWarnings.length === 1 ? "" : "s";
-    console.log(
-      `  ${skippedWarnings.length} skill${plural} SKIPPED and NOT served:`,
-    );
-    for (const warning of skippedWarnings) {
-      console.log(`  ✗ ${warning.path}: ${warning.message}`);
-    }
-  }
-  if (servedWithWarnings.length > 0) {
-    const plural = servedWithWarnings.length === 1 ? "" : "s";
-    console.log(
-      `  ${servedWithWarnings.length} warning${plural}, still served:`,
-    );
-    for (const warning of servedWithWarnings) {
-      console.log(`  ! ${warning.path}: ${warning.message}`);
-    }
+  for (const line of formatSkillsReport({
+    skillsPath: CONFIG.SKILLS_PATH,
+    catalog: skillCatalog,
+    loadError: skillLoadError,
+    warnings: classifiedWarnings,
+  })) {
+    console.log(line);
   }
 
   console.log("");
