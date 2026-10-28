@@ -1,6 +1,5 @@
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
-import { createServer, type Server } from "node:http";
-import { parse as parseUrl } from "node:url";
+import { type Server } from "node:http";
 import { createHash } from "node:crypto";
 import {
   copyFileSync,
@@ -13,6 +12,12 @@ import {
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { load as yamlLoad } from "js-yaml";
+import {
+  BEARER_TOKEN,
+  mcpCall,
+  parseJsonRpcResponse,
+  startMockAapServer,
+} from "./helpers/mock-aap.js";
 
 // What only breaks on the wire: result shapes, the capability declaration, and
 // the two checks a conforming host runs before loading a skill — digest
@@ -21,12 +26,6 @@ import { load as yamlLoad } from "js-yaml";
 const MOCK_AAP_PORT = 18380;
 const MCP_SERVER_PORT = 13300;
 const MCP_BASE_URL = `http://localhost:${MCP_SERVER_PORT}`;
-const BEARER_TOKEN = "test-bearer-token";
-
-const MODERN_VERSION = "2026-07-28";
-const PROTOCOL_VERSION_META_KEY = "io.modelcontextprotocol/protocolVersion";
-const CLIENT_CAPABILITIES_META_KEY =
-  "io.modelcontextprotocol/clientCapabilities";
 
 const SKILL_NAME = "aap-platform-health-check";
 const SKILL_URI = `skill://aap/${SKILL_NAME}/SKILL.md`;
@@ -64,57 +63,8 @@ let mockAapServer: Server;
 let skillsRoot: string;
 let createdConfig = false;
 
-const modernEnvelope = () => ({
-  [PROTOCOL_VERSION_META_KEY]: MODERN_VERSION,
-  [CLIENT_CAPABILITIES_META_KEY]: {},
-});
-
-/** Methods whose body param the modern era mirrors into the Mcp-Name header. */
-const MCP_NAME_HEADER_SOURCE: Record<string, string> = {
-  "resources/read": "uri",
-  "tools/call": "name",
-};
-
-let nextId = 1;
-
-// The modern transport requires headers and body to agree, so Mcp-Method is
-// always sent and Mcp-Name mirrored for the spec methods carrying a target.
-const call = async (
-  method: string,
-  params: Record<string, unknown> = {},
-): Promise<any> => {
-  const headers: Record<string, string> = {
-    "Content-Type": "application/json",
-    Accept: "application/json, text/event-stream",
-    Authorization: `Bearer ${BEARER_TOKEN}`,
-    "mcp-protocol-version": MODERN_VERSION,
-    "mcp-method": method,
-  };
-  const nameSource = MCP_NAME_HEADER_SOURCE[method];
-  if (nameSource && typeof params[nameSource] === "string") {
-    headers["mcp-name"] = params[nameSource] as string;
-  }
-
-  const response = await fetch(`${MCP_BASE_URL}/mcp`, {
-    method: "POST",
-    headers,
-    body: JSON.stringify({
-      jsonrpc: "2.0",
-      id: nextId++,
-      method,
-      params: { ...params, _meta: modernEnvelope() },
-    }),
-  });
-
-  const contentType = response.headers.get("content-type") || "";
-  const text = await response.text();
-  if (contentType.includes("text/event-stream")) {
-    const dataLine = text.split("\n").find((line) => line.startsWith("data:"));
-    if (!dataLine) throw new Error(`No SSE data frame in response: ${text}`);
-    return JSON.parse(dataLine.slice("data:".length).trim());
-  }
-  return JSON.parse(text);
-};
+const call = (method: string, params: Record<string, unknown> = {}) =>
+  mcpCall(MCP_BASE_URL, method, params);
 
 /** Handshake as a pre-2026-07-28 client, which answers over SSE. */
 const legacyInitialize = async (): Promise<any> => {
@@ -128,7 +78,7 @@ const legacyInitialize = async (): Promise<any> => {
     },
     body: JSON.stringify({
       jsonrpc: "2.0",
-      id: nextId++,
+      id: 1000,
       method: "initialize",
       params: {
         protocolVersion: "2025-06-18",
@@ -138,10 +88,7 @@ const legacyInitialize = async (): Promise<any> => {
     }),
   });
 
-  const text = await response.text();
-  const dataLine = text.split("\n").find((line) => line.startsWith("data:"));
-  if (!dataLine) throw new Error(`No SSE data frame in response: ${text}`);
-  return JSON.parse(dataLine.slice("data:".length).trim());
+  return parseJsonRpcResponse(response);
 };
 
 /** Fetch a resource's bytes, decoding whichever of text/blob came back. */
@@ -154,69 +101,6 @@ const readBytes = async (uri: string): Promise<Buffer> => {
     : Buffer.from(content.blob, "base64");
 };
 
-const startMockAapServer = (): Promise<Server> =>
-  new Promise((resolve) => {
-    const server = createServer((req, res) => {
-      const pathname = parseUrl(req.url || "", true).pathname || "";
-      res.setHeader("Access-Control-Allow-Origin", "*");
-
-      if (req.method === "OPTIONS") {
-        res.writeHead(204);
-        res.end();
-        return;
-      }
-
-      if (pathname === "/api/gateway/v1/me/") {
-        if (!req.headers["authorization"]?.startsWith("Bearer ")) {
-          res.writeHead(401, { "Content-Type": "application/json" });
-          res.end(JSON.stringify({ detail: "no creds" }));
-          return;
-        }
-        res.writeHead(200, { "Content-Type": "application/json" });
-        res.end(
-          JSON.stringify({
-            results: [
-              {
-                id: 1,
-                username: "test-user",
-                email: "test@redhat.com",
-                is_superuser: true,
-                summary_fields: {
-                  resource: {
-                    ansible_id: "550e8400-e29b-41d4-a716-446655440000",
-                  },
-                },
-              },
-            ],
-          }),
-        );
-        return;
-      }
-
-      if (pathname.includes("schema") || pathname.includes("openapi")) {
-        res.writeHead(200, { "Content-Type": "application/json" });
-        res.end(
-          JSON.stringify({
-            openapi: "3.0.0",
-            info: { title: "Mock API", version: "1.0.0" },
-            paths: {},
-          }),
-        );
-        return;
-      }
-
-      if (pathname.startsWith("/api/")) {
-        res.writeHead(200, { "Content-Type": "application/json" });
-        res.end(JSON.stringify({ count: 0, results: [] }));
-        return;
-      }
-
-      res.writeHead(404, { "Content-Type": "application/json" });
-      res.end(JSON.stringify({ error: "Not found" }));
-    });
-    server.listen(MOCK_AAP_PORT, () => resolve(server));
-  });
-
 describe("End-to-End: SEP-2640 skills", () => {
   beforeAll(async () => {
     skillsRoot = mkdtempSync(join(tmpdir(), "e2e-skills-"));
@@ -227,7 +111,7 @@ describe("End-to-End: SEP-2640 skills", () => {
       REFERENCE_MD,
     );
 
-    mockAapServer = await startMockAapServer();
+    mockAapServer = await startMockAapServer(MOCK_AAP_PORT);
 
     const configPath = join(process.cwd(), "aap-mcp.yaml");
     const samplePath = join(process.cwd(), "aap-mcp.sample.yaml");
@@ -289,7 +173,7 @@ describe("End-to-End: SEP-2640 skills", () => {
   });
 
   describe("skills/list", () => {
-    it("returns entries shaped uri/frontmatter/resources and nothing else", async () => {
+    it("carries exactly the keys SEP-2640 defines, at both levels", async () => {
       const message = await call("skills/list");
       expect(message.error).toBeUndefined();
       expect(message.result.skills).toHaveLength(1);
@@ -306,12 +190,8 @@ describe("End-to-End: SEP-2640 skills", () => {
       // requirement that the path's final segment equal the frontmatter name.
       expect(entry.uri).toBe(SKILL_URI);
       expect(entry.frontmatter.name).toBe(SKILL_NAME);
-    });
 
-    it("lists resources as an array of uri/digest/size, never 'dynamic'", async () => {
-      const entry = (await call("skills/list")).result.skills[0];
-
-      expect(Array.isArray(entry.resources)).toBe(true);
+      // An array of descriptors, never the string "dynamic".
       expect(entry.resources.map((r: any) => r.uri).sort()).toEqual(
         [SKILL_URI, REFERENCE_URI].sort(),
       );
