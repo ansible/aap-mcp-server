@@ -315,6 +315,11 @@ verify. Note that `resources/list` advertises each skill's `SKILL.md` only, whil
 `resources/read` serves any file in the skill directory — **so a skill must cite its own
 reference files**, or a client never learns they exist.
 
+The extension is advertised as `{"directoryRead": true}`, so `resources/directory/read` also
+works. That value is derived by the SDK from the catalog source rather than configured here:
+the Node source implements directory reads, and declining them would mean not using the
+catalog.
+
 The server also names every skill it serves, by URI and description, in the `instructions`
 field of `server/discover`. That is base protocol rather than an extension, so clients that
 implement nothing of SEP-2640 still find the skills; without it, in testing, they did not. Set
@@ -338,6 +343,10 @@ cannot take the server's tools down with it. A skill is skipped when:
 Exceeding the SEP-2640 limits of 512 files or 16 MiB is **not** a skip: the skill is still
 served in full, though a conforming host may decline it. The startup log reports those under
 `warning(s), still served`.
+
+A `skills_path` the server cannot read at all — missing, not a directory, no permission — is
+reported as an error and skills are disabled for that run. The server still starts and serves
+its tools.
 
 Every skipped skill is named in the startup log with its file, line and reason:
 

@@ -502,17 +502,31 @@ const executeToolRequest = async (
 // SEP-2640 skill catalog, read once at startup rather than per request:
 // createMcpServer runs on every request, and loading hashes every skill file.
 const skillWarnings: { path: string; message: string }[] = [];
-const skillCatalog: SkillCatalog | undefined = CONFIG.SKILLS_PATH
-  ? await loadSkills(CONFIG.SKILLS_PATH, {
+let loadedCatalog: SkillCatalog | undefined;
+let skillLoadError: string | undefined;
+if (CONFIG.SKILLS_PATH) {
+  try {
+    loadedCatalog = await loadSkills(CONFIG.SKILLS_PATH, {
       ...(CONFIG.SKILLS_URI_PREFIX ? { prefix: CONFIG.SKILLS_URI_PREFIX } : {}),
       // Defaults to ttlMs:0/private, which would leave skills the only
       // uncacheable surface on the server.
       cacheHint: { ttlMs: 300_000, cacheScope: "public" },
       onWarning: (warning) => skillWarnings.push(warning),
-    })
-  : undefined;
+    });
+  } catch (error) {
+    // A root the loader cannot enumerate throws, unlike a per-skill problem,
+    // which only warns. Degrade to serving without skills: skills ship inside
+    // the image, so a missing COPY must not cost the server its tools.
+    skillLoadError = error instanceof Error ? error.message : String(error);
+    console.error(
+      `${getTimestamp()} ERROR: skills_path="${CONFIG.SKILLS_PATH}" could not be ` +
+        `loaded; serving without skills. ${skillLoadError}`,
+    );
+  }
+}
 
-const skillsEnabled = Boolean(skillCatalog && skillCatalog.entries.length > 0);
+// An empty catalog is no catalog: nothing to attach, nothing to advertise.
+const skillCatalog = loadedCatalog?.entries.length ? loadedCatalog : undefined;
 
 // Split loader warnings into the ones that cost us a skill and the ones that
 // did not: exceeding the SEP-2640 limits only warns, and the skill is still
@@ -522,16 +536,20 @@ const skillDirOf = (path: string): string => path.split("/")[0];
 const servedDirs = new Set(
   (skillCatalog?.entries ?? []).map((entry) => entry.uri.split("/").at(-2)),
 );
-const skippedWarnings = skillWarnings.filter(
+// Catalog-level problems are reported against ".", which is no skill's
+// directory and must not be counted as a skipped skill.
+const catalogWarnings = skillWarnings.filter((w) => w.path === ".");
+const perSkillWarnings = skillWarnings.filter((w) => w.path !== ".");
+const skippedWarnings = perSkillWarnings.filter(
   (warning) => !servedDirs.has(skillDirOf(warning.path)),
 );
-const servedWithWarnings = skillWarnings.filter((warning) =>
+const servedWithWarnings = perSkillWarnings.filter((warning) =>
   servedDirs.has(skillDirOf(warning.path)),
 );
 
 // Built once alongside the catalog: the text is identical for every request.
 const skillsInstructions =
-  skillCatalog && skillsEnabled && CONFIG.SKILLS_INSTRUCTIONS
+  skillCatalog && CONFIG.SKILLS_INSTRUCTIONS
     ? buildSkillsInstructions(skillCatalog)
     : undefined;
 
@@ -553,7 +571,7 @@ const createMcpServer = (requestCtx: RequestContext): McpServer => {
         tools: { listChanged: false },
         // Same reasoning for resources: attach() registers the skill:// files,
         // defaulting listChanged to true, but the catalog never changes.
-        ...(skillsEnabled ? { resources: { listChanged: false } } : {}),
+        ...(skillCatalog ? { resources: { listChanged: false } } : {}),
       },
       // SEP-2640's second discovery mechanism, pointing at the served skills.
       ...(skillsInstructions ? { instructions: skillsInstructions } : {}),
@@ -617,7 +635,7 @@ const createMcpServer = (requestCtx: RequestContext): McpServer => {
   // server instance because the handler builds a fresh McpServer per request.
   // Unlike tools, skills are not narrowed by toolset: every endpoint serves
   // the whole catalog.
-  if (skillCatalog && skillsEnabled) {
+  if (skillCatalog) {
     skillCatalog.attach(server);
   }
 
@@ -974,15 +992,23 @@ async function main(): Promise<void> {
   console.log("");
   if (!CONFIG.SKILLS_PATH) {
     console.log("Skills: disabled (no skills_path / SKILLS_PATH configured)");
-  } else if (!skillsEnabled) {
+  } else if (skillLoadError) {
+    console.log(
+      `Skills: FAILED to load from ${CONFIG.SKILLS_PATH}, serving without skills`,
+    );
+    console.log(`  ✗ ${skillLoadError}`);
+  } else if (!skillCatalog) {
     console.log(`Skills: none loaded from ${CONFIG.SKILLS_PATH}`);
   } else {
     console.log(
-      `Skills: ${skillCatalog!.entries.length} loaded from ${CONFIG.SKILLS_PATH}`,
+      `Skills: ${skillCatalog.entries.length} loaded from ${CONFIG.SKILLS_PATH}`,
     );
-    for (const entry of skillCatalog!.entries) {
+    for (const entry of skillCatalog.entries) {
       console.log(`  ✓ ${entry.uri}`);
     }
+  }
+  for (const warning of catalogWarnings) {
+    console.log(`  ! ${warning.message}`);
   }
   if (skippedWarnings.length > 0) {
     const plural = skippedWarnings.length === 1 ? "" : "s";

@@ -69,6 +69,8 @@ const REFERENCE_MD = "# Sources\n\nSupporting reference material.\n";
 
 let mockAapServer: Server;
 let skillsRoot: string;
+// Only clean up the config this file wrote: a developer's own must survive.
+let createdConfig = false;
 
 const modernEnvelope = () => ({
   [PROTOCOL_VERSION_META_KEY]: MODERN_VERSION,
@@ -124,6 +126,34 @@ const call = async (
     return JSON.parse(dataLine.slice("data:".length).trim());
   }
   return JSON.parse(text);
+};
+
+/** Handshake as a pre-2026-07-28 client, which answers over SSE. */
+const legacyInitialize = async (): Promise<any> => {
+  const response = await fetch(`${MCP_BASE_URL}/mcp`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Accept: "application/json, text/event-stream",
+      Authorization: `Bearer ${BEARER_TOKEN}`,
+      "mcp-protocol-version": "2025-06-18",
+    },
+    body: JSON.stringify({
+      jsonrpc: "2.0",
+      id: nextId++,
+      method: "initialize",
+      params: {
+        protocolVersion: "2025-06-18",
+        capabilities: {},
+        clientInfo: { name: "legacy-skills-test", version: "1.0.0" },
+      },
+    }),
+  });
+
+  const text = await response.text();
+  const dataLine = text.split("\n").find((line) => line.startsWith("data:"));
+  if (!dataLine) throw new Error(`No SSE data frame in response: ${text}`);
+  return JSON.parse(dataLine.slice("data:".length).trim());
 };
 
 /** Fetch a resource's bytes, decoding whichever of text/blob came back. */
@@ -215,6 +245,7 @@ describe("End-to-End: SEP-2640 skills", () => {
     const samplePath = join(process.cwd(), "aap-mcp.sample.yaml");
     if (!existsSync(configPath) && existsSync(samplePath)) {
       copyFileSync(samplePath, configPath);
+      createdConfig = true;
     }
 
     process.env.BASE_URL = `http://localhost:${MOCK_AAP_PORT}`;
@@ -232,6 +263,9 @@ describe("End-to-End: SEP-2640 skills", () => {
       );
     }
     rmSync(skillsRoot, { recursive: true, force: true });
+    if (createdConfig) {
+      rmSync(join(process.cwd(), "aap-mcp.yaml"), { force: true });
+    }
   }, 10000);
 
   describe("capability declaration", () => {
@@ -255,6 +289,15 @@ describe("End-to-End: SEP-2640 skills", () => {
       // Contents are unit-tested; the half that cannot be is whether the
       // field survives to the wire at all.
       const message = await call("server/discover");
+
+      expect(message.result.instructions).toContain(SKILL_URI);
+    });
+
+    it("carries the same pointer on the legacy initialize handshake", async () => {
+      // server/discover and initialize build their results independently, so
+      // one can lose the pointer without the other noticing — and a client
+      // old enough to handshake is the one least likely to know SEP-2640.
+      const message = await legacyInitialize();
 
       expect(message.result.instructions).toContain(SKILL_URI);
     });
