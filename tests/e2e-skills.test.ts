@@ -14,14 +14,9 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { load as yamlLoad } from "js-yaml";
 
-// SEP-2640 skills served over HTTP, end to end.
-//
-// Catalog construction belongs to the SDK; the pointer built from it is
-// covered by src/skills-instructions.test.ts. This file covers what only
-// breaks on the wire: result shapes, the capability declaration, and the two
-// checks a conforming host runs before loading a skill — digest agreement and
-// frontmatter fidelity. A loader can be perfect and the server still unusable
-// if skills/get answers in the wrong envelope.
+// What only breaks on the wire: result shapes, the capability declaration, and
+// the two checks a conforming host runs before loading a skill — digest
+// agreement and frontmatter fidelity.
 
 const MOCK_AAP_PORT = 18380;
 const MCP_SERVER_PORT = 13300;
@@ -37,10 +32,8 @@ const SKILL_NAME = "aap-platform-health-check";
 const SKILL_URI = `skill://aap/${SKILL_NAME}/SKILL.md`;
 const REFERENCE_URI = `skill://aap/${SKILL_NAME}/references/sources.md`;
 
-/**
- * A fixture carrying the constructs in the real ansible/aap-skills SKILL.md
- * that a careless loader normalizes away.
- */
+// Carries the constructs in the real ansible/aap-skills SKILL.md that a
+// careless loader normalizes away.
 const SKILL_MD = `---
 # ─── agentskills.io Base Fields ───────────────────────────────────────────
 name: ${SKILL_NAME}
@@ -69,7 +62,6 @@ const REFERENCE_MD = "# Sources\n\nSupporting reference material.\n";
 
 let mockAapServer: Server;
 let skillsRoot: string;
-// Only clean up the config this file wrote: a developer's own must survive.
 let createdConfig = false;
 
 const modernEnvelope = () => ({
@@ -85,12 +77,8 @@ const MCP_NAME_HEADER_SOURCE: Record<string, string> = {
 
 let nextId = 1;
 
-/**
- * Issue a modern-era JSON-RPC call and return the decoded message. The modern
- * transport requires headers and body to agree, so Mcp-Method is always sent
- * and Mcp-Name mirrored for the spec methods carrying a target. Custom methods
- * (skills/*) are not name-checked.
- */
+// The modern transport requires headers and body to agree, so Mcp-Method is
+// always sent and Mcp-Name mirrored for the spec methods carrying a target.
 const call = async (
   method: string,
   params: Record<string, unknown> = {},
@@ -274,14 +262,12 @@ describe("End-to-End: SEP-2640 skills", () => {
       const capabilities = message.result.capabilities;
 
       // directoryRead is not ours to choose: attach() derives it from whether
-      // the catalog source implements readDirectory, and the Node source
-      // does. Declining it would mean not using the catalog.
+      // the catalog source implements readDirectory, and the Node source does.
       expect(
         capabilities.extensions?.["io.modelcontextprotocol/skills"],
       ).toEqual({ directoryRead: true });
-      // Resources are registered statically and we never send
-      // notifications/resources/list_changed, so the SDK default of true
-      // would be a promise we do not keep.
+      // We never send notifications/resources/list_changed, so the SDK
+      // default of true would be a promise we do not keep.
       expect(capabilities.resources?.listChanged).toBe(false);
     });
 
@@ -295,8 +281,7 @@ describe("End-to-End: SEP-2640 skills", () => {
 
     it("carries the same pointer on the legacy initialize handshake", async () => {
       // server/discover and initialize build their results independently, so
-      // one can lose the pointer without the other noticing — and a client
-      // old enough to handshake is the one least likely to know SEP-2640.
+      // one can lose the pointer without the other noticing.
       const message = await legacyInitialize();
 
       expect(message.result.instructions).toContain(SKILL_URI);
@@ -435,19 +420,15 @@ describe("End-to-End: SEP-2640 skills", () => {
       // Quoted version stays a string; unquoted stays whatever YAML made it.
       expect(frontmatter.metadata.version).toBe("1.0.0");
       expect(frontmatter.aapVersion).toBe(">=2.5");
-      // The body is not frontmatter.
       expect(JSON.stringify(frontmatter)).not.toContain("Body content");
     });
   });
 
   describe("resources/list", () => {
     it("lists one entry point per skill, not every file", async () => {
-      // Reference files stay reachable through the skill:// template (the
-      // digest test above reads REFERENCE_URI) but are not enumerated. That
-      // is progressive disclosure by design, and the consequence is an
-      // authoring constraint rather than a serving bug: a client that never
-      // reads SKILL.md never learns a reference file exists, so a skill has
-      // to cite its own.
+      // Reference files stay reachable through the skill:// template but are
+      // not enumerated, so a client that never reads SKILL.md never learns one
+      // exists: a skill has to cite its own.
       const message = await call("resources/list");
       expect(message.error).toBeUndefined();
 

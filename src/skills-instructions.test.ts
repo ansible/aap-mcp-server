@@ -5,12 +5,9 @@ import { join } from "node:path";
 import { loadSkills } from "@modelcontextprotocol/server/ext/skills/node";
 import { buildSkillsInstructions } from "./skills-instructions.js";
 
-/**
- * A reference skill close enough to ansible/aap-skills to exercise the YAML
- * the pointer has to survive. `tools` is a block sequence rather than a flow
- * sequence on purpose: the SDK parses frontmatter over a restricted subset and
- * rejects a flow collection spanning lines.
- */
+// `tools` is a block sequence rather than a flow sequence on purpose: the SDK
+// parses frontmatter over a restricted subset and rejects a flow collection
+// spanning lines.
 const REFERENCE_SKILL_MD = `---
 # ─── agentskills.io Base Fields ─────────────────────────────────────────────
 name: aap-platform-health-check
@@ -53,7 +50,6 @@ const writeSkill = (name: string, skillMd: string) => {
   return dir;
 };
 
-/** Load with warnings swallowed: these tests assert on output, not on logs. */
 const load = (prefix?: string) =>
   loadSkills(root, {
     ...(prefix ? { prefix } : {}),
@@ -91,10 +87,8 @@ describe("buildSkillsInstructions", () => {
   });
 
   it("carries the trigger conditions, collapsed onto one line", async () => {
-    // Asserted together because they fail together: the trigger conditions
-    // are what let a model match a prompt with no discovery round trip, and
-    // they arrive in a block scalar whose newlines would otherwise break the
-    // one-entry-per-line shape of the list.
+    // Asserted together because they fail together: trigger conditions arrive
+    // in a block scalar whose newlines would break the one-entry-per-line list.
     writeSkill("aap-platform-health-check", REFERENCE_SKILL_MD);
 
     const instructions = buildSkillsInstructions(await load())!;
@@ -125,9 +119,7 @@ describe("buildSkillsInstructions", () => {
   });
 
   it("omits a skill the loader refused to serve", async () => {
-    // A pointer to an unservable skill is worse than no pointer: the model
-    // spends a call to be told the resource does not exist. So the pointer
-    // must be built from the catalog, never from a directory listing.
+    // The pointer must be built from the catalog, never a directory listing.
     writeSkill("aap-platform-health-check", REFERENCE_SKILL_MD);
     writeSkill(
       "mismatched",

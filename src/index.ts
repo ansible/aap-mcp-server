@@ -73,8 +73,7 @@ const localConfig = loadConfig();
 
 const MCP_PORT = resolveMcpPort(process.env.MCP_PORT);
 
-// Helper function to get timestamps. Must stay above CONFIG: the setting
-// parsed below logs through it.
+// Must stay above CONFIG: the setting parsed below logs through it.
 const getTimestamp = (): string => {
   return new Date().toISOString().split(".")[0] + "Z";
 };
@@ -121,7 +120,6 @@ const CONFIG = {
     localConfig.skills_uri_prefix ||
     "aap"
   ).trim(),
-  // Name the served skills in the server's `instructions` field.
   SKILLS_INSTRUCTIONS: skillsInstructionsSetting.value,
 } as const;
 
@@ -494,8 +492,8 @@ const executeToolRequest = async (
   }
 };
 
-// SEP-2640 skill catalog, read once at startup rather than per request:
-// createMcpServer runs on every request, and loading hashes every skill file.
+// Read once at startup, not per request: createMcpServer runs on every request,
+// and loading hashes every skill file.
 const skillWarnings: SkillWarning[] = [];
 let loadedCatalog: SkillCatalog | undefined;
 let skillLoadError: string | undefined;
@@ -510,8 +508,8 @@ if (CONFIG.SKILLS_PATH) {
     });
   } catch (error) {
     // A root the loader cannot enumerate throws, unlike a per-skill problem,
-    // which only warns. Degrade to serving without skills: skills ship inside
-    // the image, so a missing COPY must not cost the server its tools.
+    // which only warns. Skills ship inside the image, so a missing COPY must
+    // not cost the server its tools.
     skillLoadError = error instanceof Error ? error.message : String(error);
     console.error(
       `${getTimestamp()} ERROR: skills_path="${CONFIG.SKILLS_PATH}" could not be ` +
@@ -520,12 +518,11 @@ if (CONFIG.SKILLS_PATH) {
   }
 }
 
-// An empty catalog is no catalog: nothing to attach, nothing to advertise.
 const skillCatalog = loadedCatalog?.entries.length ? loadedCatalog : undefined;
 
 const classifiedWarnings = classifySkillWarnings(skillWarnings, skillCatalog);
 
-// Built once alongside the catalog: the text is identical for every request.
+// Built once: the text is identical for every request.
 const skillsInstructions =
   skillCatalog && CONFIG.SKILLS_INSTRUCTIONS
     ? buildSkillsInstructions(skillCatalog)
@@ -551,7 +548,6 @@ const createMcpServer = (requestCtx: RequestContext): McpServer => {
         // defaulting listChanged to true, but the catalog never changes.
         ...(skillCatalog ? { resources: { listChanged: false } } : {}),
       },
-      // SEP-2640's second discovery mechanism, pointing at the served skills.
       ...(skillsInstructions ? { instructions: skillsInstructions } : {}),
       // Cache hint for the SDK-built tools/list result (2026-07-28). The tool set
       // is static per process, so a short shared TTL is safe. cacheScope is
@@ -609,8 +605,6 @@ const createMcpServer = (requestCtx: RequestContext): McpServer => {
     return executeToolRequest(tool, args, requestCtx);
   });
 
-  // Registers skills/list, skills/get and the skill:// resource template, per
-  // server instance because the handler builds a fresh McpServer per request.
   // Unlike tools, skills are not narrowed by toolset: every endpoint serves
   // the whole catalog.
   if (skillCatalog) {

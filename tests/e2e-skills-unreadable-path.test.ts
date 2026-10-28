@@ -6,9 +6,8 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 
 // A skills_path the loader cannot enumerate throws, unlike a bad skill inside
-// a readable root, which only warns. Skills ship inside the server image, so
-// the trigger is a build regression — a dropped COPY, a renamed directory —
-// and the server must come up without them rather than not at all.
+// a readable root, which only warns. The trigger is a build regression, so the
+// server must come up without skills rather than not at all.
 
 const MOCK_AAP_PORT = 18381;
 const MCP_SERVER_PORT = 13301;

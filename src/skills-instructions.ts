@@ -1,22 +1,11 @@
-/**
- * SEP-2640 instructions pointer — the one piece of skills serving the SDK
- * leaves to us, and the only discovery path a client without the extension
- * has. Reachable is not the same as findable: asked "is my AAP platform
- * healthy?" with nothing advertised, a real client made seven tool calls, zero
- * resource calls and never found the skill. See "Serving Skills" in README.md.
- */
-
 import type { SkillCatalog } from "@modelcontextprotocol/server/ext/skills";
 
 // SEP-2640 calls `instructions` "practically bounded in size", so the pointer
 // must stay a pointer. Trigger conditions are the part worth the bytes.
 const INSTRUCTION_DESCRIPTION_BUDGET = 400;
 
-/**
- * Advertise the skill catalog in the server's `instructions` field. Returns
- * undefined for an empty catalog: a pointer to an unservable skill is worse
- * than none, costing the model a call to be told the resource is missing.
- */
+// Undefined for an empty catalog: a pointer to an unservable skill is worse
+// than none, costing the model a call to be told the resource is missing.
 export const buildSkillsInstructions = (
   catalog: SkillCatalog,
 ): string | undefined => {

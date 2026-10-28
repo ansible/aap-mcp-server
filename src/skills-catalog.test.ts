@@ -10,11 +10,8 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { loadSkills } from "@modelcontextprotocol/server/ext/skills/node";
 
-/**
- * SDK catalog behaviour this server depends on. Not tests of our code — they
- * pin what our wiring and our operator-facing docs assume, so an SDK bump that
- * changes it fails here rather than in production.
- */
+// SDK behaviour, not ours: these pin what the wiring and the docs assume, so
+// an SDK bump that changes it fails here rather than in production.
 
 let root: string;
 let outside: string;
@@ -44,11 +41,9 @@ afterEach(() => {
 });
 
 describe("path containment at catalog build time", () => {
-  // The catalog enumerates a walked tree and assigns files to skills by path
-  // prefix, so no path is built from untrusted input and there is nothing to
-  // traverse at build time (tests/e2e-skills.test.ts covers the read path,
-  // which does take input). That leaves symlinks as the only way in from
-  // outside the tree, and these tests pin it.
+  // The catalog assigns files to skills by path prefix over a walked tree, so
+  // no path comes from untrusted input and there is nothing to traverse at
+  // build time. Symlinks are the only way in from outside the tree.
 
   it("drops a skill whose symlink escapes, and only that skill", async () => {
     // Also why we take the default skip-with-warning over `strict`: one bad
@@ -93,9 +88,8 @@ describe("path containment at catalog build time", () => {
 
 describe("SEP-2640 per-skill limits", () => {
   it("warns past 512 files but still serves the skill", async () => {
-    // The surprising half: exceeding the limits does NOT skip the skill, so
-    // the failure lands at a conforming host rather than here. Hence the
-    // startup log reporting this separately from a skip.
+    // Exceeding the limits does NOT skip the skill, so the failure lands at a
+    // conforming host rather than here.
     writeSkill("oversized-skill", () => {
       const dir = join(root, "oversized-skill");
       for (let i = 0; i < 600; i++) {
@@ -116,8 +110,7 @@ describe("SEP-2640 per-skill limits", () => {
   });
 
   it("counts bytes against the 16 MiB limit, not just file count", async () => {
-    // One file, well under the file limit, over the byte limit. Asserted with
-    // a lowered limit rather than by writing 16 MiB to disk on every run.
+    // Lowered limit rather than writing 16 MiB to disk on every run.
     writeSkill("heavy-skill", () =>
       writeFileSync(join(root, "heavy-skill", "big.md"), "x".repeat(64 * 1024)),
     );

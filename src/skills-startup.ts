@@ -1,9 +1,3 @@
-/**
- * Startup-time skills bookkeeping: reading an on/off setting, sorting loader
- * warnings into skips and non-skips, and rendering the startup report. Pure,
- * so the failure paths can be tested without booting a server.
- */
-
 import type { SkillCatalog } from "@modelcontextprotocol/server/ext/skills";
 
 export interface SkillWarning {
@@ -14,15 +8,14 @@ export interface SkillWarning {
 export interface ClassifiedWarnings {
   /** Problems with the catalog root rather than with any one skill. */
   catalog: SkillWarning[];
-  /** Skills that never reached the catalog and are not served. */
   skipped: SkillWarning[];
-  /** Skills served in spite of a warning — exceeding the SEP-2640 limits. */
+  /** Served in spite of a warning — exceeding the SEP-2640 limits. */
   served: SkillWarning[];
 }
 
-// Parse an on/off setting. Reports an unrecognised value rather than silently
-// defaulting: these arrive through the installers' generic pass-through, which
-// does not schema-validate, so this is the only place a typo can surface.
+// Reports an unrecognised value rather than silently defaulting: these arrive
+// through the installers' generic pass-through, which does not schema-validate,
+// so this is the only place a typo can surface.
 export const parseOnOff = (
   name: string,
   raw: string | undefined,
@@ -42,8 +35,7 @@ export const parseOnOff = (
 const skillDirOf = (path: string): string => path.split("/")[0];
 
 // Warnings carry no severity, so classify structurally — by whether the skill
-// reached the catalog — rather than by matching message text. Exceeding the
-// SEP-2640 limits only warns, and the skill is still served.
+// reached the catalog — rather than by matching message text.
 export const classifySkillWarnings = (
   warnings: SkillWarning[],
   catalog: SkillCatalog | undefined,
@@ -51,8 +43,6 @@ export const classifySkillWarnings = (
   const servedDirs = new Set(
     (catalog?.entries ?? []).map((entry) => entry.uri.split("/").at(-2)),
   );
-  // Catalog-level problems are reported against ".", which is no skill's
-  // directory and must not be counted as a skipped skill.
   const perSkill = warnings.filter((warning) => warning.path !== ".");
   return {
     catalog: warnings.filter((warning) => warning.path === "."),
@@ -65,7 +55,6 @@ export const classifySkillWarnings = (
   };
 };
 
-/** The `Skills:` block of the startup banner, one string per line. */
 export const formatSkillsReport = (input: {
   skillsPath: string;
   catalog: SkillCatalog | undefined;
