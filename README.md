@@ -144,6 +144,10 @@ MCP_PORT=3000
 # Name the served skills in the server's `instructions` field: "on" (default)
 # or "off". Any other value is reported at startup and the default kept.
 #SKILLS_INSTRUCTIONS=on
+
+# Directory of reference material shared by several skills, served at one URI
+# each. Unset or empty disables it. See "Shared context" below.
+#SHARED_CONTEXT_PATH=/opt/aap-mcp/context
 ```
 
 ### Configuration Priority
@@ -325,6 +329,31 @@ field of `server/discover`. That is base protocol rather than an extension, so c
 implement nothing of SEP-2640 still find the skills; without it, in testing, they did not. Set
 `skills_instructions: "off"` (or `SKILLS_INSTRUCTIONS=off`) to serve skills only through the
 extension methods.
+
+### Shared context
+
+SEP-2640 serves only files inside a skill's own directory, so a document several skills share
+— a report format standard, say — cannot be cited across them. Copying it into each skill
+works but gives one document N addresses, and a client's response cache is keyed on the URI.
+
+`SHARED_CONTEXT_PATH` (or `shared_context_path`) points at a directory of markdown documents
+served as plain MCP resources, one URI each:
+
+```
+aap://context/<path-relative-to-the-directory>
+```
+
+Each appears in `resources/list` with its byte `size` and a SHA-256 digest under `_meta`, and
+is readable with `resources/read`. They are **not** skills: a format standard is not a
+capability a user can ask for, so listing it in `skills/list` would offer it as something it
+is not. Symlinks are refused, as they are for skills; `.md` files only; the directory is read
+once at startup.
+
+Unlike `skills_uri_prefix`, the `aap://context/` prefix is fixed. Skill content cites these
+URIs directly, so the address cannot vary by deployment — and because it does, shared context
+stays reachable with `skills_instructions` off, which the `instructions` field itself does
+not. A missing directory is reported at startup and disables shared context; it never fails
+startup.
 
 ### A skill that fails to load
 
