@@ -35,6 +35,13 @@ import { createOriginValidationMiddleware } from "./middleware/origin-validation
 import { resolveMcpPort } from "./port.js";
 import { buildSkillsInstructions } from "./skills-instructions.js";
 import {
+  attachSharedContext,
+  formatSharedContextReport,
+  loadSharedContext,
+  type SharedContextEntry,
+  type SharedContextWarning,
+} from "./shared-context.js";
+import {
   classifySkillWarnings,
   formatSkillsReport,
   parseOnOff,
@@ -121,6 +128,14 @@ const CONFIG = {
     "aap"
   ).trim(),
   SKILLS_INSTRUCTIONS: skillsInstructionsSetting.value,
+  // Directory of reference material shared by several skills, served at one
+  // URI each rather than copied into every skill that cites it. Empty
+  // disables it.
+  SHARED_CONTEXT_PATH: (
+    process.env.SHARED_CONTEXT_PATH ||
+    localConfig.shared_context_path ||
+    ""
+  ).trim(),
 } as const;
 
 // Multi-round-trip (MRTR) requestState integrity codec (2026-07-28). requestState
@@ -522,10 +537,19 @@ const skillCatalog = loadedCatalog?.entries.length ? loadedCatalog : undefined;
 
 const classifiedWarnings = classifySkillWarnings(skillWarnings, skillCatalog);
 
+// Read once at startup for the same reason the catalog is, and never throws:
+// an unreadable directory is reported and shared context is disabled.
+const sharedContextWarnings: SharedContextWarning[] = [];
+const sharedContext: SharedContextEntry[] = CONFIG.SHARED_CONTEXT_PATH
+  ? await loadSharedContext(CONFIG.SHARED_CONTEXT_PATH, {
+      onWarning: (warning) => sharedContextWarnings.push(warning),
+    })
+  : [];
+
 // Built once: the text is identical for every request.
 const skillsInstructions =
   skillCatalog && CONFIG.SKILLS_INSTRUCTIONS
-    ? buildSkillsInstructions(skillCatalog)
+    ? buildSkillsInstructions(skillCatalog, sharedContext)
     : undefined;
 
 // Factory function to create a new McpServer instance with request handlers.
@@ -544,9 +568,12 @@ const createMcpServer = (requestCtx: RequestContext): McpServer => {
         // the SDK default listChanged to true, which would advertise a capability
         // we don't honor on server/discover; pin it false.
         tools: { listChanged: false },
-        // Same reasoning for resources: attach() registers the skill:// files,
-        // defaulting listChanged to true, but the catalog never changes.
-        ...(skillCatalog ? { resources: { listChanged: false } } : {}),
+        // Same reasoning for resources: attach() registers the skill:// files
+        // and shared context registers its own, defaulting listChanged to
+        // true, but neither set changes after startup.
+        ...(skillCatalog || sharedContext.length > 0
+          ? { resources: { listChanged: false } }
+          : {}),
       },
       ...(skillsInstructions ? { instructions: skillsInstructions } : {}),
       // Cache hint for the SDK-built tools/list result (2026-07-28). The tool set
@@ -609,6 +636,13 @@ const createMcpServer = (requestCtx: RequestContext): McpServer => {
   // the whole catalog.
   if (skillCatalog) {
     skillCatalog.attach(server);
+  }
+
+  // Outside the skill:// namespace because it is reference material, not a
+  // capability. resources/list is how it stays reachable with the
+  // instructions pointer off.
+  if (sharedContext.length > 0) {
+    attachSharedContext(server, sharedContext);
   }
 
   return server;
@@ -967,6 +1001,14 @@ async function main(): Promise<void> {
     catalog: skillCatalog,
     loadError: skillLoadError,
     warnings: classifiedWarnings,
+  })) {
+    console.log(line);
+  }
+
+  for (const line of formatSharedContextReport({
+    path: CONFIG.SHARED_CONTEXT_PATH,
+    entries: sharedContext,
+    warnings: sharedContextWarnings,
   })) {
     console.log(line);
   }
