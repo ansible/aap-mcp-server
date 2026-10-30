@@ -118,6 +118,36 @@ describe("buildSkillsInstructions", () => {
     expect(instructions.length).toBeLessThan(1000);
   });
 
+  it("states how to address a skill's supporting files", async () => {
+    // Without the rule a model synthesizes the join and was measured dropping
+    // the skill segment (AAP-99041 Defect 2).
+    writeSkill("aap-platform-health-check", REFERENCE_SKILL_MD);
+
+    const instructions = buildSkillsInstructions(await load())!;
+
+    expect(instructions).toContain("replace the final SKILL.md segment");
+  });
+
+  it("lists shared context as documents rather than capabilities", async () => {
+    writeSkill("aap-platform-health-check", REFERENCE_SKILL_MD);
+
+    const instructions = buildSkillsInstructions(await load(), [
+      {
+        uri: "aap://context/output-format.md",
+        ref: "output-format.md",
+        text: "# Output format\n",
+        size: 16,
+        digest: "sha256:abc",
+        summary: "Report structure and markdown rules",
+      },
+    ])!;
+
+    expect(instructions).toContain("aap://context/output-format.md");
+    expect(instructions).toContain("Report structure and markdown rules");
+    expect(instructions).toContain("not");
+    expect(instructions).toContain("capabilities");
+  });
+
   it("omits a skill the loader refused to serve", async () => {
     // The pointer must be built from the catalog, never a directory listing.
     writeSkill("aap-platform-health-check", REFERENCE_SKILL_MD);

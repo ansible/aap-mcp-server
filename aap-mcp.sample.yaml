@@ -59,6 +59,15 @@
 # Lower priority than the SKILLS_INSTRUCTIONS env var.
 # skills_instructions: "on"
 
+# Directory of reference material shared by several skills (a report format
+# standard, say), served as plain MCP resources at aap://context/<path> rather
+# than copied into every skill that cites it. Markdown only; symlinks are
+# refused. Unset or empty disables it.
+# The aap://context/ prefix is fixed, unlike skills_uri_prefix: skill content
+# cites these URIs directly, so the address cannot vary by deployment.
+# Lower priority than the SHARED_CONTEXT_PATH env var.
+# shared_context_path: "/opt/aap-mcp/context"
+
 services:
   - name: controller
     # url: "https://custom-controller.example.com/api/v2/schema/"
