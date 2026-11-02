@@ -72,6 +72,21 @@ describe("loadSharedContext", () => {
     ]);
   });
 
+  it("reads a block scalar description rather than its indicator", async () => {
+    // Both real skills write multi-line descriptions, so a shared document
+    // written the same way must not summarize itself as ">-".
+    write(
+      "folded.md",
+      "---\ndescription: >-\n  Report structure\n  and rules\n---\n",
+    );
+    write("literal.md", "---\ndescription: |\n  Report structure\n---\n");
+
+    expect((await load()).map((entry) => entry.summary)).toEqual([
+      "Report structure and rules",
+      "Report structure",
+    ]);
+  });
+
   it("keeps nested paths in the URI so two files can share a name", async () => {
     write("reports/format.md", "# Reports\n");
     write("authoring/format.md", "# Authoring\n");

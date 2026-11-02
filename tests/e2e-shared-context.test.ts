@@ -85,6 +85,9 @@ describe("End-to-End: shared context without the instructions pointer", () => {
     const message = await call("resources/read", { uri: SHARED_URI });
     expect(message.error).toBeUndefined();
     expect(message.result.contents[0].text).toBe(SHARED_MD);
+    // The read is the primary path, so it must state the type itself rather
+    // than leave it to the list a citing client never calls.
+    expect(message.result.contents[0].mimeType).toBe("text/markdown");
   });
 
   it("advertises a digest and size a client can verify the bytes against", async () => {

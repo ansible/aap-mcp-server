@@ -144,7 +144,7 @@ describe("buildSkillsInstructions", () => {
 
     expect(instructions).toContain("aap://context/output-format.md");
     expect(instructions).toContain("Report structure and markdown rules");
-    expect(instructions).toContain("not");
+    expect(instructions).toContain("documents, not");
     expect(instructions).toContain("capabilities");
   });
 
