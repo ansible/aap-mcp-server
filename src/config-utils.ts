@@ -15,6 +15,7 @@ export interface AapMcpConfig {
   skills_path?: string;
   skills_uri_prefix?: string;
   skills_instructions?: string;
+  shared_context_path?: string;
 }
 
 /**
