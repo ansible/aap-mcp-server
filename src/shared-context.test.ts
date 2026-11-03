@@ -140,9 +140,14 @@ describe("loadSharedContext", () => {
 });
 
 describe("formatSharedContextReport", () => {
-  it("reports nothing when no directory is configured", () => {
+  it("stays silent when skills are off", () => {
     expect(
-      formatSharedContextReport({ path: "", entries: [], warnings: [] }),
+      formatSharedContextReport({
+        enabled: false,
+        path: "/app/context",
+        entries: [],
+        warnings: [],
+      }),
     ).toEqual([]);
   });
 
@@ -150,11 +155,13 @@ describe("formatSharedContextReport", () => {
     // Same count either way, so the warning line is the only thing telling an
     // operator the image is missing a COPY.
     const empty = formatSharedContextReport({
+      enabled: true,
       path: "/ctx",
       entries: [],
       warnings: [],
     });
     const absent = formatSharedContextReport({
+      enabled: true,
       path: "/ctx",
       entries: [],
       warnings: [{ path: "/ctx", message: "directory not found" }],
@@ -171,6 +178,7 @@ describe("formatSharedContextReport", () => {
     write("output-format.md", "# Output format\n");
 
     const lines = formatSharedContextReport({
+      enabled: true,
       path: root,
       entries: await load(),
       warnings: [],

@@ -21,8 +21,8 @@ export interface SharedContextWarning {
   message: string;
 }
 
-// Fixed, unlike skills_uri_prefix: skill content cites these URIs directly, so
-// the authority cannot be a deployment option.
+// Fixed: skill content cites these URIs directly, so the authority cannot be
+// a deployment option.
 const URI_PREFIX = "aap://context/";
 
 const describe = (error: unknown): string =>
@@ -174,12 +174,13 @@ export const attachSharedContext = (
 };
 
 export const formatSharedContextReport = (input: {
+  enabled: boolean;
   path: string;
   entries: SharedContextEntry[];
   warnings: SharedContextWarning[];
 }): string[] => {
-  const { path, entries, warnings } = input;
-  if (!path) return [];
+  const { enabled, path, entries, warnings } = input;
+  if (!enabled) return [];
 
   return [
     `Shared context: ${entries.length} document${

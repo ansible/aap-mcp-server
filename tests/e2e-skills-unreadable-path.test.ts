@@ -36,6 +36,7 @@ describe("End-to-End: an unreadable skills_path", () => {
 
     process.env.BASE_URL = `http://localhost:${MOCK_AAP_PORT}`;
     process.env.MCP_PORT = String(MCP_SERVER_PORT);
+    process.env.SKILLS_ENABLED = "true";
     process.env.SKILLS_PATH = MISSING_SKILLS_PATH;
 
     await import("../src/index.js");

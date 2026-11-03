@@ -3,7 +3,7 @@ import type { SkillCatalog } from "@modelcontextprotocol/server/ext/skills";
 import {
   classifySkillWarnings,
   formatSkillsReport,
-  parseOnOff,
+  parseBooleanOrWarn,
   type ClassifiedWarnings,
 } from "./skills-startup.js";
 
@@ -14,24 +14,44 @@ const catalogOf = (...names: string[]) =>
 
 const noWarnings: ClassifiedWarnings = { catalog: [], skipped: [], served: [] };
 
-describe("parseOnOff", () => {
+describe("parseBooleanOrWarn", () => {
   it.each([
-    ["on", true],
-    ["  OFF  ", false],
+    ["true", true],
+    ["  FALSE  ", false],
+    // Unquoted in YAML, so js-yaml hands over a boolean rather than a string.
+    [false, false],
     [undefined, true],
     ["   ", true],
   ])("reads %s as %s", (raw, expected) => {
-    expect(parseOnOff("skills_instructions", raw, true)).toEqual({
+    expect(parseBooleanOrWarn("skills_instructions", raw, true)).toEqual({
       value: expected,
     });
   });
 
   it("reports an unrecognised value instead of silently defaulting", () => {
-    const { value, warning } = parseOnOff("skills_instructions", "true", true);
+    const { value, warning } = parseBooleanOrWarn(
+      "skills_instructions",
+      "on",
+      true,
+    );
 
     expect(value).toBe(true);
-    expect(warning).toContain('skills_instructions="true"');
-    expect(warning).toContain('Falling back to "on"');
+    expect(warning).toContain('skills_instructions="on"');
+    expect(warning).toContain("Falling back to true");
+  });
+
+  it("stays false when skills_enabled is mistyped", () => {
+    // Reaches the server through the installers' unvalidated pass-through.
+    const { value, warning } = parseBooleanOrWarn(
+      "skills_enabled",
+      "yes",
+      false,
+    );
+
+    expect(value).toBe(false);
+    expect(warning).toContain('skills_enabled="yes"');
+    expect(warning).toContain("accepted: true, false");
+    expect(warning).toContain("Falling back to false");
   });
 });
 
@@ -66,20 +86,31 @@ describe("classifySkillWarnings", () => {
 });
 
 describe("formatSkillsReport", () => {
-  it("says skills are disabled when no path is configured", () => {
+  it("says skills are disabled, naming the setting that turns them on", () => {
     const lines = formatSkillsReport({
-      skillsPath: "",
+      enabled: false,
+      skillsPath: "/app/skills",
       catalog: undefined,
       warnings: noWarnings,
     });
 
-    expect(lines).toEqual([
-      "Skills: disabled (no skills_path / SKILLS_PATH configured)",
-    ]);
+    expect(lines).toEqual(["Skills: disabled (skills_enabled is false)"]);
+  });
+
+  it("separates enabled-but-empty from disabled, which look alike otherwise", () => {
+    const lines = formatSkillsReport({
+      enabled: true,
+      skillsPath: "/app/skills",
+      catalog: undefined,
+      warnings: noWarnings,
+    });
+
+    expect(lines).toEqual(["Skills: ENABLED but none loaded from /app/skills"]);
   });
 
   it("reports a path it could not read as a failure, not as an empty one", () => {
     const lines = formatSkillsReport({
+      enabled: true,
       skillsPath: "/opt/skills",
       catalog: undefined,
       loadError: "cannot be listed: ENOENT",
@@ -92,6 +123,7 @@ describe("formatSkillsReport", () => {
 
   it("reports a readable path with nothing in it", () => {
     const lines = formatSkillsReport({
+      enabled: true,
       skillsPath: "/opt/skills",
       catalog: undefined,
       warnings: {
@@ -101,13 +133,14 @@ describe("formatSkillsReport", () => {
     });
 
     expect(lines).toEqual([
-      "Skills: none loaded from /opt/skills",
+      "Skills: ENABLED but none loaded from /opt/skills",
       "  ! no skills found",
     ]);
   });
 
   it("names every served skill, then its skips and its warnings apart", () => {
     const lines = formatSkillsReport({
+      enabled: true,
       skillsPath: "/opt/skills",
       catalog: catalogOf("good", "oversized"),
       warnings: {

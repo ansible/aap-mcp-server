@@ -122,6 +122,7 @@ describe("End-to-End: SEP-2640 skills", () => {
 
     process.env.BASE_URL = `http://localhost:${MOCK_AAP_PORT}`;
     process.env.MCP_PORT = String(MCP_SERVER_PORT);
+    process.env.SKILLS_ENABLED = "true";
     process.env.SKILLS_PATH = skillsRoot;
 
     await import("../src/index.js");

@@ -57,9 +57,10 @@ describe("End-to-End: shared context without the instructions pointer", () => {
 
     process.env.BASE_URL = `http://localhost:${MOCK_AAP_PORT}`;
     process.env.MCP_PORT = String(MCP_SERVER_PORT);
+    process.env.SKILLS_ENABLED = "true";
     process.env.SKILLS_PATH = skillsRoot;
     process.env.SHARED_CONTEXT_PATH = sharedRoot;
-    process.env.SKILLS_INSTRUCTIONS = "off";
+    process.env.SKILLS_INSTRUCTIONS = "false";
 
     await import("../src/index.js");
     await new Promise((resolve) => setTimeout(resolve, 500));
