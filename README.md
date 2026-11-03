@@ -133,21 +133,10 @@ MCP_PORT=3000
 # `requestStateCodec.mint(...)` or verification will reject the client's retry.
 #REQUEST_STATE_SECRET=<random-high-entropy-string>
 
-# Directory of skills to serve over the MCP skills extension (SEP-2640).
-# Unset or empty disables skills entirely. See "Serving Skills" below.
-# Also settable via `skills_path` in aap-mcp.yaml (env var takes precedence).
-#SKILLS_PATH=/opt/aap-mcp/skills
-
-# Organizational prefix for skill URIs (optional, defaults to "aap").
-#SKILLS_URI_PREFIX=aap
-
-# Name the served skills in the server's `instructions` field: "on" (default)
-# or "off". Any other value is reported at startup and the default kept.
-#SKILLS_INSTRUCTIONS=on
-
-# Directory of reference material shared by several skills, served at one URI
-# each. Unset or empty disables it. See "Shared context" below.
-#SHARED_CONTEXT_PATH=/opt/aap-mcp/context
+# Serve the AAP skills shipped in the image over the MCP skills extension
+# (SEP-2640): true or false (default). Any other value is reported at startup
+# and the default kept. See "Serving Skills" below.
+#SKILLS_ENABLED=false
 ```
 
 ### Configuration Priority
@@ -271,27 +260,35 @@ loads to carry out a multi-step task, defined by the MCP skills extension
 ([SEP-2640](https://modelcontextprotocol.io/seps/2640-skills-extension)) and implemented by
 the MCP TypeScript SDK 2.4.0 or later.
 
-Skills are **off by default**. Point the server at a directory to enable them:
-
-```bash
-SKILLS_PATH=/opt/aap-mcp/skills npm start
-```
-
-or in `aap-mcp.yaml`:
+The skills themselves ship inside the container image. Serving them is **off by default** and
+turned on with one setting:
 
 ```yaml
-skills_path: "/opt/aap-mcp/skills"
-skills_uri_prefix: "aap" # optional, defaults to "aap"
+# aap-mcp.yaml
+skills_enabled: true
 ```
 
-With `SKILLS_PATH` unset or empty the extension is not advertised and `skills/list` and
-`skills/get` are not registered. The catalog is read once at startup, so content changes need
-a restart, and unlike tools it is not narrowed by toolset: every endpoint, `/mcp/{toolset}`
-included, serves the whole catalog.
+or `SKILLS_ENABLED=true` in the environment. Accepted values are `true` and `false`; anything
+else is reported at startup — naming both the value and the accepted set — and the default is
+kept, so a typo cannot leave you believing skills are on when they are not.
+
+There is deliberately no setting for _where_ the content lives. The image puts the skills and
+their shared reference material in place, and the integrity of what gets served rests on that
+build pipeline — a reviewed upstream repository, a fast-forward-only sync, and a pinned
+revision in the image. The `sha256` the server publishes for each file proves the bytes were
+not altered in transit; it cannot tell you they came from that pipeline. Pointing the server
+somewhere else would quietly void the guarantee, so the path is not part of the supported
+configuration surface.
+
+With `skills_enabled` false the extension is not advertised, `skills/list` and `skills/get` are
+not registered, nothing is named in `instructions`, and no skill or shared document is
+readable. The catalog is read once at startup, so content changes need a restart, and unlike
+tools it is not narrowed by toolset: every endpoint, `/mcp/{toolset}` included, serves the
+whole catalog.
 
 ### Directory layout
 
-Each immediate subdirectory of `SKILLS_PATH` is one skill:
+Each immediate subdirectory of the skills root is one skill:
 
 ```
 skills/
@@ -326,9 +323,7 @@ catalog.
 
 The server also names every skill it serves, by URI and description, in the `instructions`
 field of `server/discover`. That is base protocol rather than an extension, so clients that
-implement nothing of SEP-2640 still find the skills; without it, in testing, they did not. Set
-`skills_instructions: "off"` (or `SKILLS_INSTRUCTIONS=off`) to serve skills only through the
-extension methods.
+implement nothing of SEP-2640 still find the skills; without it, in testing, they did not.
 
 ### Shared context
 
@@ -336,8 +331,8 @@ SEP-2640 serves only files inside a skill's own directory, so a document several
 — a report format standard, say — cannot be cited across them. Copying it into each skill
 works but gives one document N addresses, and a client's response cache is keyed on the URI.
 
-`SHARED_CONTEXT_PATH` (or `shared_context_path`) points at a directory of markdown documents
-served as plain MCP resources, one URI each:
+The image ships those documents alongside the skills, and `skills_enabled` turns both on
+together. They are served as plain MCP resources, one URI each:
 
 ```
 aap://context/<path-relative-to-the-directory>
@@ -349,11 +344,10 @@ capability a user can ask for, so listing it in `skills/list` would offer it as 
 is not. Symlinks are refused, as they are for skills; `.md` files only; the directory is read
 once at startup.
 
-Unlike `skills_uri_prefix`, the `aap://context/` prefix is fixed. Skill content cites these
-URIs directly, so the address cannot vary by deployment — and because it does, shared context
-stays reachable with `skills_instructions` off, which the `instructions` field itself does
-not. A missing directory is reported at startup and disables shared context; it never fails
-startup.
+The `aap://context/` prefix is fixed. Skill content cites these URIs directly, so the address
+cannot vary by deployment — and because it does, a client resolves a document from a skill's
+own text without depending on the `instructions` field at all. A missing directory is reported
+at startup and disables shared context; it never fails startup.
 
 ### A skill that fails to load
 
@@ -373,14 +367,15 @@ Exceeding the SEP-2640 limits of 512 files or 16 MiB is **not** a skip: the skil
 served in full, though a conforming host may decline it. The startup log reports those under
 `warning(s), still served`.
 
-A `skills_path` the server cannot read at all — missing, not a directory, no permission — is
+A skills root the server cannot read at all — missing, not a directory, no permission — is
 reported as an error and skills are disabled for that run. The server still starts and serves
-its tools.
+its tools. With `skills_enabled` true, that case is a broken image rather than a choice, so the
+startup log says `ENABLED but ...` to keep it from reading like the disabled state.
 
 Every skipped skill is named in the startup log with its file, line and reason:
 
 ```
-Skills: 2 loaded from /opt/aap-mcp/skills
+Skills: 2 loaded from /app/skills
   ✓ skill://aap/aap-effective-access-review/SKILL.md
   ✓ skill://aap/aap-skill-creator/SKILL.md
   1 skill SKIPPED and NOT served:

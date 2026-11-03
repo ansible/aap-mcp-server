@@ -16,19 +16,24 @@ export interface ClassifiedWarnings {
 // Reports an unrecognised value rather than silently defaulting: these arrive
 // through the installers' generic pass-through, which does not schema-validate,
 // so this is the only place a typo can surface.
-export const parseOnOff = (
+export const parseBooleanOrWarn = (
   name: string,
-  raw: string | undefined,
+  raw: string | boolean | undefined,
   fallback: boolean,
 ): { value: boolean; warning?: string } => {
+  // Unquoted in YAML this arrives already parsed; from the environment, and
+  // from a quoted YAML value, it is a string.
+  if (typeof raw === "boolean") return { value: raw };
   const value = (raw ?? "").trim().toLowerCase();
   if (value === "") return { value: fallback };
-  if (value === "on" || value === "off") return { value: value === "on" };
+  if (value === "true" || value === "false") {
+    return { value: value === "true" };
+  }
   return {
     value: fallback,
     warning:
-      `${name}="${raw}" is not a recognised value (accepted: "on", "off"). ` +
-      `Falling back to "${fallback ? "on" : "off"}".`,
+      `${name}="${raw}" is not a recognised value (accepted: true, false). ` +
+      `Falling back to ${fallback}.`,
   };
 };
 
@@ -58,20 +63,20 @@ export const classifySkillWarnings = (
 const plural = (count: number): string => (count === 1 ? "" : "s");
 
 const headerLines = (
+  enabled: boolean,
   skillsPath: string,
   catalog: SkillCatalog | undefined,
   loadError: string | undefined,
 ): string[] => {
-  if (!skillsPath) {
-    return ["Skills: disabled (no skills_path / SKILLS_PATH configured)"];
-  }
+  if (!enabled) return ["Skills: disabled (skills_enabled is false)"];
+  // ENABLED, because enabled and empty is a broken image, not a choice.
   if (loadError) {
     return [
-      `Skills: FAILED to load from ${skillsPath}, serving without skills`,
+      `Skills: ENABLED but FAILED to load from ${skillsPath}, serving without skills`,
       `  ✗ ${loadError}`,
     ];
   }
-  if (!catalog) return [`Skills: none loaded from ${skillsPath}`];
+  if (!catalog) return [`Skills: ENABLED but none loaded from ${skillsPath}`];
   return [
     `Skills: ${catalog.entries.length} loaded from ${skillsPath}`,
     ...catalog.entries.map((entry) => `  ✓ ${entry.uri}`),
@@ -88,16 +93,17 @@ const warningLines = (
     : [heading, ...warnings.map((w) => `  ${mark} ${w.path}: ${w.message}`)];
 
 export const formatSkillsReport = (input: {
+  enabled: boolean;
   skillsPath: string;
   catalog: SkillCatalog | undefined;
   loadError?: string;
   warnings: ClassifiedWarnings;
 }): string[] => {
-  const { skillsPath, catalog, loadError, warnings } = input;
+  const { enabled, skillsPath, catalog, loadError, warnings } = input;
   const { skipped, served } = warnings;
 
   return [
-    ...headerLines(skillsPath, catalog, loadError),
+    ...headerLines(enabled, skillsPath, catalog, loadError),
     ...warnings.catalog.map((warning) => `  ! ${warning.message}`),
     ...warningLines(
       skipped,

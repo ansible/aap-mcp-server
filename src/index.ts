@@ -44,7 +44,7 @@ import {
 import {
   classifySkillWarnings,
   formatSkillsReport,
-  parseOnOff,
+  parseBooleanOrWarn,
   type SkillWarning,
 } from "./skills-startup.js";
 import {
@@ -85,9 +85,18 @@ const getTimestamp = (): string => {
   return new Date().toISOString().split(".")[0] + "Z";
 };
 
-const skillsInstructionsSetting = parseOnOff(
+const skillsEnabledSetting = parseBooleanOrWarn(
+  "skills_enabled",
+  process.env.SKILLS_ENABLED || localConfig.skills_enabled,
+  false,
+);
+if (skillsEnabledSetting.warning) {
+  console.warn(`${getTimestamp()} WARNING: ${skillsEnabledSetting.warning}`);
+}
+
+const skillsInstructionsSetting = parseBooleanOrWarn(
   "skills_instructions",
-  process.env.SKILLS_INSTRUCTIONS || localConfig.skills_instructions,
+  process.env.SKILLS_INSTRUCTIONS,
   true,
 );
 if (skillsInstructionsSetting.warning) {
@@ -114,28 +123,15 @@ const CONFIG = {
   )
     .map((origin) => origin.trim())
     .filter((origin) => origin.length > 0),
-  // Directory of SEP-2640 skills to serve. Empty disables skills entirely.
-  SKILLS_PATH: (
-    process.env.SKILLS_PATH ||
-    localConfig.skills_path ||
-    ""
+  SKILLS_ENABLED: skillsEnabledSetting.value,
+  SKILLS_PATH: (process.env.SKILLS_PATH || "/app/skills").trim(),
+  SHARED_CONTEXT_PATH: (
+    process.env.SHARED_CONTEXT_PATH || "/app/context"
   ).trim(),
   // Prefix in skill://<prefix>/<name>/<file>. Only the final segment is
   // constrained by SEP-2640 (it must equal the frontmatter name).
-  SKILLS_URI_PREFIX: (
-    process.env.SKILLS_URI_PREFIX ||
-    localConfig.skills_uri_prefix ||
-    "aap"
-  ).trim(),
+  SKILLS_URI_PREFIX: (process.env.SKILLS_URI_PREFIX || "aap").trim(),
   SKILLS_INSTRUCTIONS: skillsInstructionsSetting.value,
-  // Directory of reference material shared by several skills, served at one
-  // URI each rather than copied into every skill that cites it. Empty
-  // disables it.
-  SHARED_CONTEXT_PATH: (
-    process.env.SHARED_CONTEXT_PATH ||
-    localConfig.shared_context_path ||
-    ""
-  ).trim(),
 } as const;
 
 // Multi-round-trip (MRTR) requestState integrity codec (2026-07-28). requestState
@@ -512,7 +508,7 @@ const executeToolRequest = async (
 const skillWarnings: SkillWarning[] = [];
 let loadedCatalog: SkillCatalog | undefined;
 let skillLoadError: string | undefined;
-if (CONFIG.SKILLS_PATH) {
+if (CONFIG.SKILLS_ENABLED) {
   try {
     loadedCatalog = await loadSkills(CONFIG.SKILLS_PATH, {
       ...(CONFIG.SKILLS_URI_PREFIX ? { prefix: CONFIG.SKILLS_URI_PREFIX } : {}),
@@ -527,8 +523,8 @@ if (CONFIG.SKILLS_PATH) {
     // not cost the server its tools.
     skillLoadError = error instanceof Error ? error.message : String(error);
     console.error(
-      `${getTimestamp()} ERROR: skills_path="${CONFIG.SKILLS_PATH}" could not be ` +
-        `loaded; serving without skills. ${skillLoadError}`,
+      `${getTimestamp()} ERROR: skills_enabled is true but ${CONFIG.SKILLS_PATH} ` +
+        `could not be loaded; serving without skills. ${skillLoadError}`,
     );
   }
 }
@@ -540,7 +536,7 @@ const classifiedWarnings = classifySkillWarnings(skillWarnings, skillCatalog);
 // Read once at startup for the same reason the catalog is, and never throws:
 // an unreadable directory is reported and shared context is disabled.
 const sharedContextWarnings: SharedContextWarning[] = [];
-const sharedContext: SharedContextEntry[] = CONFIG.SHARED_CONTEXT_PATH
+const sharedContext: SharedContextEntry[] = CONFIG.SKILLS_ENABLED
   ? await loadSharedContext(CONFIG.SHARED_CONTEXT_PATH, {
       onWarning: (warning) => sharedContextWarnings.push(warning),
     })
@@ -997,6 +993,7 @@ async function main(): Promise<void> {
 
   console.log("");
   for (const line of formatSkillsReport({
+    enabled: CONFIG.SKILLS_ENABLED,
     skillsPath: CONFIG.SKILLS_PATH,
     catalog: skillCatalog,
     loadError: skillLoadError,
@@ -1006,6 +1003,7 @@ async function main(): Promise<void> {
   }
 
   for (const line of formatSharedContextReport({
+    enabled: CONFIG.SKILLS_ENABLED,
     path: CONFIG.SHARED_CONTEXT_PATH,
     entries: sharedContext,
     warnings: sharedContextWarnings,
